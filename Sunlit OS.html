@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunlit OS</title>
+    <link rel="icon" type="image/png" href="https://github.com/EXVYS/Image-host/blob/main/goguardian-lock.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --glass-bg: rgba(20, 20, 20, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --accent-color: #ffffff;
+            --font-main: 'Inter', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --cursor-default: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="1.5"><path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z"/></svg>') 0 0, auto;
+            --cursor-pointer: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="1.5"><path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z"/><circle cx="12" cy="12" r="3" fill="rgba(255,255,255,0.3)"/></svg>') 0 0, pointer;
+            --cursor-text: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="24" viewBox="0 0 20 24" fill="white" stroke="black" stroke-width="1.5"><rect x="8" y="2" width="4" height="20" rx="1"/></svg>') 10 12, text;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            font-family: var(--font-main);
+            overflow: hidden;
+            user-select: none;
+            color: #ffffff;
+            background: #000000;
+            cursor: var(--cursor-default);
+            height: 100%;
+            position: fixed;
+            width: 100%;
+        }
+
+        a, button, .dock-item, .window-controls, .traffic-light, .context-item, .game-item, .proxy-item, .setting-item, .user-info, .search-btn, .search-container {
+            cursor: var(--cursor-pointer);
+        }
+
+        input, textarea {
+            cursor: var(--cursor-text);
+        }
+
+        .restricted-html, .restricted-body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .restricted-body {
+            background-color: #3E3E3E;
+            background: radial-gradient(ellipse at center, #707070 13%, #333333 100%);
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .restricted-blur {
+            -webkit-filter: blur(10px);
+            filter: blur(10px);
+            opacity: 0.6;
+        }
+
+        .restricted-popspace {
+            opacity: 1.0;
+            position: absolute;
+            top: 190px;
+            left: 430px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .restricted-pophead {
+            color: #00AAD7;
+            margin: 0;
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            font-size: 20px;
+            font-weight: 100;
+        }
+
+        .restricted-pophead2 {
+            color: #AFAFAF;
+            padding-top: 5;
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            font-size: 11px;
+            font-weight: 100;
+        }
+
+        .restricted-form {
+            border-radius:2px;
+            padding: 20px 30px;
+            box-shadow: 0 0 15px;
+            font-size:14px;
+            font-weight: bold;
+            max-width: 350px;
+            margin: 20px 250px 0 35px;
+            float: left;
+        }
+
+        .restricted-content {
+            max-width: 760px;
+            padding: 0 20px;
+            margin: 30px auto;
+            color: #c7c7c7;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 100;
+            height: 530px;
+            background-repeat: no-repeat;
+            background-size: 245px;
+            background-position: center center;
+            background-image: url('https://github.com/EXVYS/Image-host/blob/main/goguardian-lock.png?raw=true');
+        }
+
+        .restricted-content h1 {
+            color: #00AAD7;
+            font-size: 60px;
+            margin: 0;
+            margin-bottom: -20px;
+        }
+
+        .restricted-bypassCont {
+            margin-top: 40px;
+        }
+
+        .restricted-bypassCont label {
+          border: 0;
+          clip: rect(0 0 0 0);
+          height: 1px;
+          margin: -1px;
+          overflow: hidden;
+          padding: 0;
+          position: absolute;
+          width: 1px;
+        }
+
+        .restricted-content i {
+            display: block;
+            position: fixed;
+            bottom: 0px;
+            left: 0px;
+            max-width: 300px;
+            width: 100%;
+            height: 60px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 310px;
+        }
+
+        .restricted-bypassCont i {
+            display: none;
+        }
+
+        .restricted-bypassCont button.restricted-bypassfilter {
+            border-radius: 4px;
+            background-image: -webkit-linear-gradient(89deg, #00AAD7 0%, #2DBCE2 81%);
+            background-image: linear-gradient(-1deg, #00AAD7 0%, #2DBCE2 81%);
+            box-shadow: 0 1px 4px 0 rgba(0,0,0,0.38);
+            border: none;
+            padding: 15px;
+            color: white;
+            font-size: 25px;
+            width: 250px;
+            margin-top: 235px;
+            position: relative;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .restricted-bypassCont button.restricted-bypassfilter::after {
+            font-size: 30px;
+            position: absolute;
+            content: ">";
+            color: #2c5b75;
+            top: 10px;
+            right: 20px;
+            transform:scale(1,1.5);
+            -webkit-transform:scale(1,1.5);
+        }
+
+        .restricted-bypassCont button, .restricted-bypassCont input {
+            margin-top: 10px;
+            color: #333;
+        }
+
+        .restricted-whitelist {
+            margin-top: 10px;
+            font-size: 16px;
+            text-decoration: underline;
+            cursor: pointer;
+            color: #9c9c9c;
+        }
+
+        #restricted-password {
+            width: 292px;
+            height: 37px;
+            font-weight: 100;
+            padding: 10px;
+        }
+
+        #restricted-unblockreq {
+            height:130px;
+            width: 290px;
+            font-weight: 100;
+            padding: 10px;
+        }
+
+        .restricted-but {
+            background-image: linear-gradient(-1deg, #35B0D1 0%, #35B0D1 81%);
+            box-shadow: 0 1px 4px 0 rgba(0,0,0,0.38);
+            border: none;
+            margin-left: 95;
+            color: rgb(155, 213, 221);
+            font-size: 16px;
+            font-weight: 300;
+            width: 100px;
+            height: 35px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        #restricted-logindiv,
+        #restricted-unblockdiv {
+            height: 0;
+            width: 0;
+        }
+
+        .restricted-outer {
+            display: table;
+            position: absolute;
+            height: 100%;
+            width: 100%;
+        }
+
+        .restricted-middle {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .restricted-but:hover {
+            color: #E1E9F0;
+        }
+
+        #restricted-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 200000;
+            background-color: #3E3E3E;
+            background: radial-gradient(ellipse at center, #707070 13%, #333333 100%);
+            font-family: 'Roboto', sans-serif;
+            transition: opacity 0.8s ease;
+            overflow-y: auto;
+        }
+
+        #restricted-screen.fade-out {
+            opacity: 0;
+        }
+
+        #intro-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 100000;
+            background: black;
+            overflow: hidden;
+            display: none;
+        }
+        
+        #intro-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border: none;
+        }
+
+        #desktop-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .bg-overlay {
+            display: none;
+        }
+
+        .time-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+            mix-blend-mode: difference;
+        }
+
+        .time-clock {
+            font-size: 120px;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1;
+            letter-spacing: 4px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .time-date {
+            font-size: 32px;
+            font-weight: 400;
+            color: #ffffff;
+            margin-top: 15px;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .window {
+            position: absolute;
+            background: rgba(15, 15, 15, 0.65);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 500px;
+            min-height: 400px;
+            resize: both;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+            backdrop-filter: blur(25px) saturate(160%);
+            will-change: left, top, width, height;
+        }
+
+        .window.active {
+            border-color: rgba(255,255,255,0.15);
+            box-shadow: 0 30px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08);
+            transform: scale(1.02);
+        }
+
+        .window.dragging {
+            transition: none !important;
+            opacity: 0.9;
+            box-shadow: 0 40px 120px rgba(0,0,0,0.8);
+        }
+
+        .window-header {
+            height: 52px;
+            background: rgba(15, 15, 15, 0.45);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            cursor: grab;
+            position: relative;
+            backdrop-filter: blur(10px);
+            -webkit-app-region: drag;
+            user-select: none;
+        }
+
+        .window-header:active {
+            cursor: grabbing;
+        }
+
+        .window-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            -webkit-app-region: no-drag;
+        }
+
+        .traffic-light {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.2);
+        }
+
+        .traffic-light::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .traffic-light:hover {
+            transform: scale(1.1);
+        }
+
+        .traffic-light.close {
+            background: #ff5f57;
+        }
+
+        .traffic-light.close::before {
+            width: 8px;
+            height: 8px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%234d0000' d='M1.5 1L4 3.5 6.5 1 7.5 2 5 4.5 7.5 7 6.5 8 4 5.5 1.5 8 .5 7 3 4.5 .5 2z'/%3E%3C/svg%3E") center/contain no-repeat;
+        }
+
+        .traffic-light.minimize {
+            background: #febc2e;
+        }
+
+        .traffic-light.minimize::before {
+            width: 8px;
+            height: 2px;
+            background: #995700;
+            border-radius: 1px;
+        }
+
+        .traffic-light.maximize {
+            background: #28c840;
+        }
+
+        .traffic-light.maximize::before {
+            width: 6px;
+            height: 6px;
+            border: 1.5px solid #006500;
+            border-radius: 1px;
+        }
+
+        .traffic-light:hover::before {
+            opacity: 1;
+        }
+
+        .window-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.95);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+
+        .window-content {
+            flex: 1;
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .window-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+        }
+
+        .resize-handle {
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 20px; height: 20px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.2) 50%);
+            transition: opacity 0.2s;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .window:hover .resize-handle {
+            opacity: 1;
+        }
+
+.fullscreen-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    background: black;
+    display: none;
+}
+
+.fullscreen-container.active {
+    display: block;
+}
+
+.fullscreen-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: black;
+}
+
+.fullscreen-buttons {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(30, 30, 30, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 10001;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.fullscreen-container:hover .fullscreen-buttons {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.fs-btn {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.2);
+}
+
+.fs-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.fs-btn:hover {
+    transform: scale(1.1);
+}
+
+.fs-btn:hover::before {
+    opacity: 1;
+}
+
+.fs-btn.close {
+    background: #ff5f57;
+}
+
+.fs-btn.close::before {
+    width: 8px;
+    height: 8px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%234d0000' d='M1.5 1L4 3.5 6.5 1 7.5 2 5 4.5 7.5 7 6.5 8 4 5.5 1.5 8 .5 7 3 4.5 .5 2z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+.fs-btn.minimize {
+    background: #febc2e;
+}
+
+.fs-btn.minimize::before {
+    width: 8px;
+    height: 2px;
+    background: #995700;
+    border-radius: 1px;
+}
+
+.fs-btn.maximize {
+    background: #28c840;
+}
+
+.fs-btn.maximize::before {
+    width: 6px;
+    height: 6px;
+    border: 1.5px solid #006500;
+    border-radius: 1px;
+}
+        .dock {
+            position: fixed;
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .dock-item {
+            width: 55px;
+            height: 55px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+
+        .dock-item:hover {
+            background: rgba(0, 0, 0, 0.5);
+            transform: scale(1.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .dock.dock-bottom .dock-item:hover { transform: scale(1.15) translateY(-8px); }
+
+.dock-item img { 
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); 
+}
+
+        .dock-tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.7);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.2s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.08);
+            z-index: 1001;
+        }
+
+        .dock.dock-bottom .dock-tooltip { top: -45px; }
+        .dock-item:hover .dock-tooltip { opacity: 1; transform: translateY(0); }
+
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+            height: 55px;
+        }
+
+        .search-btn {
+            width: 55px;
+            height: 55px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+
+        .search-btn:hover {
+            background: rgba(0, 0, 0, 0.5);
+            transform: scale(1.15) translateY(-8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-btn img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .search-bar {
+            position: absolute;
+            left: 65px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 45px;
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            padding: 0;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+            pointer-events: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-bar.active {
+            width: 280px;
+            padding: 0 15px;
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .search-bar input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 15px;
+            outline: none;
+            font-family: var(--font-main);
+        }
+
+        .search-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-bar .search-icon-small {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            object-fit: contain;
+        }
+
+        .search-results {
+            position: fixed;
+            bottom: 120px;
+            right: 50px;
+            width: 350px;
+            max-height: 400px;
+            background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 10px;
+            overflow-y: auto;
+            z-index: 2000;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            display: none;
+        }
+
+        .search-results.active {
+            display: block;
+            animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .search-result-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .result-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .result-icon img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .result-type {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 2px;
+        }
+
+        .dock.dock-bottom {
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 80px;
+            padding: 0 20px;
+            gap: 12px;
+            border-radius: 24px;
+            flex-direction: row;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+        }
+
+        .context-menu {
+            position: fixed;
+            background: rgba(15, 15, 15, 0.75);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 200px;
+            z-index: 2000;
+            display: none;
+            backdrop-filter: blur(25px) saturate(160%);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: menuAppear 0.2s ease;
+        }
+
+        @keyframes menuAppear {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .context-item {
+            padding: 12px 18px;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .context-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(4px);
+        }
+
+        .context-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 8px 0;
+        }
+
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 25px;
+            padding: 30px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .game-item, .proxy-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 20px;
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(5px);
+        }
+
+        .game-item:hover, .proxy-item:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .game-icon, .proxy-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.08);
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .game-icon img, .proxy-icon img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .game-item:hover .game-icon, .proxy-item:hover .proxy-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+
+        .game-text-logo, .proxy-text-logo {
+            font-size: 14px;
+            font-weight: 800;
+            color: #ffffff;
+            text-align: center;
+            line-height: 1.2;
+            padding: 8px;
+            word-break: break-word;
+        }
+
+        .game-name, .proxy-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        .settings-panel {
+            padding: 35px;
+            color: #ffffff;
+            height: 100%;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .settings-section { margin-bottom: 35px; }
+
+        .settings-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .setting-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .setting-item:hover {
+            background: rgba(255,255,255,0.06);
+            transform: translateX(5px);
+        }
+
+        .setting-label { font-weight: 700; font-size: 15px; color: #ffffff; }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        .setting-desc {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+            margin-top: 5px;
+        }
+
+        .toggle {
+            width: 52px;
+            height: 28px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle.active { background: #34c759; }
+
+        .toggle-knob {
+            width: 24px;
+            height: 24px;
+            background: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .toggle.active .toggle-knob { transform: translateX(24px); }
+
+        .terminal {
+            background: rgba(0, 0, 0, 0.6);
+            color: #32d74b;
+            font-family: var(--font-mono);
+            padding: 25px;
+            height: 100%;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+            backdrop-filter: blur(5px);
+        }
+
+        .terminal-line { margin-bottom: 6px; }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .terminal-prompt { color: #ffffff; font-weight: 700; }
+
+        .terminal-input {
+            background: transparent;
+            border: none;
+            color: #32d74b;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            flex: 1;
+            outline: none;
+        }
+
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .notification {
+            background: rgba(15, 15, 15, 0.8);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 16px 20px;
+            min-width: 300px;
+            max-width: 400px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            transform: translateX(120%);
+            animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            pointer-events: all;
+        }
+
+        @keyframes slideIn {
+            to { transform: translateX(0); }
+        }
+
+        .notification.hiding {
+            animation: slideOut 0.3s ease forwards;
+        }
+
+        @keyframes slideOut {
+            to { transform: translateX(120%); opacity: 0; }
+        }
+
+        .notification-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #ffffff;
+        }
+
+        .notification-body {
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.4;
+        }
+
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sound-toggle svg {
+            width: 20px;
+            height: 20px;
+            fill: rgba(255,255,255,0.7);
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="restricted-screen">
+        <div class="restricted-outer">
+            <div class="restricted-middle">
+                <div class="restricted-content">
+                    <h1>
+                        <strong>
+                            <i class="fa fa-exclamation-triangle"></i>
+                            Restricted
+                        </strong>
+                    </h1>
+                    <br>
+                    This website has been blocked by your administrator.
+                    
+                    <div class="restricted-bypassCont" style="display: none;" id="restricted-bypassContainer">
+                        <button class="restricted-bypassfilter" id="restricted-bypassBtn">Bypass Filter</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="restricted-logindiv" class="restricted-popspace" style="display: none;">
+            <div class="restricted-form" id="restricted-login" style="background-color: #DBDBDB;">
+                <div style="padding: 10px;">
+                    <h3 class="restricted-pophead">Enter Password</h3>
+                    <p class="restricted-pophead2 restricted-passapp">All Attempts are Logged.</p>
+                </div>
+                <input type="password" id="restricted-password" placeholder="Password"/> <br/><br/>
+                <button class="btn btn-default btn-xs restricted-but restricted-submitAll">Bypass</button>
+            </div>
+        </div>
+
+        <div id="restricted-unblockdiv" class="restricted-popspace" style="top:178px; display: none;">
+            <div class="restricted-form" style="background-color: #DBDBDB;">
+                <div style="padding: 10px;">
+                    <h3 class="restricted-pophead restricted-unblocktitle">Why?</h3>
+                    <p class="restricted-pophead2 restricted-unblockapp">Limit to 300 characters.</p>
+                </div>
+                <textarea type="text" id="restricted-unblockreq" placeholder="Explain"></textarea>
+                <button class="btn btn-default btn-xs restricted-but restricted-submitcont" style="margin-left: 100px; margin-top: 20px;">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="intro-screen">
+        <video id="intro-video" autoplay muted playsinline>
+            <source src="https://video.onlineprinthost.workers.dev/" type="video/mp4">
+        </video>
+    </div>
+
+    <video id="desktop-bg" autoplay muted loop playsinline>
+        <source src="https://bg.onlineprinthost.workers.dev/" type="video/mp4">
+    </video>
+
+    <div class="time-display" id="timeDisplay">
+        <div class="time-clock" id="timeClock">12:00 PM</div>
+        <div class="time-date" id="timeDate">Monday, January 1</div>
+    </div>
+
+    <div class="fullscreen-container" id="fullscreen-container">
+        <iframe class="fullscreen-iframe" id="fullscreen-iframe" allow="fullscreen; autoplay; picture-in-picture"></iframe>
+        <div class="fullscreen-buttons" id="fullscreen-buttons">
+            <div class="fs-btn close" id="fs-close" title="Close"></div>
+            <div class="fs-btn minimize" id="fs-minimize" title="Minimize"></div>
+            <div class="fs-btn maximize" id="fs-maximize" title="Fullscreen"></div>
+        </div>
+    </div>
+
+    <div class="dock dock-bottom" id="dock">
+        <div class="dock-item" id="dock-browser">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" alt="Browser">
+            <div class="dock-tooltip">Browser</div>
+        </div>
+        <div class="dock-item" id="dock-movies">
+            <img src="https://cdn.icon-icons.com/icons2/2699/PNG/512/netflix_logo_icon_170919.png" alt="Movies">
+            <div class="dock-tooltip">Movies</div>
+        </div>
+        <div class="dock-item" id="dock-games">
+            <img src="https://www.pngall.com/wp-content/uploads/13/Xbox-Logo-PNG-File-180x180.png" alt="Games">
+            <div class="dock-tooltip">Games</div>
+        </div>
+        <div class="dock-item" id="dock-terminal">
+            <img src="https://th.bing.com/th/id/R.d94aa1c4979b25e9ffbda97fcbae219a?rik=r%2bRpTLeRa61GHA&pid=ImgRaw&r=0" alt="Terminal">
+            <div class="dock-tooltip">Terminal</div>
+        </div>
+        <div class="dock-item" id="dock-settings">
+            <img src="https://th.bing.com/th/id/R.bf10e548e61d79e99751b2e58b16fb3f?rik=qx%2fb0zFldSvfjQ&pid=ImgRaw&r=0" alt="Settings">
+            <div class="dock-tooltip">Settings</div>
+        </div>
+        
+        <div class="search-container">
+            <div class="search-bar" id="searchBar">
+                <img class="search-icon-small" src="https://github.com/EXVYS/Image-host/blob/main/search.png?raw=true" alt="Search">
+                <input type="text" id="searchInput" placeholder="Search apps, games..." autocomplete="off">
+            </div>
+            <div class="search-btn" id="searchBtn">
+                <img src="https://github.com/EXVYS/Image-host/blob/main/search.png?raw=true" alt="Search">
+                <div class="dock-tooltip">Search</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-results" id="searchResults"></div>
+
+    <div class="context-menu" id="contextMenu">
+        <div class="context-item" id="ctx-movies">Movies</div>
+        <div class="context-item" id="ctx-games">Games</div>
+        <div class="context-item" id="ctx-terminal">Terminal</div>
+        <div class="context-divider"></div>
+        <div class="context-item" id="ctx-reset">Reset</div>
+    </div>
+
+    <script>
+        const restrictedScreen = document.getElementById('restricted-screen');
+        const introScreen = document.getElementById('intro-screen');
+        const video = document.getElementById('intro-video');
+
+        const originalFavicon = document.querySelector('link[rel="icon"]');
+        const originalTitle = document.title;
+
+        window.addEventListener('load', function() {
+            if (originalFavicon) {
+                originalFavicon.href = 'https://github.com/EXVYS/Image-host/blob/main/goguardian-lock.png?raw=true';
+            }
+            document.title = 'Restricted';
+            
+            video.load();
+            video.play().then(() => {
+                video.pause();
+                video.currentTime = 0;
+            }).catch(() => {});
+        });
+        
+        function handleRestrictedKey(e) {
+            if (e.key === '>' || e.key === '>') {
+                e.preventDefault();
+                document.removeEventListener('keydown', handleRestrictedKey);
+                
+                if (originalFavicon) {
+                    originalFavicon.href = 'https://exvys.github.io/Image-host/logo2.png';
+                }
+                document.title = 'Sunlit OS';
+                
+                restrictedScreen.style.display = 'none';
+                introScreen.style.display = 'block';
+                introScreen.style.opacity = '1';
+                
+                video.currentTime = 0;
+                
+                const playPromise = video.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log('Video autoplay failed:', error);
+                        setTimeout(() => {
+                            introScreen.style.opacity = '0';
+                            setTimeout(() => {
+                                introScreen.style.display = 'none';
+                                showDesktop();
+                            }, 300);
+                        }, 2000);
+                    });
+                }
+                
+                video.addEventListener('ended', function onVideoEnd() {
+                    video.removeEventListener('ended', onVideoEnd);
+                    
+                    introScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        introScreen.style.display = 'none';
+                        showDesktop();
+                    }, 300);
+                });
+            }
+        }
+        
+        document.addEventListener('keydown', handleRestrictedKey);
+
+        const GAMES = [
+            { code: "gunspin", name: "Gun Spin", icon: "https://is1-ssl.mzstatic.com/image/thumb/Purple123/v4/b2/97/a6/b297a646-beee-ee0b-15b2-1c20760ebe0d/AppIcon-0-0-1x_U007emarketing-0-0-0-7-0-85-220.png/1024x1024bb.png", url: "https://theairidancegunspin.aaacraps.workers.dev/" },
+            { code: "fnae", name: "FNAE", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUAHWUmXW5p_n72UZlFYJ9aUWY6crdBhl2Og&s", url: "https://math.lualol.com/gamefile/fnae.html" },
+            { code: "stickgta", name: "Stick man Gta", icon: "https://www.onlinegames.io/media/posts/900/responsive/stickman-gta-city-free-xs.jpg", url: "https://stickmangta.aaacraps.workers.dev/" },
+            { code: "granny", name: "Granny", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8X5JjpaXIFfsI2KKuU_kjCFDAGJZxktgz3g&s", url: "https://math.lualol.com/gamefile/tung.html" },
+            { code: "cookie", name: "Cookie Clicker", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUaILhFYRcXKcCxVOrB2i-1Jo4kfIxh7rIag&s", url: "https://math.lualol.com/games/cookie-clicker/index.html" },
+            { code: "escaperoad", name: "Escape Road", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSkf70EeBTZRRJAn9fvuL0wwQglMCYEoaPJEQ&s", url: "https://math.lualol.com/gamefile/escape.html" },
+            { code: "subway", name: "Subway Surfers", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQv581lSJvWo4pRSP97wi8hum56FJUOndEJbQ&s", url: "https://math.lualol.com/games/subway-surfers/index.html" },
+            { code: "waves", name: "Space Waves", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSlvpINlHVXkHS4cpT7NznJUU6LA6B1WsDhkw&s", url: "https://math.lualol.com/gamefile/spacewaves.html" },
+            { code: "memesound", name: "Meme Soundboard", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCyvlABdrfx6pG9ZVOGzkzT7EZFLG2Hk3z1Q&s", url: "https://soundboardguys.com/?ref=producthunt" },
+            { code: "blockblast", name: "Block Blast", icon: "https://thehofstrachronicle.com/wp-content/uploads/2025/03/block-blast.png", url: "https://blockblast.aaacraps.workers.dev/" },
+            { code: "stickmanhook", name: "Stickman Hook", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKclUg-7v0l4KeCYELMzTrsaHvwJ1uubNfkw&s", url: "https://hooktest.aaacraps.workers.dev/" },
+            { code: "ducklife", name: "Duck Life", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS5GdAbv5dSITcuVtwHYxx5VlAmqagd9pkSSw&s", url: "https://ducklife.aaacraps.workers.dev/" },
+            { code: "survivalkarts", name: "Survival Karts", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpgKJn4U5HmiZt-I52kiwmnJB-phnwfRdIvQ&s", url: "https://karts.aaacraps.workers.dev/" },
+            { code: "flappy", name: "Flappy Bird", icon: "https://upload.wikimedia.org/wikipedia/en/0/0a/Flappy_Bird_icon.png", url: "https://flappy.aaacraps.workers.dev/" },
+            { code: "agario", name: "Agar.io", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHaBmrNqCK6xfStjMmy-bdzsHuUOn3DBkd7w&s", url: "https://agario.aaacraps.workers.dev" },
+            { code: "twerkrace3d", name: "Twerk Race 3D", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRd-uMHIZhrmLNRcoZaHmfhySUEq9flgqx73g&s", url: "https://twerk.aaacraps.workers.dev/" }
+        ];
+
+        const PROXIES = {
+            "boredom": { name: "Boredom", url: "https://academi.edu.pl/" },
+            "waves": { name: "Waves", url: "https://yay.osiadaczabogados.cl/" },
+            "uniub": { name: "UniUB", url: "https://cuckepiso.de/" },
+            "velara": { name: "Velara", url: "https://v.lualol.com/" }
+        };
+
+        const MOVIES_URL = "https://anikai.to/";
+
+        let windowCount = 0;
+        let zIndex = 100;
+        let activeWindow = null;
+        let fullscreenUrl = null;
+        let fullscreenTitle = '';
+        let devMode = false;
+        let dockPosition = 'bottom';
+        let dragData = null;
+        let resizeData = null;
+        let isFullscreen = false;
+        let soundEnabled = true;
+        let searchActive = false;
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled || !audioCtx) return;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            switch(type) {
+                case 'click':
+                    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'notification':
+                    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.15);
+                    break;
+                case 'startup':
+                    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.5);
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.25);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.5);
+                    break;
+            }
+        }
+
+        function showDesktop() {
+            document.getElementById('dock').style.display = 'flex';
+            setDockPosition('bottom');
+            
+            initAudio();
+            playSound('startup');
+            showNotification('Welcome', 'Logged in as Admin');
+            
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            setupEventListeners();
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            const dateStr = now.toLocaleDateString([], options);
+            
+            document.getElementById('timeClock').textContent = timeStr;
+            document.getElementById('timeDate').textContent = dateStr;
+        }
+
+        function openFullscreen(url, title) {
+            const fsContainer = document.getElementById('fullscreen-container');
+            const fsIframe = document.getElementById('fullscreen-iframe');
+            
+            fullscreenUrl = url;
+            fullscreenTitle = title || 'Sunlit OS';
+            
+            fsIframe.src = url;
+            fsContainer.classList.add('active');
+
+            document.getElementById('dock').style.opacity = '0';
+            document.getElementById('dock').style.pointerEvents = 'none';
+            
+            showNotification('Opened', title + ' is now in fullscreen');
+        }
+
+        function closeFullscreen() {
+            const fsContainer = document.getElementById('fullscreen-container');
+            const fsIframe = document.getElementById('fullscreen-iframe');
+            
+            fsIframe.src = 'about:blank';
+            fsContainer.classList.remove('active');
+            
+            document.getElementById('dock').style.opacity = '1';
+            document.getElementById('dock').style.pointerEvents = 'all';
+            
+            fullscreenUrl = null;
+        }
+
+        function minimizeFullscreen() {
+            const fsContainer = document.getElementById('fullscreen-container');
+            fsContainer.classList.remove('active');
+            
+            document.getElementById('dock').style.opacity = '1';
+            document.getElementById('dock').style.pointerEvents = 'all';
+        }
+
+        function toggleFullscreenMode() {
+            const fsIframe = document.getElementById('fullscreen-iframe');
+            if (!document.fullscreenElement) {
+                if (fsIframe.requestFullscreen) {
+                    fsIframe.requestFullscreen();
+                } else if (fsIframe.webkitRequestFullscreen) {
+                    fsIframe.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        function openAboutBlank() {
+            const currentCustomPortalUrl = 'https://clever.com/';
+            
+            const portalTab = window.open(currentCustomPortalUrl, '_blank');
+            
+            if (portalTab) {
+                setTimeout(() => {
+                    try {
+                        portalTab.close();
+                    } catch (e) {
+                        console.log('Could not close tab automatically');
+                    }
+                    
+                    setTimeout(() => {
+                        const reopenedPortal = window.open(currentCustomPortalUrl, '_blank');
+                        
+                        setTimeout(() => {
+                            const gameTab = window.open('about:blank', '_blank');
+                            if (gameTab) {
+                                gameTab.document.open();
+                                gameTab.document.write('<!DOCTYPE html><html><head><title>Sunlit OS</title><style>body{margin:0;height:100vh;overflow:hidden;}</style></head><body><iframe src="https://coreos.top/" scrolling="no" style="width:100%;height:100%;border:none;overflow:hidden;"></iframe></body></html>');
+                                gameTab.document.close();
+                            }
+                        }, 2000);
+                    }, 500);
+                }, 500);
+            } else {
+                const gameTab = window.open('about:blank', '_blank');
+                if (gameTab) {
+                    gameTab.document.open();
+                    gameTab.document.write('<!DOCTYPE html><html><head><title>Sunlit OS</title><style>body{margin:0;height:100vh;overflow:hidden;}</style></head><head><body><iframe src="https://sunlitos.top/" scrolling="no" style="width:100%;height:100%;border:none;overflow:hidden;"></iframe></body></html>');
+                    gameTab.document.close();
+                }
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('dock-browser').addEventListener('click', function() {
+                playSound('click');
+                openFullscreen('https://lithium--ossunlit.replit.app/', 'Browser');
+            });
+            
+            document.getElementById('dock-movies').addEventListener('click', function() {
+                playSound('click');
+                openFullscreen(MOVIES_URL, 'Movies');
+            });
+            
+            document.getElementById('dock-games').addEventListener('click', function() {
+                playSound('click');
+                openGamesFolder();
+            });
+            document.getElementById('dock-terminal').addEventListener('click', function() {
+                playSound('click');
+                createTerminalWindow();
+            });
+            document.getElementById('dock-settings').addEventListener('click', function() {
+                playSound('click');
+                openSettings();
+            });
+            
+            document.getElementById('fs-close').addEventListener('click', function() {
+                playSound('click');
+                closeFullscreen();
+            });
+            document.getElementById('fs-minimize').addEventListener('click', function() {
+                playSound('click');
+                minimizeFullscreen();
+            });
+            document.getElementById('fs-maximize').addEventListener('click', function() {
+                playSound('click');
+                toggleFullscreenMode();
+            });
+
+            const searchBtn = document.getElementById('searchBtn');
+            const searchBar = document.getElementById('searchBar');
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            
+            searchBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                playSound('click');
+                toggleSearch();
+            });
+            
+            searchInput.addEventListener('input', function() {
+                performSearch(this.value);
+            });
+            
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeSearch();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const firstResult = document.querySelector('.search-result-item');
+                    if (firstResult) {
+                        firstResult.click();
+                    }
+                }
+            });
+            
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.search-container') && !e.target.closest('.search-results')) {
+                    closeSearch();
+                }
+            });
+
+            document.getElementById('ctx-movies').addEventListener('click', function() {
+                playSound('click');
+                openFullscreen(MOVIES_URL, 'Movies');
+            });
+            document.getElementById('ctx-games').addEventListener('click', function() {
+                playSound('click');
+                openGamesFolder();
+            });
+            document.getElementById('ctx-terminal').addEventListener('click', function() {
+                playSound('click');
+                createTerminalWindow();
+            });
+            document.getElementById('ctx-reset').addEventListener('click', function() {
+                playSound('click');
+                location.reload();
+            });
+            
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                playSound('click');
+                const menu = document.getElementById('contextMenu');
+                menu.style.display = 'block';
+                menu.style.left = e.clientX + 'px';
+                menu.style.top = e.clientY + 'px';
+            });
+            
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.context-menu')) {
+                    document.getElementById('contextMenu').style.display = 'none';
+                }
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                if ((e.metaKey || e.ctrlKey) && e.code === 'Space') {
+                    e.preventDefault();
+                    toggleSearch();
+                }
+                
+                if (e.key === 'Escape') {
+                    if (searchActive) {
+                        closeSearch();
+                    } else if (document.getElementById('fullscreen-container').classList.contains('active')) {
+                        closeFullscreen();
+                    }
+                }
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (dragData) {
+                    e.preventDefault();
+                    const dx = e.clientX - dragData.startX;
+                    const dy = e.clientY - dragData.startY;
+                    dragData.win.style.left = (dragData.startLeft + dx) + 'px';
+                    dragData.win.style.top = (dragData.startTop + dy) + 'px';
+                }
+                if (resizeData) {
+                    e.preventDefault();
+                    const dx = e.clientX - resizeData.startX;
+                    const dy = e.clientY - resizeData.startY;
+                    resizeData.win.style.width = Math.max(500, resizeData.startWidth + dx) + 'px';
+                    resizeData.win.style.height = Math.max(400, resizeData.startHeight + dy) + 'px';
+                }
+            });
+            
+            document.addEventListener('mouseup', function() {
+                if (dragData) {
+                    dragData.win.classList.remove('dragging');
+                    dragData = null;
+                }
+                if (resizeData) {
+                    resizeData = null;
+                }
+            });
+        }
+
+        function toggleSearch() {
+            const searchBar = document.getElementById('searchBar');
+            const searchInput = document.getElementById('searchInput');
+            
+            searchBar.classList.toggle('active');
+            searchActive = searchBar.classList.contains('active');
+            
+            if (searchActive) {
+                searchInput.focus();
+                performSearch('');
+            } else {
+                closeSearch();
+            }
+        }
+
+        function closeSearch() {
+            const searchBar = document.getElementById('searchBar');
+            const searchResults = document.getElementById('searchResults');
+            searchBar.classList.remove('active');
+            searchResults.classList.remove('active');
+            searchActive = false;
+        }
+
+        function performSearch(query) {
+            const searchResults = document.getElementById('searchResults');
+            const items = [];
+            
+            items.push({
+                id: 'movies',
+                name: 'Movies',
+                type: 'App',
+                icon: 'movie',
+                action: () => openFullscreen(MOVIES_URL, 'Movies')
+            });
+            
+            GAMES.forEach(game => {
+                items.push({
+                    id: game.code,
+                    name: game.name,
+                    type: 'Game',
+                    icon: 'game',
+                    action: () => launchGame(game.code)
+                });
+            });
+            
+            items.push(
+                { id: 'browser', name: 'Browser', type: 'App', icon: 'browser', action: () => openFullscreen('https://lithium--ossunlit.replit.app/', 'Browser') },
+                { id: 'games', name: 'Games Folder', type: 'Folder', icon: 'folder', action: openGamesFolder },
+                { id: 'proxies', name: 'Proxies Folder', type: 'Folder', icon: 'folder', action: openProxiesFolder },
+                { id: 'terminal', name: 'Terminal', type: 'App', icon: 'terminal', action: createTerminalWindow },
+                { id: 'settings', name: 'Settings', type: 'App', icon: 'settings', action: openSettings },
+                { id: 'aboutblank', name: 'About:Blank', type: 'Tool', icon: 'browser', action: openAboutBlank }
+            );
+            
+            if (devMode) {
+                Object.entries(PROXIES).forEach(([key, proxy]) => {
+                    items.push({
+                        id: key,
+                        name: proxy.name,
+                        type: 'Proxy',
+                        icon: 'proxy',
+                        action: () => launchProxy(key)
+                    });
+                });
+            }
+            
+            const filtered = query.trim() === '' 
+                ? items.slice(0, 8)
+                : items.filter(item => 
+                    item.name.toLowerCase().includes(query.toLowerCase()) ||
+                    item.type.toLowerCase().includes(query.toLowerCase())
+                  );
+            
+            if (filtered.length === 0) {
+                searchResults.innerHTML = '<div style="padding: 20px; text-align: center; color: rgba(255,255,255,0.5);">No results found</div>';
+                searchResults.classList.add('active');
+                return;
+            }
+            
+            searchResults.innerHTML = filtered.map(item => {
+                let iconUrl = '';
+                if (item.icon === 'movie') {
+                    iconUrl = 'https://cdn.icon-icons.com/icons2/2699/PNG/512/netflix_logo_icon_170919.png';
+                } else if (item.icon === 'game') {
+                    iconUrl = 'https://www.pngall.com/wp-content/uploads/13/Xbox-Logo-PNG-File-180x180.png';
+                } else if (item.id === 'browser' || item.id === 'aboutblank') {
+                    iconUrl = 'https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg';
+                } else if (item.id === 'terminal') {
+                    iconUrl = 'https://th.bing.com/th/id/R.d94aa1c4979b25e9ffbda97fcbae219a?rik=r%2bRpTLeRa61GHA&pid=ImgRaw&r=0';
+                } else if (item.id === 'settings') {
+                    iconUrl = 'https://th.bing.com/th/id/R.bf10e548e61d79e99751b2e58b16fb3f?rik=qx%2fb0zFldSvfjQ&pid=ImgRaw&r=0';
+                } else {
+                    iconUrl = 'https://github.com/EXVYS/Image-host/blob/main/search.png?raw=true';
+                }
+                
+                return '<div class="search-result-item" data-id="' + item.id + '"><div class="result-icon"><img src="' + iconUrl + '" alt="icon"></div><div class="result-info"><div class="result-name">' + item.name + '</div><div class="result-type">' + item.type + '</div></div></div>';
+            }).join('');
+            
+            searchResults.querySelectorAll('.search-result-item').forEach(el => {
+                el.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const item = filtered.find(i => i.id === id);
+                    if (item) {
+                        playSound('click');
+                        item.action();
+                        closeSearch();
+                    }
+                });
+            });
+            
+            searchResults.classList.add('active');
+        }
+
+        function createWindow(title, contentHtml, width, height, canFullscreen) {
+            width = width || 900;
+            height = height || 650;
+            windowCount++;
+            const id = 'win-' + windowCount;
+            const win = document.createElement('div');
+            win.className = 'window';
+            win.id = id;
+            win.style.width = width + 'px';
+            win.style.height = height + 'px';
+            win.style.left = (100 + windowCount * 30) + 'px';
+            win.style.top = (60 + windowCount * 30) + 'px';
+            win.style.zIndex = ++zIndex;
+            
+            const maximizeBtn = canFullscreen 
+                ? '<div class="traffic-light maximize" data-action="maximize" data-win="' + id + '"></div>'
+                : '<div class="traffic-light maximize" style="opacity:0.3;cursor:not-allowed"></div>';
+            
+            win.innerHTML = '<div class="window-header" data-win="' + id + '">' +
+                '<div class="window-controls">' +
+                    '<div class="traffic-light close" data-action="close" data-win="' + id + '"></div>' +
+                    '<div class="traffic-light minimize" data-action="minimize" data-win="' + id + '"></div>' +
+                    maximizeBtn +
+                '</div>' +
+                '<div class="window-title">' + title + '</div>' +
+            '</div>' +
+            '<div class="window-content">' + contentHtml + '</div>' +
+            '<div class="resize-handle" data-win="' + id + '"></div>';
+            
+            win.addEventListener('mousedown', function() { focusWindow(id); });
+            
+            win.querySelectorAll('.traffic-light[data-action]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    playSound('click');
+                    const action = this.getAttribute('data-action');
+                    const winId = this.getAttribute('data-win');
+                    if (action === 'close') closeWindow(winId);
+                    else if (action === 'minimize') minimizeWindow(winId);
+                    else if (action === 'maximize') {
+                        playSound('click');
+                        const iframe = document.getElementById(winId).querySelector('iframe');
+                        if (iframe && iframe.src) {
+                            openFullscreen(iframe.src, title);
+                        }
+                    }
+                });
+            });
+            
+            const header = win.querySelector('.window-header');
+            header.addEventListener('mousedown', function(e) { 
+                if (!e.target.closest('.window-controls')) {
+                    startDrag(e, id);
+                }
+            });
+            
+            const resizeHandle = win.querySelector('.resize-handle');
+            resizeHandle.addEventListener('mousedown', function(e) { 
+                e.stopPropagation();
+                startResize(e, id); 
+            });
+            
+            document.body.appendChild(win);
+            
+            win.style.transform = 'scale(0.9)';
+            win.style.opacity = '0';
+            setTimeout(function() {
+                win.style.transform = 'scale(1)';
+                win.style.opacity = '1';
+            }, 10);
+            
+            focusWindow(id);
+            return win;
+        }
+
+        function focusWindow(id) {
+            const win = document.getElementById(id);
+            if (!win) return;
+            
+            zIndex++;
+            win.style.zIndex = zIndex;
+            
+            document.querySelectorAll('.window').forEach(function(w) {
+                w.classList.remove('active');
+            });
+            win.classList.add('active');
+            activeWindow = id;
+        }
+
+        function closeWindow(id) {
+            const win = document.getElementById(id);
+            if (!win) return;
+            win.style.transform = 'scale(0.9)';
+            win.style.opacity = '0';
+            setTimeout(function() { win.remove(); }, 200);
+            if (activeWindow === id) activeWindow = null;
+        }
+
+        function minimizeWindow(id) {
+            const win = document.getElementById(id);
+            if (!win) return;
+            win.classList.add('minimized');
+            win.style.transform = 'scale(0) translateY(500px)';
+            win.style.opacity = '0';
+            win.classList.remove('active');
+        }
+
+        function startDrag(e, id) {
+            const win = document.getElementById(id);
+            if (win.classList.contains('minimized')) return;
+            
+            e.preventDefault();
+            focusWindow(id);
+            
+            win.classList.add('dragging');
+            
+            dragData = {
+                win: win,
+                startX: e.clientX,
+                startY: e.clientY,
+                startLeft: win.offsetLeft,
+                startTop: win.offsetTop
+            };
+        }
+
+        function startResize(e, id) {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            const win = document.getElementById(id);
+            focusWindow(id);
+            
+            resizeData = {
+                win: win,
+                startX: e.clientX,
+                startY: e.clientY,
+                startWidth: win.offsetWidth,
+                startHeight: win.offsetHeight
+            };
+        }
+
+        function getTextLogo(name) {
+            const words = name.split(' ');
+            if (words.length === 1) {
+                return name.substring(0, 2).toUpperCase();
+            } else {
+                return (words[0][0] + words[1][0]).toUpperCase();
+            }
+        }
+
+        function openGamesFolder() {
+            let gridHtml = '<div class="folder-grid">';
+            GAMES.forEach(function(game) {
+                const iconHtml = game.icon 
+                    ? '<img src="' + game.icon + '" style="width:60px;height:60px;object-fit:cover;border-radius:12px;">'
+                    : '<div class="game-text-logo">' + getTextLogo(game.name) + '</div>';
+                gridHtml += '<div class="game-item" data-game="' + game.code + '"><div class="game-icon">' + iconHtml + '</div><div class="game-name">' + game.name + '</div></div>';
+            });
+            gridHtml += '</div>';
+            
+            const win = createWindow('Games', gridHtml, 800, 600, false);
+            
+            win.querySelectorAll('.game-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    playSound('click');
+                    launchGame(this.getAttribute('data-game'));
+                });
+            });
+        }
+
+        function openProxiesFolder() {
+            let gridHtml = '<div class="folder-grid">';
+            Object.entries(PROXIES).forEach(function([key, proxy]) {
+                const logo = getTextLogo(proxy.name);
+                gridHtml += '<div class="proxy-item" data-proxy="' + key + '"><div class="proxy-icon"><div class="proxy-text-logo">' + logo + '</div></div><div class="proxy-name">' + proxy.name + '</div></div>';
+            });
+            gridHtml += '</div>';
+            
+            const win = createWindow('Proxies', gridHtml, 600, 500, false);
+            
+            win.querySelectorAll('.proxy-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    playSound('click');
+                    launchProxy(this.getAttribute('data-proxy'));
+                });
+            });
+        }
+
+        function launchGame(code) {
+            const game = GAMES.find(g => g.code === code);
+            if (game) {
+                openFullscreen(game.url, game.name);
+            }
+        }
+
+        function launchProxy(key) {
+            const proxy = PROXIES[key];
+            if (proxy) {
+                openFullscreen(proxy.url, proxy.name);
+            }
+        }
+
+        function createTerminalWindow() {
+            const termId = 'term-' + (++windowCount);
+            const content = '<div class="terminal" id="' + termId + '"><div class="terminal-line">Sunlit Terminal v1.0</div><div class="terminal-line">Welcome Admin</div><div class="terminal-line"></div></div>';
+            const win = createWindow('Terminal', content, 700, 500, false);
+            setTimeout(function() { addTerminalLine(termId); }, 100);
+        }
+
+        function addTerminalLine(termId) {
+            const term = document.getElementById(termId);
+            if (!term) return;
+            
+            const line = document.createElement('div');
+            line.className = 'terminal-input-line';
+            line.innerHTML = '<span class="terminal-prompt">admin@coreos:~$</span><input type="text" class="terminal-input" autofocus>';
+            term.appendChild(line);
+            
+            const input = line.querySelector('input');
+            input.focus();
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const cmd = this.value.trim();
+                    this.parentElement.innerHTML = '<span class="terminal-prompt">admin@coreos:~$</span> ' + cmd;
+                    
+                    const response = document.createElement('div');
+                    response.className = 'terminal-line';
+                    
+                    const args = cmd.split(' ');
+                    const command = args[0].toLowerCase();
+                    
+                    switch(command) {
+                        case 'help':
+                            response.textContent = 'Available: help, clear, movies, games, browser, time, date, reboot, whoami, dev <password>, search, notify <msg>, sound, proxies, aboutblank';
+                            break;
+                        case 'clear':
+                            term.innerHTML = '';
+                            addTerminalLine(termId);
+                            return;
+                        case 'movies':
+                            response.textContent = 'Opening movies...';
+                            setTimeout(() => openFullscreen(MOVIES_URL, 'Movies'), 300);
+                            break;
+                        case 'games':
+                            response.textContent = 'Opening games...';
+                            setTimeout(openGamesFolder, 300);
+                            break;
+                        case 'proxies':
+                            response.textContent = 'Opening proxies...';
+                            setTimeout(openProxiesFolder, 300);
+                            break;
+                        case 'browser':
+                            response.textContent = 'Opening browser...';
+                            setTimeout(() => openFullscreen('https://lualol.com/', 'Browser'), 300);
+                            break;
+                        case 'aboutblank':
+                            response.textContent = 'Opening About:Blank...';
+                            setTimeout(openAboutBlank, 300);
+                            break;
+                        case 'time':
+                            response.textContent = new Date().toLocaleTimeString();
+                            break;
+                        case 'date':
+                            response.textContent = new Date().toLocaleDateString();
+                            break;
+                        case 'reboot':
+                            response.textContent = 'Rebooting...';
+                            setTimeout(function() { location.reload(); }, 800);
+                            break;
+                        case 'whoami':
+                            response.textContent = 'admin';
+                            break;
+                        case 'search':
+                            response.textContent = 'Opening search...';
+                            setTimeout(() => toggleSearch(), 300);
+                            break;
+                        case 'notify':
+                            const msg = args.slice(1).join(' ');
+                            showNotification('Terminal', msg || 'Hello from terminal!');
+                            response.textContent = 'Notification sent';
+                            break;
+                        case 'sound':
+                            soundEnabled = !soundEnabled;
+                            localStorage.setItem('coreos_sound', soundEnabled);
+                            response.textContent = 'Sound ' + (soundEnabled ? 'enabled' : 'disabled');
+                            break;
+                        case 'dev':
+                            if (args[1] === 'admin') {
+                                if (!devMode) {
+                                    devMode = true;
+                                    response.textContent = 'Developer mode enabled. Proxies unlocked.';
+                                    showNotification('Developer Mode', 'Advanced features unlocked');
+                                } else {
+                                    response.textContent = 'Developer mode already enabled.';
+                                }
+                            } else {
+                                response.textContent = 'Invalid password. Usage: dev <password>';
+                            }
+                            break;
+                        default:
+                            if (cmd) response.textContent = 'Command not found: ' + cmd;
+                    }
+                    
+                    if (cmd) term.appendChild(response);
+                    addTerminalLine(termId);
+                }
+            });
+            
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function setDockPosition(position) {
+            dockPosition = position;
+            const dock = document.getElementById('dock');
+            
+            dock.classList.remove('dock-bottom', 'dock-left', 'dock-right');
+            dock.classList.add('dock-' + position);
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('coreos_sound', soundEnabled);
+            return soundEnabled;
+        }
+
+        function openSettings() {
+            const content = '<div class="settings-panel">' +
+                '<div class="settings-section">' +
+                    '<div class="settings-title">Account</div>' +
+                    '<div class="setting-item">' +
+                        '<div>' +
+                            '<div class="setting-label">Current User</div>' +
+                            '<div class="setting-desc">Admin</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="setting-item" id="settings-reset" style="cursor:pointer">' +
+                        '<div>' +
+                            '<div class="setting-label" style="color:#ff5f56">Reset</div>' +
+                            '<div class="setting-desc">Restart the OS</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="settings-section">' +
+                    '<div class="settings-title">Tools</div>' +
+                    '<div class="setting-item" id="settings-aboutblank" style="cursor:pointer">' +
+                        '<div>' +
+                            '<div class="setting-label">About:Blank</div>' +
+                            '<div class="setting-desc">Open a new tab with Sunlit OS</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="settings-section">' +
+                    '<div class="settings-title">System</div>' +
+                    '<div class="setting-item" style="cursor:pointer" id="settings-sound">' +
+                        '<div>' +
+                            '<div class="setting-label">Sound Effects</div>' +
+                            '<div class="setting-desc">' + (soundEnabled ? 'Enabled' : 'Disabled') + '</div>' +
+                        '</div>' +
+                        '<div class="sound-toggle">' +
+                            (soundEnabled ? 
+                                '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>' :
+                                '<svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>'
+                            ) +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+            
+            const win = createWindow('Settings', content, 500, 600, false);
+            
+            win.querySelector('#settings-reset').addEventListener('click', function() {
+                location.reload();
+            });
+            win.querySelector('#settings-aboutblank').addEventListener('click', function() {
+                playSound('click');
+                openAboutBlank();
+                showNotification('About:Blank', 'Opening new tab with Sunlit OS');
+            });
+            win.querySelector('#settings-sound').addEventListener('click', function() {
+                playSound('click');
+                const newState = toggleSound();
+                showNotification('Sound ' + (newState ? 'Enabled' : 'Disabled'), 'Preferences saved');
+                closeWindow(win.id);
+                openSettings();
+            });
+        }
+
+        function showNotification(title, message) {
+            playSound('notification');
+            
+            const container = document.getElementById('notification-container') || (() => {
+                const div = document.createElement('div');
+                div.id = 'notification-container';
+                div.className = 'notification-container';
+                document.body.appendChild(div);
+                return div;
+            })();
+            
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.innerHTML = '<div class="notification-title">' + title + '</div><div class="notification-body">' + message + '</div>';
+            
+            container.appendChild(notif);
+            
+            setTimeout(() => {
+                notif.classList.add('hiding');
+                setTimeout(() => notif.remove(), 300);
+            }, 3000);
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f953ac791b9c3eb',t:'MTc3ODM3NzE2MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9f953ac791b9c3eb","version":"2025.9.1","r":1,"token":"3cc8041002a4416a9a735590b4ff4c42","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
+</body>
+</html>
