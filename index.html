@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apricity</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --md-sys-color-primary: #8B5000;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #FFDCC0;
+            --md-sys-color-on-primary-container: #2D1600;
+            --md-sys-color-surface: #FFFBFF;
+            --md-sys-color-on-surface: #201A17;
+            --md-sys-color-outline: #85736B;
+            --font-ui: 'Outfit', sans-serif;
+            --font-logo: 'Great Vibes', cursive;
+            --yt-surface: color-mix(in srgb, var(--md-sys-color-surface) 95%, var(--md-sys-color-primary) 5%);
+            --yt-surface2: color-mix(in srgb, var(--md-sys-color-primary-container) 30%, var(--md-sys-color-surface) 70%);
+            --yt-border: color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent 80%);
+            --yt-border2: color-mix(in srgb, var(--md-sys-color-outline) 35%, transparent 65%);
+            --yt-muted: var(--md-sys-color-outline);
+        }
+
+        [data-theme="orange-dark"] {
+            --md-sys-color-primary: #FFB870;
+            --md-sys-color-primary-container: #693C00;
+            --md-sys-color-on-primary-container: #FFDCC0;
+            --md-sys-color-surface: #201A17;
+            --md-sys-color-on-surface: #ECE0DA;
+            --md-sys-color-outline: #9F8D84;
+        }
+        [data-theme="blue-light"] {
+            --md-sys-color-primary: #0061A4;
+            --md-sys-color-primary-container: #D1E4FF;
+            --md-sys-color-on-primary-container: #001D36;
+            --md-sys-color-surface: #FDFCFF;
+            --md-sys-color-on-surface: #1A1C1E;
+        }
+        [data-theme="blue-dark"] {
+            --md-sys-color-primary: #A4C9FE;
+            --md-sys-color-primary-container: #00497E;
+            --md-sys-color-on-primary-container: #D1E4FF;
+            --md-sys-color-surface: #1A1C1E;
+            --md-sys-color-on-surface: #E2E2E6;
+        }
+        [data-theme="green-light"] {
+            --md-sys-color-primary: #006D3A;
+            --md-sys-color-primary-container: #98F7B5;
+            --md-sys-color-on-primary-container: #00210E;
+            --md-sys-color-surface: #FBFDF8;
+            --md-sys-color-on-surface: #1A1C19;
+            --md-sys-color-outline: #72796F;
+        }
+        [data-theme="green-dark"] {
+            --md-sys-color-primary: #7CDB96;
+            --md-sys-color-primary-container: #00522A;
+            --md-sys-color-on-primary-container: #98F7B5;
+            --md-sys-color-surface: #191C1A;
+            --md-sys-color-on-surface: #E1E3DF;
+            --md-sys-color-outline: #8C9389;
+        }
+        [data-theme="lavender-light"] {
+            --md-sys-color-primary: #6750A4;
+            --md-sys-color-primary-container: #EADDFF;
+            --md-sys-color-on-primary-container: #21005D;
+            --md-sys-color-surface: #FFFBFE;
+            --md-sys-color-on-surface: #1C1B1F;
+            --md-sys-color-outline: #79747E;
+        }
+        [data-theme="lavender-dark"] {
+            --md-sys-color-primary: #D0BCFF;
+            --md-sys-color-primary-container: #4F378B;
+            --md-sys-color-on-primary-container: #EADDFF;
+            --md-sys-color-surface: #1C1B1F;
+            --md-sys-color-on-surface: #E6E1E5;
+            --md-sys-color-outline: #938F99;
+        }
+        [data-theme="amoled"] {
+            --md-sys-color-primary: #FFFFFF;
+            --md-sys-color-primary-container: #333333;
+            --md-sys-color-on-primary-container: #FFFFFF;
+            --md-sys-color-surface: #000000;
+            --md-sys-color-on-surface: #FFFFFF;
+            --md-sys-color-outline: #444444;
+        }
+        [data-theme="amoled-inverted"] {
+            --md-sys-color-primary: #000000;
+            --md-sys-color-primary-container: #E8E8E8;
+            --md-sys-color-on-primary-container: #000000;
+            --md-sys-color-surface: #FFFFFF;
+            --md-sys-color-on-surface: #000000;
+            --md-sys-color-outline: #8A8A8A;
+        }
+
+        body {
+            font-family: var(--font-ui);
+            background-color: var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--yt-border2); border-radius: 3px; }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* HOME PAGE */
+        #home-page {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100vh; overflow: hidden; position: relative;
+        }
+        #home-page.active { display: flex; }
+
+        .settings-trigger {
+            position: fixed; top: 20px; right: 20px;
+            cursor: pointer; width: 48px; height: 48px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s; color: var(--md-sys-color-primary);
+            z-index: 50;
+        }
+        .settings-trigger:hover { background: var(--md-sys-color-primary-container); }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal {
+            background: var(--md-sys-color-surface);
+            padding: 24px; border-radius: 28px;
+            width: 350px; max-height: 80vh;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column;
+        }
+        .theme-list { overflow-y: auto; margin-top: 16px; padding-right: 8px; }
+        .theme-option {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px; margin: 4px 0;
+            cursor: pointer; border-radius: 16px;
+            transition: background 0.2s; font-weight: 500;
+        }
+        .theme-option:hover { background: var(--md-sys-color-primary-container); }
+        .color-preview { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; }
+
+        .main-content {
+            width: 100%; max-width: 600px;
+            display: flex; flex-direction: column;
+            align-items: center; text-align: center; padding: 0 20px;
+        }
+        .logo {
+            font-family: var(--font-logo);
+            font-size: 6.5rem;
+            color: var(--md-sys-color-primary);
+            margin-bottom: 10px;
+            user-select: none;
+            transition: color 0.4s;
+        }
+        .search-container { position: relative; width: 100%; margin-bottom: 30px; }
+        .search-bar {
+            width: 100%; padding: 20px 24px 20px 64px;
+            font-size: 1.1rem; font-family: var(--font-ui);
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: 32px; background: transparent;
+            color: var(--md-sys-color-on-surface); outline: none;
+            transition: all 0.3s;
+        }
+        .search-bar:focus {
+            border-color: var(--md-sys-color-primary);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .search-icon {
+            position: absolute; left: 24px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--md-sys-color-primary);
+        }
+        .btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+        .home-btn {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border: none; padding: 12px 28px; border-radius: 100px;
+            cursor: pointer; font-family: var(--font-ui); font-weight: 600; font-size: 15px;
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .home-btn:active { transform: scale(0.95); }
+        .home-btn:hover { opacity: 0.85; }
+        .home-btn-primary {
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+        }
+        /* YouTube button always red */
+        .home-btn-youtube {
+            background: #FF0000;
+            color: #FFFFFF;
+        }
+        .home-btn-youtube:hover { opacity: 0.88; }
+
+        footer {
+            position: absolute; bottom: 20px;
+            font-size: 0.85rem; opacity: 0.7;
+            text-align: center; min-height: 24px;
+            transition: opacity 0.6s ease-in-out;
+        }
+
+        /* APPS PANEL */
+        .apps-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center; z-index: 200;
+        }
+        .apps-panel {
+            background: var(--md-sys-color-surface);
+            padding: 24px; border-radius: 28px;
+            width: 380px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .apps-panel h2 { margin: 0 0 8px 0; font-weight: 600; }
+        .app-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 16px; border-radius: 16px;
+            cursor: pointer; transition: background 0.2s; font-weight: 500;
+        }
+        .app-item:hover { background: var(--md-sys-color-primary-container); }
+        .app-icon {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: var(--md-sys-color-primary-container);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .apps-close-btn {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border: none; padding: 12px; border-radius: 100px;
+            cursor: pointer; font-family: var(--font-ui); font-weight: 500;
+            margin-top: 8px; width: 100%;
+        }
+
+        /* SUNLIT PAGE */
+        #sunlit-page { width: 100%; height: 100vh; }
+        #sunlit-page iframe { width: 100%; height: 100%; border: none; display: block; }
+        .sunlit-back {
+            position: fixed; top: 12px; left: 12px; z-index: 9999;
+            background: rgba(0,0,0,0.65); color: #fff;
+            border: none; padding: 8px 18px; border-radius: 100px;
+            cursor: pointer; font-size: 14px; font-weight: 500;
+            backdrop-filter: blur(8px); transition: background 0.2s;
+        }
+
+        /* YOUTUBE EXPLORER PAGE */
+        #youtube-page.active { display: flex; }
+        #youtube-page { min-height: 100vh; flex-direction: column; }
+
+        .yt-topbar {
+            display: flex; align-items: center; gap: 0;
+            background: var(--md-sys-color-surface);
+            border-bottom: 1px solid var(--yt-border2);
+            padding: 0 24px;
+            height: 64px;
+            position: sticky; top: 0; z-index: 40;
+            flex-shrink: 0;
+        }
+        .yt-topbar-menu {
+            background: none; border: none;
+            color: var(--md-sys-color-on-surface);
+            cursor: pointer;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 16px;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .yt-topbar-menu:hover { background: color-mix(in srgb, var(--md-sys-color-outline) 15%, transparent); }
+
+        .yt-topbar-back {
+            display: flex; align-items: center; gap: 8px;
+            background: none; border: none;
+            color: var(--md-sys-color-primary);
+            font-family: var(--font-ui); font-weight: 600; font-size: 14px;
+            cursor: pointer; padding: 8px 16px 8px 0;
+            border-right: 1px solid var(--yt-border2);
+            margin-right: 20px;
+            transition: opacity 0.2s;
+        }
+        .yt-topbar-back:hover { opacity: 0.7; }
+        .yt-topbar-logo {
+            font-family: var(--font-logo);
+            font-size: 2rem;
+            color: var(--md-sys-color-primary);
+            user-select: none;
+            margin-right: 8px;
+        }
+        .yt-topbar-subtitle {
+            font-size: 12px;
+            color: var(--md-sys-color-outline);
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            margin-right: auto;
+        }
+
+        .yt-shell {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Sidebar — retractable YouTube-style */
+        .yt-sidebar {
+            background: var(--yt-surface);
+            border-right: 1px solid var(--yt-border2);
+            display: flex; flex-direction: column;
+            position: sticky; top: 64px;
+            height: calc(100vh - 64px);
+            overflow: hidden;
+            width: 220px;
+            flex-shrink: 0;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .yt-sidebar.collapsed {
+            width: 72px;
+        }
+
+        .yt-nav { padding: 8px 0; flex: 1; overflow-y: auto; overflow-x: hidden; }
+
+        .yt-nav-section-label {
+            font-size: 10px; text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--md-sys-color-outline);
+            padding: 12px 20px 4px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            opacity: 1;
+            transition: opacity 0.15s, padding 0.25s;
+        }
+        .yt-sidebar.collapsed .yt-nav-section-label {
+            opacity: 0;
+            padding-top: 12px;
+            padding-bottom: 0;
+            height: 0;
+            padding-top: 0;
+        }
+
+        .yt-nav-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 10px 20px;
+            cursor: pointer;
+            color: var(--md-sys-color-outline);
+            font-size: 14px; font-weight: 600;
+            transition: color 0.15s, background 0.15s;
+            border-radius: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            position: relative;
+        }
+        /* collapsed: center the icon */
+        .yt-sidebar.collapsed .yt-nav-item {
+            padding: 10px 0;
+            justify-content: center;
+            gap: 0;
+        }
+        .yt-nav-item:hover {
+            color: var(--md-sys-color-on-surface);
+            background: color-mix(in srgb, var(--md-sys-color-primary) 6%, transparent);
+        }
+        .yt-nav-item.active {
+            color: var(--md-sys-color-primary);
+            background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+        }
+        /* pill indicator on active */
+        .yt-nav-item.active::before {
+            content: '';
+            position: absolute; left: 0; top: 20%; bottom: 20%;
+            width: 3px; border-radius: 0 3px 3px 0;
+            background: var(--md-sys-color-primary);
+        }
+
+        .yt-nav-icon {
+            font-size: 20px;
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .yt-nav-label {
+            overflow: hidden;
+            opacity: 1;
+            transition: opacity 0.15s;
+            white-space: nowrap;
+        }
+        .yt-sidebar.collapsed .yt-nav-label {
+            opacity: 0;
+            width: 0;
+            pointer-events: none;
+        }
+
+        /* Tooltip on collapsed hover */
+        .yt-sidebar.collapsed .yt-nav-item {
+            position: relative;
+        }
+        .yt-sidebar.collapsed .yt-nav-item:hover::after {
+            content: attr(data-label);
+            position: absolute;
+            left: 76px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--md-sys-color-on-surface);
+            color: var(--md-sys-color-surface);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .yt-main {
+            padding: 36px 44px;
+            overflow-y: auto;
+            height: calc(100vh - 64px);
+            flex: 1;
+            min-width: 0;
+        }
+        .yt-page { display: none; animation: fadein 0.2s ease; }
+        .yt-page.active { display: block; }
+        @keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+        .yt-page-header { margin-bottom: 24px; }
+        .yt-page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+        .yt-page-sub { color: var(--md-sys-color-outline); font-size: 14px; margin-top: 4px; }
+
+        /* Search bar row with filters button */
+        .search-row { display: flex; gap: 10px; align-items: flex-start; }
+        .search-row input { flex: 1; }
+
+        /* Filters panel */
+        .filters-panel {
+            display: none;
+            background: var(--yt-surface);
+            border: 1px solid var(--yt-border2);
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 10px;
+        }
+        .filters-panel.open { display: block; }
+        .filters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .field-row { display: flex; gap: 10px; align-items: flex-start; }
+        .field-row input { flex: 1; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+
+        .field-label {
+            font-size: 11px; color: var(--md-sys-color-outline);
+            margin-bottom: 6px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
+
+        #youtube-page input[type=text], #youtube-page input[type=password] {
+            background: transparent;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: 32px;
+            color: var(--md-sys-color-on-surface);
+            font-family: var(--font-ui);
+            font-size: 1rem;
+            padding: 12px 20px;
+            outline: none;
+            transition: border-color 0.3s;
+            width: 100%;
+        }
+        #youtube-page input[type=text]:focus, #youtube-page input[type=password]:focus {
+            border-color: var(--md-sys-color-primary);
+        }
+        #youtube-page select, #youtube-page textarea {
+            background: var(--yt-surface2);
+            border: 1px solid var(--yt-border2);
+            border-radius: 12px;
+            color: var(--md-sys-color-on-surface);
+            font-family: var(--font-ui);
+            font-size: 14px;
+            padding: 11px 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #youtube-page select:focus, #youtube-page textarea:focus {
+            border-color: var(--md-sys-color-primary);
+        }
+        select { cursor: pointer; }
+        textarea { resize: vertical; font-family: 'Courier New', monospace; font-size: 12px; }
+
+        .yt-btn {
+            background: var(--md-sys-color-primary-container);
+            border: 1px solid var(--yt-border2);
+            border-radius: 100px;
+            color: var(--md-sys-color-on-primary-container);
+            font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+            padding: 10px 20px;
+            cursor: pointer; white-space: nowrap;
+            transition: opacity 0.15s, transform 0.1s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .yt-btn:hover { opacity: 0.8; }
+        .yt-btn:active { transform: scale(0.97); }
+        .yt-btn-accent {
+            background: var(--md-sys-color-primary);
+            border-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+        }
+        .yt-btn-sm { font-size: 12px; padding: 6px 14px; }
+        .yt-btn-filter {
+            background: var(--yt-surface2);
+            border-color: var(--yt-border2);
+            color: var(--md-sys-color-on-surface);
+        }
+        .yt-btn-filter.active-filters {
+            border-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-primary);
+        }
+
+        .results { margin-top: 20px; }
+        .result-count {
+            font-size: 12px; color: var(--md-sys-color-outline);
+            margin-bottom: 14px; font-family: 'Courier New', monospace;
+        }
+
+        .result-card {
+            display: flex; gap: 14px;
+            padding: 16px;
+            background: var(--yt-surface);
+            border: 1px solid var(--yt-border);
+            border-radius: 16px;
+            margin-bottom: 10px;
+            transition: border-color 0.2s;
+        }
+        .result-card:hover { border-color: var(--md-sys-color-primary); }
+        .result-thumb {
+            width: 132px; height: 74px;
+            border-radius: 10px; object-fit: cover;
+            background: var(--yt-surface2); flex-shrink: 0;
+        }
+        .result-body { flex: 1; min-width: 0; }
+        .result-title {
+            font-size: 14px; font-weight: 600; line-height: 1.4; margin-bottom: 4px;
+            overflow: hidden; display: -webkit-box;
+            -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        }
+        .result-meta { font-size: 12px; color: var(--md-sys-color-outline); }
+        .result-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+
+        .channel-card {
+            background: var(--yt-surface);
+            border: 1px solid var(--yt-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+        .channel-card:hover { border-color: var(--md-sys-color-primary); }
+        .channel-top { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
+        .channel-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: var(--yt-surface2); flex-shrink: 0; }
+        .channel-name { font-size: 17px; font-weight: 700; }
+        .channel-handle { font-size: 13px; color: var(--md-sys-color-outline); }
+
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+        .stat-box {
+            background: var(--yt-surface2);
+            border-radius: 12px; padding: 12px; text-align: center;
+        }
+        .stat-num { font-size: 18px; font-weight: 700; color: var(--md-sys-color-primary); }
+        .stat-lbl { font-size: 11px; color: var(--md-sys-color-outline); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .video-card-detail {
+            background: var(--yt-surface);
+            border: 1px solid var(--yt-border);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .video-hero { width: 100%; max-height: 320px; object-fit: cover; display: block; }
+        .video-body { padding: 20px; }
+        .video-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+        .video-meta { font-size: 13px; color: var(--md-sys-color-outline); margin-bottom: 16px; }
+        .video-desc {
+            font-size: 13px; color: var(--md-sys-color-outline); line-height: 1.7; margin-top: 12px;
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+        }
+
+        .comment-item { padding: 14px 0; border-bottom: 1px solid var(--yt-border); }
+        .comment-author { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+        .comment-text { font-size: 13px; color: var(--md-sys-color-outline); line-height: 1.6; }
+        .comment-likes { font-size: 11px; color: var(--md-sys-color-outline); margin-top: 4px; }
+
+        .code-box {
+            background: var(--yt-surface);
+            border: 1px solid var(--yt-border);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--md-sys-color-outline);
+            overflow-x: auto; white-space: pre; line-height: 1.7;
+            margin: 10px 0 16px;
+        }
+        .code-box .kw { color: var(--md-sys-color-primary); font-weight: 700; }
+        .code-box .str { color: #3ecf8e; }
+        .response-box {
+            background: var(--yt-surface);
+            border: 1px solid var(--yt-border);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: var(--md-sys-color-outline);
+            overflow: auto; max-height: 400px;
+            white-space: pre; line-height: 1.6;
+            margin-top: 14px;
+        }
+
+        .status-msg { font-size: 13px; color: var(--md-sys-color-outline); padding: 20px 0; }
+        .status-msg.err { color: #ff6b6b; }
+
+        .playlist-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid var(--yt-border);
+            font-size: 13px;
+        }
+        .playlist-item:last-child { border-bottom: none; }
+
+        .tag { font-size: 11px; padding: 3px 9px; border-radius: 20px; display: inline-block; }
+        .tag-primary {
+            background: color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent);
+            color: var(--md-sys-color-primary);
+        }
+
+        @media (max-width: 900px) {
+            .yt-shell { grid-template-columns: 1fr; }
+            .yt-sidebar { position: static; height: auto; }
+            .yt-main { padding: 20px 16px; height: auto; }
+        }
+
+        /* Original video card styles */
+        .yt-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .video-card {
+            background: var(--md-sys-color-primary-container);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .video-card img { width: 100%; display: block; }
+        .video-card-body { padding: 12px; }
+        .video-card h3 {
+            font-size: 14px; margin: 0 0 4px 0;
+            color: var(--md-sys-color-on-primary-container);
+        }
+        .video-card p {
+            font-size: 12px; color: var(--md-sys-color-on-primary-container);
+            opacity: 0.7; margin: 0 0 10px 0;
+        }
+        .video-card-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .vc-btn {
+            background: var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            border: none; padding: 7px 14px; border-radius: 100px;
+            cursor: pointer; font-family: var(--font-ui); font-size: 12px;
+            font-weight: 500; transition: opacity 0.2s;
+        }
+        .vc-btn:hover { opacity: 0.75; }
+        .yt-status {
+            text-align: center; padding: 40px;
+            opacity: 0.6; font-size: 1rem;
+        }
+        #yt-inline-player {
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body data-theme="orange-light">
+
+    <div class="settings-trigger" onclick="toggleModal()">
+        <span class="material-symbols-outlined">palette</span>
+    </div>
+
+    <!-- Theme Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="toggleModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h2 style="margin:0; font-weight:600;">Themes</h2>
+            <div class="theme-list">
+                <div class="theme-option" onclick="setTheme('orange-light')"><div class="color-preview" style="background:#8B5000;"></div> Winter Sun</div>
+                <div class="theme-option" onclick="setTheme('orange-dark')"><div class="color-preview" style="background:#FFB870;"></div> Winter Night</div>
+                <div class="theme-option" onclick="setTheme('blue-light')"><div class="color-preview" style="background:#0061A4;"></div> Ocean Breeze</div>
+                <div class="theme-option" onclick="setTheme('blue-dark')"><div class="color-preview" style="background:#A4C9FE;"></div> Deep Sea</div>
+                <div class="theme-option" onclick="setTheme('green-light')"><div class="color-preview" style="background:#006D3A;"></div> Forest Path</div>
+                <div class="theme-option" onclick="setTheme('green-dark')"><div class="color-preview" style="background:#7CDB96;"></div> Emerald Dark</div>
+                <div class="theme-option" onclick="setTheme('lavender-light')"><div class="color-preview" style="background:#6750A4;"></div> Lavender Mist</div>
+                <div class="theme-option" onclick="setTheme('lavender-dark')"><div class="color-preview" style="background:#D0BCFF;"></div> Twilight Purple</div>
+                <div class="theme-option" onclick="setTheme('amoled')"><div class="color-preview" style="background:#000000;"></div> Midnight Noire</div>
+                <div class="theme-option" onclick="setTheme('amoled-inverted')"><div class="color-preview" style="background:#FFFFFF;border-color:#8A8A8A;"></div> Snow White</div>
+            </div>
+            <button class="home-btn" style="width:100%;margin-top:20px;justify-content:center;" onclick="toggleModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Apps Panel -->
+    <div class="apps-overlay" id="appsOverlay" onclick="toggleApps()">
+        <div class="apps-panel" onclick="event.stopPropagation()">
+            <h2>Apps</h2>
+            <div class="app-item" onclick="openSunlit()">
+                <div class="app-icon">&#127774;</div>
+                Sunlit OS
+            </div>
+            <button class="apps-close-btn" onclick="toggleApps()">Close</button>
+        </div>
+    </div>
+
+    <!-- Sunlit OS Page -->
+    <div id="sunlit-page" class="page">
+        <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+        <iframe id="sunlit-frame" src="about:blank"></iframe>
+    </div>
+
+    <!-- HOME PAGE -->
+    <div id="home-page" class="page active">
+        <div class="main-content">
+            <div class="logo">Apricity</div>
+            <div class="search-container">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" class="search-bar" id="homeSearch" placeholder="Type to start searching..." autofocus
+                    onkeydown="if(event.key==='Enter') goSearch()">
+            </div>
+            <div class="btn-group">
+                <button class="home-btn" onclick="toggleApps()">Apps</button>
+                <button class="home-btn">Games</button>
+                <button class="home-btn home-btn-youtube" onclick="showYouTube()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/>
+                    </svg>
+                    YouTube
+                </button>
+            </div>
+        </div>
+        <footer id="rotating-footer"></footer>
+    </div>
+
+    <!-- YOUTUBE EXPLORER PAGE -->
+    <div id="youtube-page" class="page">
+
+        <div class="yt-topbar">
+            <button class="yt-topbar-menu" onclick="toggleSidebar()" title="Toggle menu" aria-label="Toggle sidebar">
+                <span class="material-symbols-outlined" style="font-size:22px;">menu</span>
+            </button>
+            <button class="yt-topbar-back" onclick="showHome()">
+                <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span>
+                Back
+            </button>
+            <span class="yt-topbar-logo">Apricity</span>
+            <span class="yt-topbar-subtitle">/ YouTube Explorer</span>
+        </div>
+
+        <div class="yt-shell">
+
+            <!-- Sidebar (no API key section) -->
+            <aside class="yt-sidebar">
+                <nav class="yt-nav">
+                    <div class="yt-nav-section-label">Endpoints</div>
+                    <div class="yt-nav-item active" data-label="Search" onclick="gotoYT('search')"><span class="yt-nav-icon">🔍</span><span class="yt-nav-label">Search</span></div>
+                    <div class="yt-nav-item" data-label="Channel" onclick="gotoYT('channel')"><span class="yt-nav-icon">📺</span><span class="yt-nav-label">Channel</span></div>
+                    <div class="yt-nav-item" data-label="Video" onclick="gotoYT('video')"><span class="yt-nav-icon">▶️</span><span class="yt-nav-label">Video</span></div>
+                    <div class="yt-nav-item" data-label="Playlists" onclick="gotoYT('playlists')"><span class="yt-nav-icon">📋</span><span class="yt-nav-label">Playlists</span></div>
+                    <div class="yt-nav-item" data-label="Comments" onclick="gotoYT('comments')"><span class="yt-nav-icon">💬</span><span class="yt-nav-label">Comments</span></div>
+                    <div class="yt-nav-section-label" style="margin-top:8px;">Advanced</div>
+                    <div class="yt-nav-item" data-label="Raw Request" onclick="gotoYT('raw')"><span class="yt-nav-icon">⚡</span><span class="yt-nav-label">Raw Request</span></div>
+                    <div class="yt-nav-item" data-label="Quick Docs" onclick="gotoYT('docs')"><span class="yt-nav-icon">📖</span><span class="yt-nav-label">Quick Docs</span></div>
+                </nav>
+            </aside>
+
+            <main class="yt-main">
+
+                <!-- SEARCH -->
+                <div id="yt-page-search" class="yt-page active">
+                    <div class="yt-page-header">
+                        <div class="yt-page-title">Search</div>
+                        <div class="yt-page-sub">Search videos, channels, and playlists across YouTube.</div>
+                    </div>
+                    <div class="search-row">
+                        <input type="text" id="searchQ" placeholder="Enter search query…" onkeydown="if(event.key==='Enter')doSearch()" />
+                        <button class="yt-btn yt-btn-filter" id="filtersToggle" onclick="toggleFilters()" title="Filters">
+                            <span class="material-symbols-outlined" style="font-size:16px;">tune</span>
+                            Filters
+                        </button>
+                        <button class="yt-btn yt-btn-accent" onclick="doSearch()">Search →</button>
+                    </div>
+                    <!-- Filters panel (collapsed by default) -->
+                    <div class="filters-panel" id="filtersPanel">
+                        <div class="filters-grid">
+                            <div>
+                                <div class="field-label">Type</div>
+                                <select id="sType" style="width:100%"><option value="video">Video</option><option value="channel">Channel</option><option value="playlist">Playlist</option></select>
+                            </div>
+                            <div>
+                                <div class="field-label">Max Results</div>
+                                <select id="sMax" style="width:100%"><option value="5">5</option><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option></select>
+                            </div>
+                            <div>
+                                <div class="field-label">Order By</div>
+                                <select id="sOrder" style="width:100%"><option value="relevance" selected>Relevance</option><option value="date">Date</option><option value="viewCount">View Count</option><option value="rating">Rating</option><option value="title">Title</option></select>
+                            </div>
+                            <div>
+                                <div class="field-label">Safe Search</div>
+                                <select id="sSafe" style="width:100%"><option value="moderate" selected>Moderate</option><option value="none">None</option><option value="strict">Strict</option></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="yt-inline-player"></div>
+                    <div id="search-results" class="results"></div>
+                </div>
+
+                <!-- CHANNEL -->
+                <div id="yt-page-channel" class="yt-page">
+                    <div class="yt-page-header">
+                        <div class="yt-page-title">Channel</div>
+                        <div class="yt-page-sub">Fetch channel info by ID or @handle.</div>
+                    </div>
+                    <div class="field-row">
+                        <input type="text" id="channelId" placeholder="UCxxxxxx or @channelname" onkeydown="if(event.key==='Enter')doChannel()" />
+                        <button class="yt-btn yt-btn-accent" onclick="doChannel()">Fetch →</button>
+                    </div>
+                    <div id="channel-results" class="results"></div>
+                </div>
+
+                <!-- VIDEO -->
+                <div id="yt-page-video" class="yt-page">
+                    <div class="yt-page-header">
+                        <div class="yt-page-title">Video Details</div>
+                        <div class="yt-page-sub">Get stats, metadata, and content details for any video.</div>
+                    </div>
+                    <div class="field-row">
+                        <input type="text" id="videoId" placeholder="Video ID or full YouTube URL" onkeydown="if(event.key==='Enter')doVideo()" />
+                        <button class="yt-btn yt-btn-accent" onclick="doVideo()">Fetch →</button>
+                    </div>
+                    <div style="margin-top:14px;">
+                        <div class="field-label">Parts (Ctrl+click to multi-select)</div>
+                        <select id="vParts" multiple style="width:100%;max-width:400px;height:90px;">
+                            <option value="snippet" selected>snippet</option>
+                            <option value="statistics" selected>statistics</option>
+                            <option value="contentDetails" selected>contentDetails</option>
+                            <option value="status">status</option>
+                            <option value="player">player</option>
+                            <option value="topicDetails">topicDetails</option>
+                        </select>
+                    </div>
+                    <div id="video-results" class="results"></div>
+                </div>
+
+                <!-- PLAYLISTS -->
+                <div id="yt-page-playlists" class="yt-page">
+                    <div class="yt-page-header">
+                        <div class="yt-page-title">Playlists</div>
+                        <div class="yt-page-sub">List playlists for a channel, or fetch items from a playlist.</div>
+                    </div>
+                    <div style="margin-bottom:20px;">
+                        <div class="field-label">Channel Playlists</div>
+                        <div class="field-row">
+                            <input type="text" id="plChannelId" placeholder="Channel ID (UCxxxxxx)" />
+                            <button class="yt-btn yt-btn-accent" onclick="doPlaylists()">Fetch →</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="field-label">Playlist Items</div>
+                        <div class="field-row">
+                            <input type="text" id="plId" placeholder="Playlist ID (PLxxxxxx)" />
+                            <button class="yt-btn" onclick="doPlaylistItems()">Get Items →</button>
+                        </div>
+                    </div>
+                    <div id="playlist-results" class="results"></div>
+                </div>
+
+                <!-- COMMENTS -->
+                <div id="yt-page-comments" class="yt-page">
+                    <div class="yt-page-header">
+                        <div class="yt-page-title">Comments</div>
+                        <div class="yt-page-sub">Fetch top-level comment threads for any video.</div>
+                    </div>
+                    <div class="field-row">
+                        <input type="text" id="commentVideoId" placeholder="Video ID or YouTube URL" />
+                        <button class="yt-btn yt-btn-accent" onclick="doComments()">Fetch →</button>
+                    </div>
+                    <div class="grid2" style="margin-top:14px;">
+                        <div>
+                            <div class="field-label">Order</div>
+                            <select id="cOrder" style="width:100%"><option value="relevance" selected>Relevance</option><option value="time">Time</option></select>
+                        </div>
+                        <div>
+                            <div class="field-label">Max Results</div>
+                            <select id="cMax" style="width:100%"><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select>
+                        </div>
+                    </div>
+                    <div id="comment-results" class="results"></div>
+                </div>
+
+                <!-- RAW -->
+                <div id="yt-page-raw" class="yt-page">
+                    <div class="yt-page-header">
+                        <div class="yt-page-title">Raw API Request</div>
+                        <div class="yt-page-sub">Build any YouTube Data API v3 call manually.</div>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <div class="field-label">Endpoint</div>
+                        <select id="rawEndpoint" style="width:100%;" onchange="updateRaw()">
+                            <option value="videos?part=snippet,statistics&id=">videos – by ID</option>
+                            <option value="search?part=snippet&q=">search – query</option>
+                            <option value="channels?part=snippet,statistics&id=">channels – by ID</option>
+                            <option value="playlists?part=snippet&channelId=">playlists – by channel</option>
+                            <option value="playlistItems?part=snippet&playlistId=">playlistItems – by playlist</option>
+                            <option value="commentThreads?part=snippet&videoId=">commentThreads – by video</option>
+                            <option value="captions?part=snippet&videoId=">captions – by video</option>
+                            <option value="videoCategories?part=snippet&regionCode=US">videoCategories – US</option>
+                            <option value="i18nLanguages?part=snippet">i18nLanguages</option>
+                            <option value="i18nRegions?part=snippet">i18nRegions</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <div class="field-label">Extra Parameters (key=value, one per line)</div>
+                        <textarea id="rawParams" style="width:100%;height:80px;" placeholder="maxResults=10&#10;order=date&#10;regionCode=US" oninput="updateRaw()"></textarea>
+                    </div>
+                    <div class="field-label">Preview URL</div>
+                    <div class="code-box" id="rawPreview">GET https://www.googleapis.com/youtube/v3/…</div>
+                    <button class="yt-btn yt-btn-accent" onclick="doRaw()">Send Request →</button>
+                    <button class="yt-btn" onclick="copyRaw()" style="margin-left:8px;">Copy URL</button>
+                    <div id="raw-response" style="display:none; margin-top:16px;"></div>
+                </div>
+
+                <!-- DOCS -->
+                <div id="yt-page-docs" class="yt-page">
+                    <div class="yt-page-header">
+                        <div class="yt-page-title">Quick Reference</div>
+                        <div class="yt-page-sub">Common patterns and how to get your API key.</div>
+                    </div>
+                    <div style="margin-bottom:28px;">
+                        <div style="font-size:16px;font-weight:700;margin-bottom:10px;">Getting an API Key</div>
+                        <ol style="font-size:14px;color:var(--md-sys-color-outline);line-height:2;padding-left:20px;">
+                            <li>Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--md-sys-color-primary);">console.cloud.google.com</a></li>
+                            <li>Create a new project (or select existing)</li>
+                            <li>Go to <strong style="color:var(--md-sys-color-on-surface);">APIs &amp; Services → Library</strong></li>
+                            <li>Search for <strong style="color:var(--md-sys-color-on-surface);">YouTube Data API v3</strong> and enable it</li>
+                            <li>Go to <strong style="color:var(--md-sys-color-on-surface);">Credentials → Create Credentials → API Key</strong></li>
+                            <li>Copy the key and paste it into your code</li>
+                        </ol>
+                    </div>
+                    <div style="font-size:16px;font-weight:700;margin-bottom:12px;">API Quota</div>
+                    <div style="font-size:14px;color:var(--md-sys-color-outline);margin-bottom:20px;">Free tier: <strong style="color:var(--md-sys-color-on-surface);">10,000 units/day</strong>. Each search costs 100 units; reads cost 1–3 units.</div>
+                    <div style="font-size:16px;font-weight:700;margin-bottom:12px;">Common Endpoints</div>
+                    <div class="code-box"><span class="kw">GET</span> /youtube/v3/<span class="str">search</span>?part=snippet&q=cats&type=video&key=KEY
+<span class="kw">GET</span> /youtube/v3/<span class="str">videos</span>?part=snippet,statistics&id=VIDEO_ID&key=KEY
+<span class="kw">GET</span> /youtube/v3/<span class="str">channels</span>?part=snippet,statistics&id=CHANNEL_ID&key=KEY
+<span class="kw">GET</span> /youtube/v3/<span class="str">playlists</span>?part=snippet&channelId=UC…&key=KEY
+<span class="kw">GET</span> /youtube/v3/<span class="str">playlistItems</span>?part=snippet&playlistId=PL…&key=KEY
+<span class="kw">GET</span> /youtube/v3/<span class="str">commentThreads</span>?part=snippet&videoId=VIDEO_ID&key=KEY</div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ===== SIDEBAR TOGGLE =====
+        function toggleSidebar() {
+            document.querySelector('.yt-sidebar').classList.toggle('collapsed');
+        }
+
+        // ===== API KEY (hardcoded) =====
+        const YT_KEY = 'YOUR_API_KEY_HERE';
+
+        // ===== NAVIGATION =====
+        function showYouTube() {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('youtube-page').classList.add('active');
+        }
+        function showHome() {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('home-page').classList.add('active');
+        }
+        function goSearch() {
+            const q = document.getElementById('homeSearch').value.trim();
+            if (q) window.open('https://www.google.com/search?q=' + encodeURIComponent(q), '_blank');
+        }
+
+        // ===== APPS =====
+        function toggleApps() {
+            const o = document.getElementById('appsOverlay');
+            o.style.display = o.style.display === 'flex' ? 'none' : 'flex';
+        }
+        function openSunlit() {
+            toggleApps();
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('sunlit-page').classList.add('active');
+            const frame = document.getElementById('sunlit-frame');
+            if (!frame.dataset.loaded) { frame.src = './sunlit_os.html'; frame.dataset.loaded = '1'; }
+        }
+
+        // ===== THEME =====
+        function toggleModal() {
+            const m = document.getElementById('modalOverlay');
+            m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+        }
+        function setTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('apricity-theme-choice', theme);
+        }
+
+        // ===== FILTERS TOGGLE =====
+        function toggleFilters() {
+            const panel = document.getElementById('filtersPanel');
+            const btn = document.getElementById('filtersToggle');
+            const isOpen = panel.classList.toggle('open');
+            btn.classList.toggle('active-filters', isOpen);
+        }
+
+        // ===== YOUTUBE EXPLORER =====
+        function gotoYT(name) {
+            const pages = ['search','channel','video','playlists','comments','raw','docs'];
+            document.querySelectorAll('.yt-nav-item').forEach((el, i) => {
+                el.classList.toggle('active', pages[i] === name);
+            });
+            document.querySelectorAll('.yt-page').forEach(el => el.classList.remove('active'));
+            document.getElementById('yt-page-' + name).classList.add('active');
+        }
+
+        function requireKey() {
+            if (!YT_KEY || YT_KEY === 'YOUR_API_KEY_HERE') {
+                alert('Please set your YouTube API key in the YT_KEY variable in the source code.');
+                return false;
+            }
+            return true;
+        }
+
+        async function ytFetch(endpoint, params) {
+            const p = new URLSearchParams({ ...params, key: YT_KEY });
+            const r = await fetch(`https://www.googleapis.com/youtube/v3/${endpoint}?${p}`);
+            return r.json();
+        }
+
+        // SEARCH
+        async function doSearch() {
+            if (!requireKey()) return;
+            const q = document.getElementById('searchQ').value.trim();
+            if (!q) return;
+            const el = document.getElementById('search-results');
+            el.innerHTML = '<div class="status-msg">Searching…</div>';
+            try {
+                const d = await ytFetch('search', {
+                    part: 'snippet', q,
+                    type: document.getElementById('sType').value,
+                    maxResults: document.getElementById('sMax').value,
+                    order: document.getElementById('sOrder').value,
+                    safeSearch: document.getElementById('sSafe').value,
+                });
+                if (d.error) { el.innerHTML = `<div class="status-msg err">Error ${d.error.code}: ${esc(d.error.message)}</div>`; return; }
+                if (!d.items?.length) { el.innerHTML = '<div class="status-msg">No results found.</div>'; return; }
+                el.innerHTML = `<div class="result-count">${d.pageInfo.totalResults.toLocaleString()} total results — showing ${d.items.length}</div><div class="yt-results" id="search-results-grid"></div>`;
+                const grid = document.getElementById('search-results-grid');
+                d.items.forEach(item => {
+                    const vid = item.id.videoId || '';
+                    const cid = item.id.channelId || '';
+                    const pid = item.id.playlistId || '';
+                    const thumb = item.snippet.thumbnails?.medium?.url || '';
+                    const div = document.createElement('div');
+                    div.className = 'video-card';
+                    div.innerHTML = `
+                        ${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" />` : ''}
+                        <div class="video-card-body">
+                            <h3>${esc(item.snippet.title)}</h3>
+                            <p>${esc(item.snippet.channelTitle)}</p>
+                            <div class="video-card-btns">
+                                ${vid ? `<button class="vc-btn" onclick="playInline('${vid}')">▶ Play</button>` : ''}
+                                ${vid ? `<button class="vc-btn" onclick="openLink('https://youtube.com/watch?v=${vid}')">Open</button>` : ''}
+                                ${vid ? `<button class="vc-btn" onclick="openLink('https://youtube.com/shorts/${vid}')">Short</button>` : ''}
+                                ${vid ? `<button class="vc-btn" onclick="loadVideo('${vid}')">Details</button>` : ''}
+                                ${cid ? `<button class="vc-btn" onclick="loadChannel('${cid}')">Channel</button>` : ''}
+                            </div>
+                        </div>`;
+                    grid.appendChild(div);
+                });
+            } catch(e) { el.innerHTML = `<div class="status-msg err">Network error: ${e.message}</div>`; }
+        }
+
+        // CHANNEL
+        async function doChannel() {
+            if (!requireKey()) return;
+            const id = document.getElementById('channelId').value.trim();
+            if (!id) return;
+            const el = document.getElementById('channel-results');
+            el.innerHTML = '<div class="status-msg">Fetching…</div>';
+            try {
+                const params = { part: 'snippet,statistics,brandingSettings' };
+                if (id.startsWith('@')) params.forHandle = id; else params.id = id;
+                const d = await ytFetch('channels', params);
+                renderChannel(d, el);
+            } catch(e) { el.innerHTML = `<div class="status-msg err">${e.message}</div>`; }
+        }
+
+        function renderChannel(d, el) {
+            if (d.error) { el.innerHTML = `<div class="status-msg err">Error ${d.error.code}: ${esc(d.error.message)}</div>`; return; }
+            if (!d.items?.length) { el.innerHTML = '<div class="status-msg">Channel not found.</div>'; return; }
+            el.innerHTML = '';
+            d.items.forEach(ch => {
+                const sub = parseInt(ch.statistics?.subscriberCount || 0);
+                const views = parseInt(ch.statistics?.viewCount || 0);
+                const vids = parseInt(ch.statistics?.videoCount || 0);
+                const thumb = ch.snippet.thumbnails?.medium?.url || '';
+                const card = document.createElement('div');
+                card.className = 'channel-card';
+                card.innerHTML = `
+                    <div class="channel-top">
+                        <img class="channel-avatar" src="${esc(thumb)}" alt="" onerror="this.style.visibility='hidden'" />
+                        <div>
+                            <div class="channel-name">${esc(ch.snippet.title)}</div>
+                            <div class="channel-handle">${esc(ch.snippet.customUrl || ch.id)}</div>
+                            ${ch.statistics?.hiddenSubscriberCount ? '<div style="margin-top:4px;"><span class="tag tag-primary">Subs hidden</span></div>' : ''}
+                        </div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-box"><div class="stat-num">${fmt(sub)}</div><div class="stat-lbl">Subscribers</div></div>
+                        <div class="stat-box"><div class="stat-num">${fmt(views)}</div><div class="stat-lbl">Total Views</div></div>
+                        <div class="stat-box"><div class="stat-num">${vids.toLocaleString()}</div><div class="stat-lbl">Videos</div></div>
+                    </div>
+                    ${ch.snippet.description ? `<div style="font-size:13px;color:var(--md-sys-color-outline);line-height:1.7;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${esc(ch.snippet.description)}</div>` : ''}
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="yt-btn yt-btn-sm yt-btn-accent" onclick="openLink('https://youtube.com/channel/${ch.id}')">Open Channel ↗</button>
+                        <button class="yt-btn yt-btn-sm" onclick="loadPlaylists('${ch.id}')">View Playlists</button>
+                    </div>`;
+                el.appendChild(card);
+            });
+        }
+
+        // VIDEO
+        async function doVideo() {
+            if (!requireKey()) return;
+            let id = document.getElementById('videoId').value.trim();
+            const m = id.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if (m) id = m[1];
+            id = id.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 11);
+            if (!id) return;
+            const el = document.getElementById('video-results');
+            el.innerHTML = '<div class="status-msg">Fetching…</div>';
+            const parts = Array.from(document.getElementById('vParts').selectedOptions).map(o => o.value).join(',') || 'snippet,statistics';
+            try {
+                const d = await ytFetch('videos', { part: parts, id });
+                if (d.error) { el.innerHTML = `<div class="status-msg err">Error ${d.error.code}: ${esc(d.error.message)}</div>`; return; }
+                if (!d.items?.length) { el.innerHTML = '<div class="status-msg">Video not found.</div>'; return; }
+                el.innerHTML = '';
+                d.items.forEach(v => {
+                    const s = v.statistics || {};
+                    const dur = parseDur(v.contentDetails?.duration || '');
+                    const pub = v.snippet?.publishedAt ? new Date(v.snippet.publishedAt).toLocaleDateString() : '';
+                    const thumb = v.snippet?.thumbnails?.maxres?.url || v.snippet?.thumbnails?.high?.url || '';
+                    const card = document.createElement('div');
+                    card.className = 'video-card-detail';
+                    card.innerHTML = `
+                        ${thumb ? `<img class="video-hero" src="${esc(thumb)}" alt="" />` : ''}
+                        <div class="video-body">
+                            <div class="video-title">${esc(v.snippet?.title || id)}</div>
+                            <div class="video-meta">${esc(v.snippet?.channelTitle || '')}${pub ? ' · ' + pub : ''}${dur ? ' · ' + dur : ''}</div>
+                            <div class="stats-row">
+                                <div class="stat-box"><div class="stat-num">${fmt(s.viewCount)}</div><div class="stat-lbl">Views</div></div>
+                                <div class="stat-box"><div class="stat-num">${fmt(s.likeCount)}</div><div class="stat-lbl">Likes</div></div>
+                                <div class="stat-box"><div class="stat-num">${fmt(s.commentCount)}</div><div class="stat-lbl">Comments</div></div>
+                            </div>
+                            ${v.snippet?.description ? `<div class="video-desc">${esc(v.snippet.description)}</div>` : ''}
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+                                <button class="yt-btn yt-btn-sm yt-btn-accent" onclick="openLink('https://youtube.com/watch?v=${v.id}')">Watch on YouTube ↗</button>
+                                <button class="yt-btn yt-btn-sm" onclick="quickComments('${v.id}')">Load Comments</button>
+                                ${v.snippet?.channelId ? `<button class="yt-btn yt-btn-sm" onclick="loadChannel('${v.snippet.channelId}')">Channel</button>` : ''}
+                            </div>
+                            <div id="inline-comments-${v.id}"></div>
+                        </div>`;
+                    el.appendChild(card);
+                });
+            } catch(e) { el.innerHTML = `<div class="status-msg err">${e.message}</div>`; }
+        }
+
+        async function quickComments(vid) {
+            if (!requireKey()) return;
+            const el = document.getElementById('inline-comments-' + vid);
+            if (el.children.length) { el.innerHTML = ''; return; }
+            el.innerHTML = '<div class="status-msg">Loading comments…</div>';
+            try {
+                const d = await ytFetch('commentThreads', { part: 'snippet', videoId: vid, maxResults: 5, order: 'relevance' });
+                if (!d.items?.length) { el.innerHTML = ''; return; }
+                el.innerHTML = '<div style="font-size:13px;font-weight:600;margin:16px 0 8px;">Top Comments</div>';
+                d.items.forEach(t => {
+                    const c = t.snippet.topLevelComment.snippet;
+                    el.innerHTML += `<div class="comment-item"><div class="comment-author">${esc(c.authorDisplayName)}</div><div class="comment-text">${esc(c.textDisplay||'')}</div><div class="comment-likes">👍 ${parseInt(c.likeCount||0).toLocaleString()}</div></div>`;
+                });
+            } catch(e) {}
+        }
+
+        // PLAYLISTS
+        async function doPlaylists() {
+            if (!requireKey()) return;
+            const id = document.getElementById('plChannelId').value.trim();
+            if (!id) return;
+            const el = document.getElementById('playlist-results');
+            el.innerHTML = '<div class="status-msg">Fetching playlists…</div>';
+            try {
+                const d = await ytFetch('playlists', { part: 'snippet,contentDetails', channelId: id, maxResults: 25 });
+                if (d.error) { el.innerHTML = `<div class="status-msg err">Error: ${esc(d.error.message)}</div>`; return; }
+                if (!d.items?.length) { el.innerHTML = '<div class="status-msg">No playlists found.</div>'; return; }
+                el.innerHTML = `<div class="result-count">${d.items.length} playlists</div>`;
+                d.items.forEach(pl => {
+                    const div = document.createElement('div');
+                    div.className = 'playlist-item';
+                    div.innerHTML = `<span style="font-size:14px;font-weight:600;">${esc(pl.snippet.title)}</span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:12px;color:var(--md-sys-color-outline);">${pl.contentDetails.itemCount} videos</span>
+                            <button class="yt-btn yt-btn-sm" onclick="document.getElementById('plId').value='${pl.id}';doPlaylistItems()">Items</button>
+                            <button class="yt-btn yt-btn-sm" onclick="openLink('https://youtube.com/playlist?list=${pl.id}')">Open ↗</button>
+                        </div>`;
+                    el.appendChild(div);
+                });
+            } catch(e) { el.innerHTML = `<div class="status-msg err">${e.message}</div>`; }
+        }
+
+        async function doPlaylistItems() {
+            if (!requireKey()) return;
+            const id = document.getElementById('plId').value.trim();
+            if (!id) return;
+            const el = document.getElementById('playlist-results');
+            el.innerHTML = '<div class="status-msg">Fetching playlist items…</div>';
+            try {
+                const d = await ytFetch('playlistItems', { part: 'snippet', playlistId: id, maxResults: 25 });
+                if (d.error) { el.innerHTML = `<div class="status-msg err">Error: ${esc(d.error.message)}</div>`; return; }
+                if (!d.items?.length) { el.innerHTML = '<div class="status-msg">Playlist is empty or not found.</div>'; return; }
+                el.innerHTML = `<div class="result-count">${d.pageInfo.totalResults} items — showing ${d.items.length}</div>`;
+                d.items.forEach((item, i) => {
+                    const vid = item.snippet.resourceId?.videoId || '';
+                    const thumb = item.snippet.thumbnails?.medium?.url || '';
+                    const div = document.createElement('div');
+                    div.className = 'result-card';
+                    div.innerHTML = `
+                        ${thumb ? `<img class="result-thumb" src="${esc(thumb)}" style="width:100px;height:56px;" alt="" loading="lazy" />` : ''}
+                        <div class="result-body">
+                            <div style="font-size:12px;color:var(--md-sys-color-outline);margin-bottom:3px;">#${i+1}</div>
+                            <div class="result-title">${esc(item.snippet.title)}</div>
+                            <div class="result-actions">
+                                ${vid ? `<button class="yt-btn yt-btn-sm yt-btn-accent" onclick="openLink('https://youtube.com/watch?v=${vid}')">Watch ↗</button>` : ''}
+                                ${vid ? `<button class="yt-btn yt-btn-sm" onclick="loadVideo('${vid}')">Details</button>` : ''}
+                            </div>
+                        </div>`;
+                    el.appendChild(div);
+                });
+            } catch(e) { el.innerHTML = `<div class="status-msg err">${e.message}</div>`; }
+        }
+
+        // COMMENTS
+        async function doComments() {
+            if (!requireKey()) return;
+            let id = document.getElementById('commentVideoId').value.trim();
+            const m = id.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if (m) id = m[1];
+            if (!id) return;
+            const el = document.getElementById('comment-results');
+            el.innerHTML = '<div class="status-msg">Fetching comments…</div>';
+            try {
+                const d = await ytFetch('commentThreads', {
+                    part: 'snippet', videoId: id,
+                    maxResults: document.getElementById('cMax').value,
+                    order: document.getElementById('cOrder').value,
+                });
+                if (d.error) { el.innerHTML = `<div class="status-msg err">Error: ${esc(d.error.message)}</div>`; return; }
+                if (!d.items?.length) { el.innerHTML = '<div class="status-msg">No comments found (may be disabled).</div>'; return; }
+                el.innerHTML = `<div class="result-count">${d.pageInfo.totalResults.toLocaleString()} total comments — showing ${d.items.length}</div>`;
+                d.items.forEach(t => {
+                    const c = t.snippet.topLevelComment.snippet;
+                    const replies = t.snippet.totalReplyCount;
+                    el.innerHTML += `<div class="comment-item">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                            ${c.authorProfileImageUrl ? `<img src="${esc(c.authorProfileImageUrl)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" alt="" />` : ''}
+                            <div class="comment-author">${esc(c.authorDisplayName)}</div>
+                            <div style="font-size:11px;color:var(--md-sys-color-outline);margin-left:auto;">${c.publishedAt ? new Date(c.publishedAt).toLocaleDateString() : ''}</div>
+                        </div>
+                        <div class="comment-text">${esc(c.textDisplay||'')}</div>
+                        <div class="comment-likes">👍 ${parseInt(c.likeCount||0).toLocaleString()}${replies ? ` · 💬 ${replies} replies` : ''}</div>
+                    </div>`;
+                });
+            } catch(e) { el.innerHTML = `<div class="status-msg err">${e.message}</div>`; }
+        }
+
+        // RAW
+        function updateRaw() {
+            const ep = document.getElementById('rawEndpoint').value;
+            const extra = document.getElementById('rawParams').value.trim();
+            let url = `https://www.googleapis.com/youtube/v3/${ep}`;
+            if (extra) extra.split('\n').forEach(line => {
+                const eq = line.indexOf('=');
+                if (eq > 0) url += (url.includes('?') ? '&' : '?') + line.trim();
+            });
+            url += (url.includes('?') ? '&' : '?') + 'key=YOUR_KEY';
+            document.getElementById('rawPreview').textContent = 'GET ' + url;
+        }
+
+        async function doRaw() {
+            if (!requireKey()) return;
+            const ep = document.getElementById('rawEndpoint').value;
+            const extra = document.getElementById('rawParams').value.trim();
+            const params = { key: YT_KEY };
+            if (extra) extra.split('\n').forEach(line => {
+                const eq = line.indexOf('=');
+                if (eq > 0) params[line.slice(0,eq).trim()] = line.slice(eq+1).trim();
+            });
+            const url = `https://www.googleapis.com/youtube/v3/${ep}&${new URLSearchParams(params)}`;
+            const el = document.getElementById('raw-response');
+            el.style.display = 'block';
+            el.className = 'response-box';
+            el.textContent = 'Fetching…';
+            try {
+                const r = await fetch(url);
+                el.textContent = JSON.stringify(await r.json(), null, 2);
+            } catch(e) { el.textContent = 'Error: ' + e.message; }
+        }
+
+        function copyRaw() {
+            const txt = document.getElementById('rawPreview').textContent.replace('GET ', '').replace('YOUR_KEY', YT_KEY);
+            navigator.clipboard.writeText(txt).then(() => alert('URL copied!'));
+        }
+
+        // Helpers
+        function playInline(videoId) {
+            const player = document.getElementById('yt-inline-player');
+            player.innerHTML = '<iframe width="100%" height="480" src="https://www.youtube.com/embed/' + videoId + '?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:16px;display:block;"></iframe>';
+            player.scrollIntoView({ behavior: 'smooth' });
+        }
+        function loadVideo(id) { document.getElementById('videoId').value = id; gotoYT('video'); doVideo(); }
+        function loadChannel(id) { document.getElementById('channelId').value = id; gotoYT('channel'); doChannel(); }
+        function loadPlaylists(id) { document.getElementById('plChannelId').value = id; gotoYT('playlists'); doPlaylists(); }
+        function openLink(url) { window.open(url, '_blank'); }
+        function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function fmt(n) {
+            if (!n) return '—';
+            const v = parseInt(n);
+            if (v >= 1e9) return (v/1e9).toFixed(1) + 'B';
+            if (v >= 1e6) return (v/1e6).toFixed(1) + 'M';
+            if (v >= 1e3) return (v/1e3).toFixed(1) + 'K';
+            return v.toLocaleString();
+        }
+        function parseDur(iso) {
+            const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+            if (!m) return '';
+            const h=parseInt(m[1]||0), mn=parseInt(m[2]||0), s=parseInt(m[3]||0);
+            return h ? `${h}:${String(mn).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${mn}:${String(s).padStart(2,'0')}`;
+        }
+
+        // ===== FOOTER =====
+        const footerMessages = [
+            "shoutout to utopia and aspen",
+            "made with love by bored middle schoolers, for everyone else",
+            "goonguardian &amp; freakurely",
+            "better than kahoot, blooket, and gimkit",
+            "if ur school blocks this, be proactive and (dont) send them an email",
+            "&quot;erm i use arch btw&quot; like sthu",
+            "like i guess bro",
+            "we're not responsible if you get in trouble lol",
+            "props to t-hops",
+            "join our discord server",
+            "with the power of proxies",
+            "print(&quot;Hello, World!&quot;)",
+            "check out capticlient-pybricks-custom-client.pages.dev",
+            "why are you even reading this"
+        ];
+        let currentIndex = 0;
+        const footer = document.getElementById('rotating-footer');
+        function rotateFooter() {
+            footer.style.opacity = 0;
+            setTimeout(() => {
+                currentIndex = (currentIndex + 1) % footerMessages.length;
+                footer.innerHTML = footerMessages[currentIndex];
+                footer.style.opacity = 1;
+            }, 600);
+        }
+
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('apricity-theme-choice');
+            if (savedTheme) setTheme(savedTheme);
+            footer.innerHTML = footerMessages[0];
+            setInterval(rotateFooter, 4000);
+            updateRaw();
+        };
+    </script>
+</body>
+</html>
