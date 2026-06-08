@@ -322,7 +322,6 @@
         }
         .hide-status.active { background: color-mix(in srgb, #4caf50 15%, transparent); color: #4caf50; }
         .hide-status.inactive { background: color-mix(in srgb, var(--md-sys-color-outline) 15%, transparent); color: var(--md-sys-color-outline); }
-        .hide-status.warn { background: color-mix(in srgb, #ff9800 15%, transparent); color: #ff9800; }
         .hide-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
         .main-content {
@@ -446,4 +445,6 @@
             color: var(--md-sys-color-on-surface);
             cursor: pointer;
             width: 40px; height: 40px; border-radius: 50%;
-       
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 16px;
+      
