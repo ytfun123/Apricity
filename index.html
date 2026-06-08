@@ -107,7 +107,6 @@
             min-height: 100vh;
         }
 
-        /* ===== BACKGROUND SYSTEM ===== */
         #bg-layer {
             position: fixed;
             inset: 0;
@@ -121,13 +120,11 @@
         #bg-layer.bg-none { opacity: 0; }
         #bg-layer.bg-active { opacity: 1; }
 
-        /* All content sits above bg */
         #home-page, #sunlit-page, #youtube-page, .settings-trigger, .modal-overlay, .apps-overlay {
             position: relative;
             z-index: 1;
         }
 
-        /* Frosted glass effect on home when bg is active */
         body.has-bg #home-page .main-content {
             background: color-mix(in srgb, var(--md-sys-color-surface) 70%, transparent 30%);
             backdrop-filter: blur(12px);
@@ -144,7 +141,6 @@
         .page { display: none; }
         .page.active { display: block; }
 
-        /* HOME PAGE */
         #home-page {
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
@@ -152,7 +148,6 @@
         }
         #home-page.active { display: flex; }
 
-        /* Top-right icon cluster */
         .topbar-icons {
             position: fixed; top: 16px; right: 16px;
             display: flex; gap: 6px; z-index: 50;
@@ -167,7 +162,6 @@
         }
         .icon-btn:hover { background: var(--md-sys-color-primary-container); }
 
-        /* ===== MODAL BASE ===== */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
@@ -211,7 +205,6 @@
         .theme-option:hover { background: var(--md-sys-color-primary-container); }
         .color-preview { width: 26px; height: 26px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; }
 
-        /* ===== BACKGROUND PICKER ===== */
         .bg-grid {
             display: grid; grid-template-columns: 1fr 1fr;
             gap: 10px; padding: 4px 0;
@@ -235,7 +228,6 @@
             color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.6);
             background: rgba(0,0,0,0.35); padding: 3px 7px; border-radius: 6px;
         }
-        /* None option */
         .bg-none-opt {
             background: repeating-conic-gradient(var(--yt-surface2) 0% 25%, var(--md-sys-color-surface) 0% 50%) 0 0 / 14px 14px;
         }
@@ -275,7 +267,6 @@
             font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
         }
 
-        /* ===== SETTINGS PANEL ===== */
         .settings-section { margin: 12px 0; }
         .settings-section-title {
             font-size: 11px; color: var(--md-sys-color-outline);
@@ -293,7 +284,6 @@
         .setting-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
         .setting-desc { font-size: 12px; color: var(--md-sys-color-outline); line-height: 1.4; }
 
-        /* Toggle switch */
         .toggle-switch {
             position: relative; width: 44px; height: 24px;
             flex-shrink: 0; margin-top: 2px;
@@ -314,7 +304,6 @@
         .toggle-switch input:checked + .toggle-slider { background: var(--md-sys-color-primary); }
         .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
 
-        /* Hide status badge */
         .hide-status {
             display: inline-flex; align-items: center; gap: 5px;
             font-size: 11px; font-weight: 600; padding: 3px 8px;
@@ -381,7 +370,6 @@
             transition: opacity 0.6s ease-in-out;
         }
 
-        /* APPS PANEL */
         .apps-overlay {
             display: none; position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
@@ -416,7 +404,6 @@
             margin-top: 8px; width: 100%;
         }
 
-        /* SUNLIT PAGE */
         #sunlit-page { width: 100%; height: 100vh; }
         #sunlit-page iframe { width: 100%; height: 100%; border: none; display: block; }
         .sunlit-back {
@@ -427,7 +414,6 @@
             backdrop-filter: blur(8px); transition: background 0.2s;
         }
 
-        /* YOUTUBE EXPLORER PAGE */
         #youtube-page.active { display: flex; }
         #youtube-page { min-height: 100vh; flex-direction: column; }
 
@@ -675,13 +661,12 @@
         #panic-btn:active { transform: scale(0.95); }
         #panic-btn.hidden { display: none; }
 
-        /* Corner position classes */
         #panic-btn.corner-tl { top: 16px; left: 16px; }
         #panic-btn.corner-tr { top: 16px; right: 16px; }
         #panic-btn.corner-bl { bottom: 16px; left: 16px; }
         #panic-btn.corner-br { bottom: 16px; right: 16px; }
 
-        /* Panic overlay (covers whole screen with classroom iframe) */
+        /* ===== PANIC OVERLAY — full-screen iframe cover ===== */
         #panic-overlay {
             display: none;
             position: fixed; inset: 0;
@@ -693,17 +678,15 @@
             width: 100%; height: 100%;
             border: none; display: block;
         }
-        /* Tiny invisible return hint — only visible on hover of panic overlay edge */
         #panic-hint {
             position: fixed; bottom: 8px; right: 12px;
-            z-index: 99999;
+            z-index: 100000;
             font-size: 10px; color: rgba(0,0,0,0.18);
             font-family: monospace; pointer-events: none;
             display: none;
         }
-        #panic-overlay.active + #panic-hint { display: block; }
+        #panic-overlay.active ~ #panic-hint { display: block; }
 
-        /* Corner picker in settings */
         .corner-picker {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -726,23 +709,48 @@
         }
         .corner-opt:hover { border-color: var(--md-sys-color-primary); color: var(--md-sys-color-primary); }
         .corner-opt.selected { border-color: var(--md-sys-color-primary); background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent); color: var(--md-sys-color-primary); }
+
+        /* Permission banner for hide mode */
+        #hide-permission-banner {
+            display: none;
+            position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+            z-index: 99997;
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            padding: 12px 20px; border-radius: 14px;
+            font-size: 13px; font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: none; align-items: center; gap: 12px;
+            max-width: 90vw;
+        }
+        #hide-permission-banner button {
+            background: var(--md-sys-color-on-primary);
+            color: var(--md-sys-color-primary);
+            border: none; padding: 6px 14px; border-radius: 100px;
+            cursor: pointer; font-weight: 700; font-size: 12px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body data-theme="orange-light">
 
-<!-- Background layer -->
 <div id="bg-layer" class="bg-none"></div>
 
-<!-- Panic overlay (Google Classroom) -->
+<!-- Panic overlay (Gimkit — allows iframes) -->
 <div id="panic-overlay">
     <iframe id="panic-iframe" src="about:blank" allow="fullscreen"></iframe>
 </div>
 <div id="panic-hint">Shift+\ to return</div>
 
 <!-- Panic button -->
-<button id="panic-btn" class="corner-br" onclick="panicActivate()" title="Panic — Shift+\ to return">
-    🎓
-</button>
+<button id="panic-btn" class="corner-br" title="Panic — Shift+\ to return">🎓</button>
+
+<!-- Hide mode permission banner -->
+<div id="hide-permission-banner">
+    <span>⚠️ Allow popups for Hide Mode to work</span>
+    <button onclick="retryHideMode()">Open Now</button>
+    <button onclick="dismissBanner()" style="background:transparent;color:var(--md-sys-color-on-primary);border:1px solid rgba(255,255,255,0.4);">✕</button>
+</div>
 
 <!-- Top-right icon cluster -->
 <div class="topbar-icons">
@@ -795,42 +803,18 @@
                         <span class="bg-option-label">None</span>
                     </div>
                 </div>
-                <div class="bg-option" id="bg-opt-1" onclick="setBg('bg-1')">
-                    <div class="bg-option-inner bg-1"><span class="bg-option-label">Deep Space</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-2" onclick="setBg('bg-2')">
-                    <div class="bg-option-inner bg-2"><span class="bg-option-label">Cosmic</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-3" onclick="setBg('bg-3')">
-                    <div class="bg-option-inner bg-3"><span class="bg-option-label">Aurora</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-4" onclick="setBg('bg-4')">
-                    <div class="bg-option-inner bg-4"><span class="bg-option-label">Candy</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-5" onclick="setBg('bg-5')">
-                    <div class="bg-option-inner bg-5"><span class="bg-option-label">Nebula</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-6" onclick="setBg('bg-6')">
-                    <div class="bg-option-inner bg-6"><span class="bg-option-label">Ocean Deep</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-7" onclick="setBg('bg-7')">
-                    <div class="bg-option-inner bg-7"><span class="bg-option-label">Ember</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-8" onclick="setBg('bg-8')">
-                    <div class="bg-option-inner bg-8"><span class="bg-option-label">Violet Haze</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-9" onclick="setBg('bg-9')">
-                    <div class="bg-option-inner bg-9"><span class="bg-option-label">Pearl</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-10" onclick="setBg('bg-10')">
-                    <div class="bg-option-inner bg-10"><span class="bg-option-label">Emerald</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-11" onclick="setBg('bg-11')">
-                    <div class="bg-option-inner bg-11"><span class="bg-option-label">Dusk</span></div>
-                </div>
-                <div class="bg-option" id="bg-opt-12" onclick="setBg('bg-12')">
-                    <div class="bg-option-inner bg-12"><span class="bg-option-label">Matrix</span></div>
-                </div>
+                <div class="bg-option" id="bg-opt-1" onclick="setBg('bg-1')"><div class="bg-option-inner bg-1"><span class="bg-option-label">Deep Space</span></div></div>
+                <div class="bg-option" id="bg-opt-2" onclick="setBg('bg-2')"><div class="bg-option-inner bg-2"><span class="bg-option-label">Cosmic</span></div></div>
+                <div class="bg-option" id="bg-opt-3" onclick="setBg('bg-3')"><div class="bg-option-inner bg-3"><span class="bg-option-label">Aurora</span></div></div>
+                <div class="bg-option" id="bg-opt-4" onclick="setBg('bg-4')"><div class="bg-option-inner bg-4"><span class="bg-option-label">Candy</span></div></div>
+                <div class="bg-option" id="bg-opt-5" onclick="setBg('bg-5')"><div class="bg-option-inner bg-5"><span class="bg-option-label">Nebula</span></div></div>
+                <div class="bg-option" id="bg-opt-6" onclick="setBg('bg-6')"><div class="bg-option-inner bg-6"><span class="bg-option-label">Ocean Deep</span></div></div>
+                <div class="bg-option" id="bg-opt-7" onclick="setBg('bg-7')"><div class="bg-option-inner bg-7"><span class="bg-option-label">Ember</span></div></div>
+                <div class="bg-option" id="bg-opt-8" onclick="setBg('bg-8')"><div class="bg-option-inner bg-8"><span class="bg-option-label">Violet Haze</span></div></div>
+                <div class="bg-option" id="bg-opt-9" onclick="setBg('bg-9')"><div class="bg-option-inner bg-9"><span class="bg-option-label">Pearl</span></div></div>
+                <div class="bg-option" id="bg-opt-10" onclick="setBg('bg-10')"><div class="bg-option-inner bg-10"><span class="bg-option-label">Emerald</span></div></div>
+                <div class="bg-option" id="bg-opt-11" onclick="setBg('bg-11')"><div class="bg-option-inner bg-11"><span class="bg-option-label">Dusk</span></div></div>
+                <div class="bg-option" id="bg-opt-12" onclick="setBg('bg-12')"><div class="bg-option-inner bg-12"><span class="bg-option-label">Matrix</span></div></div>
             </div>
             <div class="bg-custom-row">
                 <div class="field-label-sm">Custom image URL</div>
@@ -848,7 +832,7 @@
                 <div class="setting-row">
                     <div class="setting-info">
                         <div class="setting-name">Hide Mode</div>
-                        <div class="setting-desc">Opens a new blank tab and hides Apricity in the background so it won't appear in your tab bar.</div>
+                        <div class="setting-desc">Opens Apricity in a new popup tab, then replaces the current tab with a blank page so Apricity stays hidden in the background. Requires popup permission.</div>
                         <div class="hide-status inactive" id="hideStatusBadge">
                             <div class="hide-status-dot"></div>
                             <span id="hideStatusText">Inactive</span>
@@ -906,7 +890,7 @@
                 <div class="setting-row">
                     <div class="setting-info">
                         <div class="setting-name">Enable Panic Button</div>
-                        <div class="setting-desc">Shows a red 🎓 button that instantly covers the screen with Google Classroom. Press <strong>Shift+\</strong> (or click again) to return.</div>
+                        <div class="setting-desc">Shows a red 🎓 button that instantly covers the screen with Gimkit. Press <strong>Shift+\</strong> (or click again) to return.</div>
                     </div>
                     <label class="toggle-switch">
                         <input type="checkbox" id="panicToggle" checked onchange="onPanicToggleChange()" />
@@ -1163,7 +1147,6 @@
     function setBg(key) {
         currentBg = key;
         const layer = document.getElementById('bg-layer');
-        // Deselect all
         document.querySelectorAll('.bg-option').forEach(el => el.classList.remove('selected'));
         const optEl = document.getElementById('bg-opt-' + (key === 'none' ? 'none' : key.replace('bg-','')));
         if (optEl) optEl.classList.add('selected');
@@ -1203,22 +1186,68 @@
     }
 
     // ===== HIDE MODE =====
-    // When hide mode is on and user visits, open about:blank in new tab, push a fake history state
-    // so pressing back just goes to the blank page instead of closing apricity.
-    // The actual tab becomes "hidden" behind the blank tab.
-
     let hideModeEnabled = true;
     let antiCloseEnabled = false;
     let hideApplied = false;
 
+    /**
+     * Hide Mode logic:
+     * 1. Open a new popup window pointing to this same page (window.open triggers popup permission prompt)
+     * 2. If the popup is allowed, navigate the CURRENT tab to about:blank
+     *    so it looks empty to anyone glancing at the tab bar
+     * 3. The user now works inside what appears to be a blank tab, with
+     *    Apricity actually loaded in the popup behind it
+     *
+     * If popups are blocked, show the permission banner.
+     */
+    function tryActivateHideMode() {
+        if (!hideModeEnabled || hideApplied) return;
+
+        const popup = window.open(window.location.href, '_blank',
+            'width=' + screen.availWidth +
+            ',height=' + screen.availHeight +
+            ',left=0,top=0,toolbar=0,scrollbars=0,status=0,menubar=0');
+
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+            // Popup was blocked — show the banner
+            showPermissionBanner();
+        } else {
+            // Popup opened — blank out this tab so it looks clean
+            hideApplied = true;
+            updateHideStatusBadge(true);
+            // Small delay so the popup has a moment to start loading before we blank the original
+            setTimeout(() => {
+                window.location.replace('about:blank');
+            }, 300);
+        }
+    }
+
+    function showPermissionBanner() {
+        const banner = document.getElementById('hide-permission-banner');
+        banner.style.display = 'flex';
+        updateHideStatusBadge(false);
+        // Update status text to show blocked
+        document.getElementById('hideStatusText').textContent = 'Blocked — allow popups';
+    }
+
+    function dismissBanner() {
+        document.getElementById('hide-permission-banner').style.display = 'none';
+    }
+
+    function retryHideMode() {
+        dismissBanner();
+        tryActivateHideMode();
+    }
+
     function onHideModeChange() {
         hideModeEnabled = document.getElementById('hideModeToggle').checked;
         localStorage.setItem('apricity-hide-mode', hideModeEnabled ? '1' : '0');
-        updateHideStatus();
         if (hideModeEnabled) {
             tryActivateHideMode();
         } else {
+            hideApplied = false;
             updateHideStatusBadge(false);
+            dismissBanner();
         }
     }
 
@@ -1227,18 +1256,18 @@
         localStorage.setItem('apricity-anti-close', antiCloseEnabled ? '1' : '0');
     }
 
-    function updateHideStatus() {
-        updateHideStatusBadge(hideModeEnabled && hideApplied);
-    }
-
     function updateHideStatusBadge(active) {
         const badge = document.getElementById('hideStatusBadge');
         const text = document.getElementById('hideStatusText');
         badge.className = 'hide-status ' + (active ? 'active' : 'inactive');
-        text.textContent = active ? 'Active — tab is hidden' : (hideModeEnabled ? 'Pending (needs interaction)' : 'Off');
+        if (active) {
+            text.textContent = 'Active — tab is hidden';
+        } else if (hideModeEnabled) {
+            text.textContent = 'Pending (needs interaction)';
+        } else {
+            text.textContent = 'Off';
+        }
     }
-
-
 
     // ===== ANTI-CLOSE =====
     window.addEventListener('beforeunload', function(e) {
@@ -1461,7 +1490,9 @@
     let panicEnabled = true;
     let panicActive = false;
     let panicCorner = 'br';
-    const PANIC_URL = 'https://classroom.google.com';
+
+    // Gimkit allows iframes — load the homepage which shows join/create options
+    const PANIC_URL = 'https://www.gimkit.com';
 
     function onPanicToggleChange() {
         panicEnabled = document.getElementById('panicToggle').checked;
@@ -1476,8 +1507,8 @@
         panicCorner = corner;
         localStorage.setItem('apricity-panic-corner', corner);
         const btn = document.getElementById('panic-btn');
-        btn.className = btn.className.replace(/corner-\w+/, '').trim() + ' corner-' + corner;
-        // Update picker UI
+        // Strip old corner class and apply new one, keep 'hidden' if present
+        btn.className = (btn.classList.contains('hidden') ? 'hidden ' : '') + 'corner-' + corner;
         ['tl','tr','bl','br'].forEach(c => {
             document.getElementById('cp-' + c).classList.toggle('selected', c === corner);
         });
@@ -1489,32 +1520,34 @@
         const overlay = document.getElementById('panic-overlay');
         const iframe = document.getElementById('panic-iframe');
         overlay.classList.add('active');
-        // Load classroom if not already loaded
+        // Load Gimkit if not already loaded
         if (iframe.src === 'about:blank' || iframe.src === '') {
             iframe.src = PANIC_URL;
         }
-        // Move panic btn on top of overlay so it's still clickable to dismiss
-        document.getElementById('panic-btn').style.zIndex = '999999';
-        document.getElementById('panic-btn').title = 'Click or Shift+\\ to return';
-        document.getElementById('panic-btn').onclick = panicDeactivate;
+        // Bring panic btn above overlay so it's still clickable to dismiss
+        const btn = document.getElementById('panic-btn');
+        btn.style.zIndex = '100000';
+        btn.title = 'Click or Shift+\\ to return';
+        btn.onclick = panicDeactivate;
     }
 
     function panicDeactivate() {
         panicActive = false;
         document.getElementById('panic-overlay').classList.remove('active');
-        document.getElementById('panic-btn').style.zIndex = '';
-        document.getElementById('panic-btn').title = 'Panic — Shift+\\ to return';
-        document.getElementById('panic-btn').onclick = panicActivate;
+        const btn = document.getElementById('panic-btn');
+        btn.style.zIndex = '';
+        btn.title = 'Panic — Shift+\\ to return';
+        btn.onclick = panicActivate;
     }
 
-    // Keyboard shortcut: Shift + \ (pipe key) = Shift+Backslash
+    // Wire up initial onclick (avoids inline onclick attribute conflict with deactivate swap)
+    document.getElementById('panic-btn').onclick = panicActivate;
+
+    // Keyboard shortcut: Shift + \
     document.addEventListener('keydown', function(e) {
         if (e.shiftKey && e.key === '\\') {
-            if (panicActive) {
-                panicDeactivate();
-            } else if (panicEnabled) {
-                panicActivate();
-            }
+            if (panicActive) panicDeactivate();
+            else if (panicEnabled) panicActivate();
         }
     });
 
@@ -1547,7 +1580,7 @@
 
         // Restore settings
         const savedHide = localStorage.getItem('apricity-hide-mode');
-        hideModeEnabled = savedHide !== '0'; // default ON
+        hideModeEnabled = savedHide !== '0';
         document.getElementById('hideModeToggle').checked = hideModeEnabled;
 
         const savedAntiClose = localStorage.getItem('apricity-anti-close');
@@ -1562,25 +1595,24 @@
 
         // Restore panic settings
         const savedPanic = localStorage.getItem('apricity-panic-enabled');
-        panicEnabled = savedPanic !== '0'; // default ON
+        panicEnabled = savedPanic !== '0';
         document.getElementById('panicToggle').checked = panicEnabled;
         const btn = document.getElementById('panic-btn');
         btn.classList.toggle('hidden', !panicEnabled);
 
         const savedCorner = localStorage.getItem('apricity-panic-corner') || 'br';
         panicCorner = savedCorner;
-        btn.className = 'corner-' + savedCorner;
+        btn.className = (panicEnabled ? '' : 'hidden ') + 'corner-' + savedCorner;
         ['tl','tr','bl','br'].forEach(c => {
             document.getElementById('cp-' + c).classList.toggle('selected', c === savedCorner);
         });
         document.getElementById('panicCornerRow').style.opacity = panicEnabled ? '1' : '0.4';
         document.getElementById('panicCornerRow').style.pointerEvents = panicEnabled ? '' : 'none';
 
-        // Update hide status badge
+        // Update hide status
         updateHideStatusBadge(false);
 
-        // Attempt hide mode (will only work if triggered by user gesture; first load likely blocked)
-        // We listen for first interaction instead
+        // Attempt hide mode on first user interaction
         if (hideModeEnabled) {
             const firstInteract = () => {
                 if (!hideApplied) tryActivateHideMode();
