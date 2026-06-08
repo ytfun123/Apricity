@@ -1238,75 +1238,7 @@
         text.textContent = active ? 'Active — tab is hidden' : (hideModeEnabled ? 'Pending (needs interaction)' : 'Off');
     }
 
-    function tryActivateHideMode() {
-        if (!hideModeEnabled || hideApplied) return;
 
-        // Try to open a new blank tab. Browsers only allow window.open on user gesture,
-        // so if this is called on page load it will be blocked. We catch that and mark as pending.
-        try {
-            const blank = window.open('about:blank', '_blank');
-            if (blank) {
-                // Successfully opened — now replace current history entry with about:blank
-                // so going back leads to a blank page, not here
-                history.pushState({ apricity: true }, '', location.href);
-                window.location.replace('about:blank');
-                // The above redirects this tab to about:blank and apricity continues in the new tab
-                // But since we opened blank in a new tab, let's do it differently:
-                // Open blank in new tab, then navigate THIS tab to about:blank so it's the "blank" one
-                // Actually the new tab IS blank, and we want THIS tab to seem blank from history.
-                // The trick: new tab shows apricity, this tab goes to about:blank visually via replace.
-                // Re-think: open new tab with apricity content is not possible cross-origin via script.
-                // Instead: open blank tab to "cover", push state so back goes to blank.
-                blank.close(); // close the test blank
-                activateHideModeTab();
-            } else {
-                updateHideStatusBadge(false);
-            }
-        } catch(e) {
-            updateHideStatusBadge(false);
-        }
-    }
-
-    function activateHideModeTab() {
-        // The technique:
-        // 1. Push state so the URL looks innocent (e.g., google.com can't be pushed, but we can use relative paths)
-        // 2. Open about:blank in a new tab
-        // 3. Navigate THIS current tab to about:blank — this hides apricity from the tab bar
-        //    BUT we want apricity to remain accessible. So we do the opposite:
-        //    Open a NEW tab with about:blank, keep THIS tab as apricity but invisible in tab bar.
-        //
-        // Practical implementation: replace history state to something innocent, then open blank cover tab
-        // The blank tab covers the current one visually. The user sees blank, clicks away, done.
-        // To return: they use the blank tab to navigate (or it auto-closes).
-        //
-        // Simpler and more reliable: redirect THIS tab to about:blank after hiding state.
-
-        try {
-            // Replace current history entry so back button doesn't reveal apricity
-            history.replaceState(null, '', location.href);
-            // Push a decoy state  
-            history.pushState(null, document.title, location.href);
-
-            // Open new tab with apricity by embedding in about:blank
-            // We can't really do this cross-origin. Instead, use the "tab swap" method:
-            // Navigate this tab to about:blank, which effectively hides it.
-            // The page is still running in memory (if it does location.replace it won't be).
-            // True hide: open about:blank covering tab, this page sets document.title to something safe
-            document.title = 'Google';
-
-            // Try to set favicon to Google's
-            setFavicon('https://www.google.com/favicon.ico', true);
-
-            // Open a blank cover tab
-            const cover = window.open('about:blank', '_blank');
-            if (cover) {
-                hideApplied = true;
-                updateHideStatusBadge(true);
-                // Focus the cover tab so this one is in background
-                cover.focus();
-            }
-        } catch(e) {}
-    }
 
     // ===== ANTI-CLOSE =====
     window.addEventListener('beforeunload', function(e) {
