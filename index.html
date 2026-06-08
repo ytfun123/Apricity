@@ -1192,34 +1192,47 @@
 
     /**
      * Hide Mode logic:
-     * 1. Open a new popup window pointing to this same page (window.open triggers popup permission prompt)
-     * 2. If the popup is allowed, navigate the CURRENT tab to about:blank
-     *    so it looks empty to anyone glancing at the tab bar
-     * 3. The user now works inside what appears to be a blank tab, with
-     *    Apricity actually loaded in the popup behind it
+     * 1. Open about:blank as a new tab (no windowFeatures string = new tab, not popup, no block)
+     * 2. document.write the full page HTML into that new tab so Apricity lives there
+     * 3. Replace the original tab with about:blank so the tab bar looks clean
      *
-     * If popups are blocked, show the permission banner.
+     * No popup permission needed — document.write into a same-origin about:blank
+     * window opened by us is always allowed.
      */
     function tryActivateHideMode() {
         if (!hideModeEnabled || hideApplied) return;
 
-        const popup = window.open(window.location.href, '_blank',
-            'width=' + screen.availWidth +
-            ',height=' + screen.availHeight +
-            ',left=0,top=0,toolbar=0,scrollbars=0,status=0,menubar=0');
+        // Grab the full HTML of this page
+        const html = document.documentElement.outerHTML;
 
-        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-            // Popup was blocked — show the banner
+        // Open a new tab (no windowFeatures = tab, not popup, never blocked)
+        const newTab = window.open('about:blank', '_blank');
+
+        if (!newTab || newTab.closed) {
+            // Extremely rare — show banner as fallback
             showPermissionBanner();
-        } else {
-            // Popup opened — blank out this tab so it looks clean
-            hideApplied = true;
-            updateHideStatusBadge(true);
-            // Small delay so the popup has a moment to start loading before we blank the original
-            setTimeout(() => {
-                window.location.replace('about:blank');
-            }, 300);
+            return;
         }
+
+        // Write our full page into the new tab
+        newTab.document.open();
+        newTab.document.write(html);
+        newTab.document.close();
+
+        // Mark as applied and blank out this original tab
+        hideApplied = true;
+        updateHideStatusBadge(true);
+
+        // Small delay so the new tab finishes writing before we ditch this one
+        setTimeout(() => {
+            // Replace current tab URL with about:blank so it looks empty
+            // Use document.write here too so the tab truly appears blank
+            document.open();
+            document.write('<html><head><title></title></head><body></body></html>');
+            document.close();
+            // Also push the URL to about:blank visually if possible
+            try { history.replaceState(null, '', 'about:blank'); } catch(e) {}
+        }, 150);
     }
 
     function showPermissionBanner() {
