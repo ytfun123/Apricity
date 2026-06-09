@@ -1785,7 +1785,9 @@
         document.getElementById('panicCornerRow').style.pointerEvents = panicEnabled ? '' : 'none';
 
         // Update hide status and auto-activate if enabled
-        if (hideModeEnabled) {
+        // Skip if already inside an iframe (i.e. we ARE the hidden tab — don't recurse)
+        const inIframe = window.self !== window.top;
+        if (hideModeEnabled && !inIframe) {
             updateHideStatusBadge(false);
             showPopupAllowHint();
         } else {
