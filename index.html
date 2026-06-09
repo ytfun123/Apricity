@@ -889,6 +889,9 @@
     <button onclick="dismissBanner()" style="background:transparent;color:var(--md-sys-color-on-primary);border:1px solid rgba(255,255,255,0.4);">✕</button>
 </div>
 
+<!-- Transient hint shown before attempting to open the popup -->
+<div id="popup-allow-hint" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100000;background:rgba(0,0,0,0.85);color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;font-weight:700;max-width:90vw;text-align:center;">You may need to allow pop-ups by clicking the pop-up blocked icon in your browser</div>
+
 <!-- Top-right icon cluster -->
 <div class="topbar-icons">
     <div class="icon-btn" onclick="toggleApps()" title="Apps">
@@ -1335,10 +1338,8 @@
     function tryActivateHideMode() {
         if (!hideModeEnabled || hideApplied) return;
 
-        const popup = window.open(window.location.href, '_blank',
-            'width=' + screen.availWidth +
-            ',height=' + screen.availHeight +
-            ',left=0,top=0,toolbar=0,scrollbars=0,status=0,menubar=0');
+        // Open in a new tab by using '_blank' without window features
+        const popup = window.open(window.location.href, '_blank');
 
         if (!popup || popup.closed || typeof popup.closed === 'undefined') {
             // Popup was blocked — show the banner
@@ -1371,11 +1372,28 @@
         tryActivateHideMode();
     }
 
+    // Show a brief on-screen hint telling the user they may need to allow pop-ups,
+    // then attempt to activate hide mode. This is an in-page message (not an alert).
+    function showPopupAllowHint(timeout = 1800) {
+        const hint = document.getElementById('popup-allow-hint');
+        if (!hint) return tryActivateHideMode();
+        hint.style.display = 'flex';
+        // Ensure it's centered and visible
+        hint.style.opacity = '1';
+        // After the timeout, hide the hint and try to open hide mode
+        setTimeout(() => {
+            hint.style.display = 'none';
+            tryActivateHideMode();
+        }, timeout);
+    }
+
     function onHideModeChange() {
         hideModeEnabled = document.getElementById('hideModeToggle').checked;
         localStorage.setItem('apricity-hide-mode', hideModeEnabled ? '1' : '0');
         if (hideModeEnabled) {
             updateHideStatusBadge(false);
+            // Show an on-screen hint before attempting to open the popup/tab
+            showPopupAllowHint();
         } else {
             hideApplied = false;
             updateHideStatusBadge(false);

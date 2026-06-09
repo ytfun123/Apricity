@@ -1,2 +1,3 @@
-This is a web proxy. It uses a simple backend made in Swift.
-This Can Be Used For only Your Own Purposes We Can Not Be Take in Charge over your uses.
+This is a web proxy. It uses a simple backend.
+This software comes with ABSOLUTELY NO WARRANTY, and we do not take responsibility for your uses of it.
+Feel free to make contributions and forks.
