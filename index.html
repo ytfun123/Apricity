@@ -1352,23 +1352,28 @@
             // Small delay so the popup has time to initialize before changing its location.
             setTimeout(() => {
                 try {
-                    popup.location.href = window.location.href;
+                    // Inject a fullscreen iframe into the about:blank popup that loads this page.
+                    // about:blank opened by script is same-origin, so we can write into it.
+                    const doc = popup.document;
+                    try {
+                        doc.open();
+                        const title = (document.title || 'Apricity').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const src = String(window.location.href).replace(/"/g, '&quot;');
+                        doc.write('<!doctype html><html><head><meta charset="utf-8"><title>' + title + '</title><meta name="viewport" content="width=device-width,initial-scale=1">');
+                        doc.write('<style>html,body{height:100%;margin:0}iframe{position:fixed;inset:0;width:100%;height:100%;border:0}</style>');
+                        doc.write('</head><body><iframe src="' + src + '" allowfullscreen></iframe></body></html>');
+                        doc.close();
+                    } catch (writeErr) {
+                        // If writing fails, fall back to navigating the popup.
+                        try { popup.location = window.location.href; } catch (e2) {}
+                    }
                     popup.focus && popup.focus();
-                    // After we've pointed the popup at this site, replace the original tab
-                    // with Google Canada so the current tab no longer shows Apricity.
-                    try {
-                        window.location.replace('https://www.google.ca');
-                    } catch (e) {
-                        // ignore
-                    }
+                    // After injecting the iframe, replace the original tab with Google Canada.
+                    try { window.location.replace('https://www.google.ca'); } catch (e) {}
                 } catch (e) {
-                    // In some browsers changing location on a cross-origin window can throw; fall back.
-                    popup.location = window.location.href;
-                    try {
-                        window.location.replace('https://www.google.ca');
-                    } catch (e2) {
-                        // ignore
-                    }
+                    // General fallback: try navigating the popup, then replace current tab.
+                    try { popup.location = window.location.href; } catch (e2) {}
+                    try { window.location.replace('https://www.google.ca'); } catch (e3) {}
                 }
             }, 300);
         }
