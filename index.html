@@ -258,11 +258,6 @@
 
         .page { display: none; }
         .page.active { display: block; }
-        .page.slide-in { animation: slideDown 0.35s cubic-bezier(0.4,0,0.2,1) both; }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-40px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
 
         #home-page {
             display: flex; flex-direction: column;
@@ -1290,12 +1285,8 @@
 
     // ===== NAVIGATION =====
     function showYouTube() {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active', 'slide-in'));
-        const yt = document.getElementById('youtube-page');
-        yt.classList.add('active');
-        // Trigger reflow so animation fires fresh each time
-        void yt.offsetWidth;
-        yt.classList.add('slide-in');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('youtube-page').classList.add('active');
     }
     function showHome() {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
