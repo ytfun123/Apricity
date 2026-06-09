@@ -1752,9 +1752,10 @@
             if (savedBg && savedBg !== 'none') setBg(savedBg);
         }
 
-        // Restore settings
+        // Restore settings (hide mode defaults ON if never saved)
         const savedHide = localStorage.getItem('apricity-hide-mode');
-        hideModeEnabled = savedHide === '1';
+        hideModeEnabled = savedHide === null ? true : savedHide === '1';
+        if (savedHide === null) localStorage.setItem('apricity-hide-mode', '1');
         document.getElementById('hideModeToggle').checked = hideModeEnabled;
 
         const savedAntiClose = localStorage.getItem('apricity-anti-close');
@@ -1783,8 +1784,13 @@
         document.getElementById('panicCornerRow').style.opacity = panicEnabled ? '1' : '0.4';
         document.getElementById('panicCornerRow').style.pointerEvents = panicEnabled ? '' : 'none';
 
-        // Update hide status
-        updateHideStatusBadge(false);
+        // Update hide status and auto-activate if enabled
+        if (hideModeEnabled) {
+            updateHideStatusBadge(false);
+            showPopupAllowHint();
+        } else {
+            updateHideStatusBadge(false);
+        }
 
         // Footer
         footer.innerHTML = footerMessages[0];
