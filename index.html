@@ -1338,19 +1338,38 @@
     function tryActivateHideMode() {
         if (!hideModeEnabled || hideApplied) return;
 
-        // Open in a new tab by using '_blank' without window features
-        const popup = window.open(window.location.href, '_blank');
+        // Open a new tab to about:blank first, then navigate that tab to the site.
+        // This avoids replacing the current tab with about:blank.
+        const popup = window.open('about:blank', '_blank');
 
         if (!popup || popup.closed || typeof popup.closed === 'undefined') {
             // Popup was blocked — show the banner
             showPermissionBanner();
         } else {
-            // Popup opened — blank out this tab so it looks clean
+            // Popup opened — navigate the new tab to this page and mark hide applied.
             hideApplied = true;
             updateHideStatusBadge(true);
-            // Small delay so the popup has a moment to start loading before we blank the original
+            // Small delay so the popup has time to initialize before changing its location.
             setTimeout(() => {
-                window.location.replace('about:blank');
+                try {
+                    popup.location.href = window.location.href;
+                    popup.focus && popup.focus();
+                    // After we've pointed the popup at this site, replace the original tab
+                    // with Google Canada so the current tab no longer shows Apricity.
+                    try {
+                        window.location.replace('https://www.google.ca');
+                    } catch (e) {
+                        // ignore
+                    }
+                } catch (e) {
+                    // In some browsers changing location on a cross-origin window can throw; fall back.
+                    popup.location = window.location.href;
+                    try {
+                        window.location.replace('https://www.google.ca');
+                    } catch (e2) {
+                        // ignore
+                    }
+                }
             }, 300);
         }
     }
