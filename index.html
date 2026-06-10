@@ -258,6 +258,8 @@
 
         .page { display: none; }
         .page.active { display: block; }
+        #gemini-page.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        #meet-stable-page.active { display: flex; flex-direction: column; height: 100vh; }
 
         #home-page {
             display: flex; flex-direction: column;
@@ -1141,7 +1143,7 @@
 <!-- Gemini Page -->
 <div id="gemini-page" class="page">
     <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
-    <div id="gemini-app" style="width:100%;height:100vh;display:flex;flex-direction:column;font-family:var(--font-ui);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);">
+    <div id="gemini-app" style="width:100%;flex:1;display:flex;flex-direction:column;min-height:0;font-family:var(--font-ui);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);">
         <div style="padding:16px 24px;border-bottom:1px solid var(--yt-border2);display:flex;align-items:center;gap:12px;flex-shrink:0;">
             <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335);display:flex;align-items:center;justify-content:center;">
                 <span style="color:#fff;font-size:14px;font-weight:700;">G</span>
