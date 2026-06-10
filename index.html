@@ -2049,10 +2049,9 @@
 
     // ===== INIT =====
     window.onload = () => {
-        // Pre-load Gemini key if not already saved
-        if (!localStorage.getItem('apricity-gemini-key')) {
-            localStorage.setItem('apricity-gemini-key', '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');
-        }
+        // Always force latest key
+        localStorage.setItem('apricity-gemini-key', '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');
+        console.log('[Apricity] Gemini key set:', localStorage.getItem('apricity-gemini-key').substring(0,20) + '...');
 
         // Restore theme
         const savedTheme = localStorage.getItem('apricity-theme-choice');
