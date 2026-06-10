@@ -1142,32 +1142,96 @@
 
 <!-- Gemini Page -->
 <div id="gemini-page" class="page">
-    <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
-    <div id="gemini-app" style="width:100%;flex:1;display:flex;flex-direction:column;min-height:0;font-family:var(--font-ui);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);">
-        <div style="padding:16px 24px;border-bottom:1px solid var(--yt-border2);display:flex;align-items:center;gap:12px;flex-shrink:0;">
-            <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335);display:flex;align-items:center;justify-content:center;">
-                <span style="color:#fff;font-size:14px;font-weight:700;">G</span>
-            </div>
-            <span style="font-size:18px;font-weight:700;color:var(--md-sys-color-primary);">Gemini AI</span>
-            <button onclick="openGeminiSettings()" style="margin-left:auto;background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:100px;padding:6px 14px;cursor:pointer;font-family:var(--font-ui);font-size:13px;color:var(--md-sys-color-on-surface);">&#9881; API Key</button>
+    <style>
+        #gemini-page.active {
+            display: flex !important;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0; left: 0;
+            background: var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            font-family: var(--font-ui);
+            z-index: 10;
+            overflow: hidden;
+        }
+        #gemini-topbar {
+            display: flex; align-items: center; gap: 12px;
+            padding: 0 24px; height: 64px;
+            border-bottom: 1px solid var(--yt-border2);
+            background: var(--md-sys-color-surface);
+            flex-shrink: 0;
+        }
+        #gemini-setup-screen {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 16px; padding: 24px;
+        }
+        #gemini-chat-screen {
+            flex: 1; display: none; flex-direction: column;
+            min-height: 0; overflow: hidden;
+        }
+        #gemini-messages {
+            flex: 1; overflow-y: auto;
+            padding: 20px 24px;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        #gemini-input-row {
+            padding: 16px 24px;
+            border-top: 1px solid var(--yt-border2);
+            display: flex; gap: 10px; align-items: flex-end;
+            flex-shrink: 0;
+        }
+        #geminiInput {
+            flex: 1; padding: 12px 16px; border-radius: 20px;
+            border: 1px solid var(--yt-border2);
+            background: var(--md-sys-color-surface-container-low);
+            color: var(--md-sys-color-on-surface);
+            font-family: var(--font-ui); font-size: 14px;
+            outline: none; resize: none;
+            max-height: 140px; overflow-y: auto; line-height: 1.5;
+        }
+        #geminiSendBtn {
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            border: none; border-radius: 50%;
+            width: 44px; height: 44px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        #geminiKeyInput {
+            flex: 1; padding: 12px 16px; border-radius: 16px;
+            border: 1px solid var(--yt-border2);
+            background: var(--md-sys-color-surface-container-low);
+            color: var(--md-sys-color-on-surface);
+            font-family: var(--font-ui); font-size: 14px; outline: none;
+        }
+    </style>
+    <div id="gemini-topbar">
+        <button class="sunlit-back" onclick="showHome()" style="position:relative;top:auto;left:auto;">&#8592; Back</button>
+        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span style="color:#fff;font-size:12px;font-weight:700;">G</span>
         </div>
-        <div id="gemini-setup" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;">
-            <div style="font-size:48px;">&#10024;</div>
-            <div style="font-size:20px;font-weight:600;">Set your Gemini API Key</div>
-            <div style="color:var(--md-sys-color-outline);font-size:14px;text-align:center;max-width:340px;">Paste your Google AI Studio key below to start chatting. It's saved locally in your browser.</div>
-            <div style="display:flex;gap:8px;width:100%;max-width:420px;">
-                <input type="password" id="geminiKeyInput" placeholder="AIza..." value="AQ.Ab8RN6IJUqc7clhzFxJV0oh7qc9wu4lrSby0dngdC4qeJnPeGw" style="flex:1;padding:12px 16px;border-radius:16px;border:1px solid var(--yt-border2);background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface);font-family:var(--font-ui);font-size:14px;outline:none;" />
-                <button onclick="saveGeminiKey()" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);border:none;border-radius:16px;padding:12px 20px;cursor:pointer;font-family:var(--font-ui);font-weight:600;font-size:14px;">Save</button>
-            </div>
+        <span style="font-size:17px;font-weight:700;color:var(--md-sys-color-primary);">Gemini AI</span>
+        <button onclick="openGeminiSettings()" style="margin-left:auto;background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:100px;padding:6px 14px;cursor:pointer;font-family:var(--font-ui);font-size:13px;color:var(--md-sys-color-on-surface);">&#9881; API Key</button>
+    </div>
+    <div id="gemini-setup-screen">
+        <div style="font-size:48px;">&#10024;</div>
+        <div style="font-size:20px;font-weight:600;">Set your Gemini API Key</div>
+        <div style="color:var(--md-sys-color-outline);font-size:14px;text-align:center;max-width:340px;">Paste your Google AI Studio key below to start chatting. Saved locally in your browser.</div>
+        <div style="display:flex;gap:8px;width:100%;max-width:420px;">
+            <input type="password" id="geminiKeyInput" placeholder="AIza..." value="AQ.Ab8RN6IJUqc7clhzFxJV0oh7qc9wu4lrSby0dngdC4qeJnPeGw" />
+            <button onclick="saveGeminiKey()" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);border:none;border-radius:16px;padding:12px 20px;cursor:pointer;font-family:var(--font-ui);font-weight:600;font-size:14px;">Save</button>
         </div>
-        <div id="gemini-chat" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
-            <div id="gemini-messages" style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:12px;"></div>
-            <div style="padding:16px 24px;border-top:1px solid var(--yt-border2);display:flex;gap:10px;align-items:flex-end;">
-                <textarea id="geminiInput" placeholder="Message Gemini&#8230;" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendGemini();}" style="flex:1;padding:12px 16px;border-radius:20px;border:1px solid var(--yt-border2);background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface);font-family:var(--font-ui);font-size:14px;outline:none;resize:none;max-height:140px;overflow-y:auto;line-height:1.5;"></textarea>
-                <button onclick="sendGemini()" id="geminiSendBtn" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);border:none;border-radius:50%;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <span class="material-symbols-outlined" style="font-size:20px;">send</span>
-                </button>
-            </div>
+    </div>
+    <div id="gemini-chat-screen">
+        <div id="gemini-messages"></div>
+        <div id="gemini-input-row">
+            <textarea id="geminiInput" placeholder="Message Gemini..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendGemini();}"></textarea>
+            <button id="geminiSendBtn" onclick="sendGemini()">
+                <span class="material-symbols-outlined" style="font-size:20px;">send</span>
+            </button>
         </div>
     </div>
 </div>
@@ -1789,17 +1853,17 @@
         document.getElementById('gemini-page').classList.add('active');
         const key = localStorage.getItem('apricity-gemini-key');
         if (key) {
-            document.getElementById('gemini-setup').style.display = 'none';
-            document.getElementById('gemini-chat').style.display = 'flex';
+            document.getElementById('gemini-setup-screen').style.display = 'none';
+            document.getElementById('gemini-chat-screen').style.display = 'flex';
         } else {
-            document.getElementById('gemini-setup').style.display = 'flex';
-            document.getElementById('gemini-chat').style.display = 'none';
+            document.getElementById('gemini-setup-screen').style.display = 'flex';
+            document.getElementById('gemini-chat-screen').style.display = 'none';
         }
     }
 
     function openGeminiSettings() {
-        document.getElementById('gemini-setup').style.display = 'flex';
-        document.getElementById('gemini-chat').style.display = 'none';
+        document.getElementById('gemini-setup-screen').style.display = 'flex';
+        document.getElementById('gemini-chat-screen').style.display = 'none';
         const key = localStorage.getItem('apricity-gemini-key');
         if (key) document.getElementById('geminiKeyInput').value = key;
     }
@@ -1808,8 +1872,8 @@
         const val = document.getElementById('geminiKeyInput').value.trim();
         if (!val) return;
         localStorage.setItem('apricity-gemini-key', val);
-        document.getElementById('gemini-setup').style.display = 'none';
-        document.getElementById('gemini-chat').style.display = 'flex';
+        document.getElementById('gemini-setup-screen').style.display = 'none';
+        document.getElementById('gemini-chat-screen').style.display = 'flex';
         geminiHistory = [];
         document.getElementById('gemini-messages').innerHTML = '';
         appendGeminiMsg('model', 'Hi! I\'m Gemini. How can I help you today?');
