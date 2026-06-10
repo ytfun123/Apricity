@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apricity</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --md-sys-color-primary: #8B5000;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #FFDCC0;
+            --md-sys-color-on-primary-container: #2D1600;
+            --md-sys-color-surface: #FFFBFF;
+            --md-sys-color-on-surface: #201A17;
+            --md-sys-color-on-surface-variant: #51443D;
+            --md-sys-color-outline: #85736B;
+            --md-sys-color-surface-container-low: #F8EEE8;
+            --md-sys-color-surface-container: #F2E8E2;
+            --md-sys-color-surface-container-high: #ECE2DC;
+            --md-sys-color-surface-container-highest: #E6DCD6;
+            --font-ui: 'Outfit', sans-serif;
+            --font-logo: 'Great Vibes', cursive;
+            --yt-surface: color-mix(in srgb, var(--md-sys-color-surface) 95%, var(--md-sys-color-primary) 5%);
+            --yt-surface2: color-mix(in srgb, var(--md-sys-color-primary-container) 30%, var(--md-sys-color-surface) 70%);
+            --yt-border: color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent 80%);
+            --yt-border2: color-mix(in srgb, var(--md-sys-color-outline) 35%, transparent 65%);
+            --yt-muted: var(--md-sys-color-outline);
+            --bg-overlay: transparent;
+        }
+
+        [data-theme="orange-dark"] {
+            --md-sys-color-primary: #FFB870;
+            --md-sys-color-on-primary: #4A2800;
+            --md-sys-color-primary-container: #693C00;
+            --md-sys-color-on-primary-container: #FFDCC0;
+            --md-sys-color-surface: #201A17;
+            --md-sys-color-on-surface: #ECE0DA;
+            --md-sys-color-on-surface-variant: #D7C2B8;
+            --md-sys-color-outline: #9F8D84;
+            --md-sys-color-surface-container-low: #2C2420;
+            --md-sys-color-surface-container: #332A26;
+            --md-sys-color-surface-container-high: #3E312C;
+            --md-sys-color-surface-container-highest: #493A34;
+        }
+        [data-theme="blue-light"] {
+            --md-sys-color-primary: #0061A4;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #D1E4FF;
+            --md-sys-color-on-primary-container: #001D36;
+            --md-sys-color-surface: #FDFCFF;
+            --md-sys-color-on-surface: #1A1C1E;
+            --md-sys-color-on-surface-variant: #42474E;
+            --md-sys-color-outline: #73777F;
+            --md-sys-color-surface-container-low: #F4F3F7;
+            --md-sys-color-surface-container: #EEF0F4;
+            --md-sys-color-surface-container-high: #E8EAEE;
+            --md-sys-color-surface-container-highest: #E2E2E6;
+        }
+        [data-theme="blue-dark"] {
+            --md-sys-color-primary: #A4C9FE;
+            --md-sys-color-on-primary: #003258;
+            --md-sys-color-primary-container: #00497E;
+            --md-sys-color-on-primary-container: #D1E4FF;
+            --md-sys-color-surface: #1A1C1E;
+            --md-sys-color-on-surface: #E2E2E6;
+            --md-sys-color-on-surface-variant: #C3C7CF;
+            --md-sys-color-outline: #8D9199;
+            --md-sys-color-surface-container-low: #222528;
+            --md-sys-color-surface-container: #282A2D;
+            --md-sys-color-surface-container-high: #323538;
+            --md-sys-color-surface-container-highest: #3D4043;
+        }
+        [data-theme="green-light"] {
+            --md-sys-color-primary: #006D3A;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #98F7B5;
+            --md-sys-color-on-primary-container: #00210E;
+            --md-sys-color-surface: #FBFDF8;
+            --md-sys-color-on-surface: #1A1C19;
+            --md-sys-color-on-surface-variant: #414941;
+            --md-sys-color-outline: #72796F;
+            --md-sys-color-surface-container-low: #F1F4EE;
+            --md-sys-color-surface-container: #EBEEE8;
+            --md-sys-color-surface-container-high: #E5E9E2;
+            --md-sys-color-surface-container-highest: #DFE3DC;
+        }
+        [data-theme="green-dark"] {
+            --md-sys-color-primary: #7CDB96;
+            --md-sys-color-on-primary: #00391C;
+            --md-sys-color-primary-container: #00522A;
+            --md-sys-color-on-primary-container: #98F7B5;
+            --md-sys-color-surface: #191C1A;
+            --md-sys-color-on-surface: #E1E3DF;
+            --md-sys-color-on-surface-variant: #C1C9BE;
+            --md-sys-color-outline: #8C9389;
+            --md-sys-color-surface-container-low: #202521;
+            --md-sys-color-surface-container: #252B27;
+            --md-sys-color-surface-container-high: #303630;
+            --md-sys-color-surface-container-highest: #3A413A;
+        }
+        [data-theme="lavender-light"] {
+            --md-sys-color-primary: #6750A4;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #EADDFF;
+            --md-sys-color-on-primary-container: #21005D;
+            --md-sys-color-surface: #FFFBFE;
+            --md-sys-color-on-surface: #1C1B1F;
+            --md-sys-color-on-surface-variant: #49454F;
+            --md-sys-color-outline: #79747E;
+            --md-sys-color-surface-container-low: #F7F2FA;
+            --md-sys-color-surface-container: #F3EDF7;
+            --md-sys-color-surface-container-high: #ECE6F0;
+            --md-sys-color-surface-container-highest: #E6E0E9;
+        }
+        [data-theme="lavender-dark"] {
+            --md-sys-color-primary: #D0BCFF;
+            --md-sys-color-on-primary: #381E72;
+            --md-sys-color-primary-container: #4F378B;
+            --md-sys-color-on-primary-container: #EADDFF;
+            --md-sys-color-surface: #1C1B1F;
+            --md-sys-color-on-surface: #E6E1E5;
+            --md-sys-color-on-surface-variant: #CAC4D0;
+            --md-sys-color-outline: #938F99;
+            --md-sys-color-surface-container-low: #211F26;
+            --md-sys-color-surface-container: #2B2930;
+            --md-sys-color-surface-container-high: #36343B;
+            --md-sys-color-surface-container-highest: #444249;
+        }
+        [data-theme="amoled"] {
+            --md-sys-color-primary: #FFFFFF;
+            --md-sys-color-on-primary: #000000;
+            --md-sys-color-primary-container: #333333;
+            --md-sys-color-on-primary-container: #FFFFFF;
+            --md-sys-color-surface: #000000;
+            --md-sys-color-on-surface: #FFFFFF;
+            --md-sys-color-on-surface-variant: #D0D0D0;
+            --md-sys-color-outline: #444444;
+            --md-sys-color-surface-container-low: #080808;
+            --md-sys-color-surface-container: #101010;
+            --md-sys-color-surface-container-high: #181818;
+            --md-sys-color-surface-container-highest: #242424;
+        }
+        [data-theme="amoled-inverted"] {
+            --md-sys-color-primary: #000000;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #E8E8E8;
+            --md-sys-color-on-primary-container: #000000;
+            --md-sys-color-surface: #FFFFFF;
+            --md-sys-color-on-surface: #000000;
+            --md-sys-color-on-surface-variant: #454545;
+            --md-sys-color-outline: #8A8A8A;
+            --md-sys-color-surface-container-low: #F7F7F7;
+            --md-sys-color-surface-container: #EFEFEF;
+            --md-sys-color-surface-container-high: #E8E8E8;
+            --md-sys-color-surface-container-highest: #DEDEDE;
+        }
+
+        body {
+            font-family: var(--font-ui);
+            background-color: var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        #bg-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        #bg-layer.bg-none { opacity: 0; }
+        #bg-layer.bg-active { opacity: 1; }
+
+        body.has-bg::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.06), transparent 36%),
+                rgba(0, 0, 0, 0.18);
+        }
+
+        #home-page, #sunlit-page, #youtube-page, #hollow-knight-page, #snow-rider-page, .settings-trigger, .modal-overlay, .apps-overlay {
+            position: relative;
+            z-index: 1;
+        }
+
+        body.has-bg #home-page .main-content {
+            background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 92%, transparent);
+            color: var(--md-sys-color-on-surface);
+            backdrop-filter: blur(18px) saturate(1.12);
+            -webkit-backdrop-filter: blur(18px) saturate(1.12);
+            border-radius: 28px;
+            padding: 40px 40px 32px;
+            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 28%, transparent);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+        }
+
+        body.has-bg #home-page .logo,
+        body.has-bg #home-page .search-icon {
+            color: var(--md-sys-color-primary);
+            text-shadow: none;
+        }
+
+        body.has-bg #home-page .search-bar {
+            background: var(--md-sys-color-surface-container-low);
+            border-color: color-mix(in srgb, var(--md-sys-color-outline) 54%, transparent);
+            color: var(--md-sys-color-on-surface);
+        }
+
+        body.has-bg #home-page .search-bar::placeholder {
+            color: var(--md-sys-color-on-surface-variant);
+            opacity: 0.78;
+        }
+
+        body.has-bg #home-page .search-bar:focus {
+            border-color: var(--md-sys-color-primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+        }
+
+        body.has-bg #home-page .home-btn:not(.home-btn-youtube) {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 22%, transparent);
+        }
+
+        body.has-bg #home-page .home-btn:not(.home-btn-youtube):hover {
+            background: color-mix(in srgb, var(--md-sys-color-primary-container) 84%, var(--md-sys-color-primary) 16%);
+            opacity: 1;
+        }
+
+        body.has-bg .icon-btn {
+            background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 90%, transparent);
+            color: var(--md-sys-color-primary);
+            border-color: color-mix(in srgb, var(--md-sys-color-outline) 25%, transparent);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+        }
+
+        body.has-bg .icon-btn:hover {
+            background: var(--md-sys-color-primary-container);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--yt-border2); border-radius: 3px; }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        #home-page {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100vh; overflow: hidden; position: relative;
+        }
+        #home-page.active { display: flex; }
+
+        .topbar-icons {
+            position: fixed; top: 16px; right: 16px;
+            display: flex; gap: 6px; z-index: 50;
+        }
+        .icon-btn {
+            cursor: pointer; width: 44px; height: 44px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+            color: var(--md-sys-color-primary);
+            background: var(--md-sys-color-surface-container-high);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--yt-border2);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+        }
+        .icon-btn:hover { background: var(--md-sys-color-primary-container); }
+        .icon-btn:active { transform: scale(0.96); }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.42);
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal {
+            background: var(--md-sys-color-surface-container-high);
+            color: var(--md-sys-color-on-surface);
+            padding: 24px; border-radius: 28px;
+            width: 380px; max-height: 85vh;
+            border: 1px solid var(--yt-border2);
+            box-shadow: 0 18px 48px rgba(0,0,0,0.24);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        .modal-tabs {
+            display: flex; gap: 4px; margin: 14px 0 6px;
+            background: var(--yt-surface2);
+            border-radius: 100px; padding: 3px;
+        }
+        .modal-tab {
+            flex: 1; padding: 8px; border-radius: 100px;
+            border: none; background: transparent;
+            color: var(--md-sys-color-outline);
+            font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .modal-tab.active {
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+        }
+        .modal-tab-content { display: none; overflow-y: auto; flex: 1; padding-right: 4px; }
+        .modal-tab-content.active { display: block; }
+
+        .theme-list { overflow-y: auto; padding-right: 4px; }
+        .theme-option {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px; margin: 3px 0;
+            cursor: pointer; border-radius: 14px;
+            color: var(--md-sys-color-on-surface);
+            transition: background 0.2s; font-weight: 500; font-size: 14px;
+        }
+        .theme-option:hover { background: var(--md-sys-color-primary-container); }
+        .color-preview { width: 26px; height: 26px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; }
+
+        .bg-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; padding: 4px 0;
+        }
+        .bg-option {
+            border-radius: 14px; overflow: hidden;
+            cursor: pointer; border: 2px solid transparent;
+            transition: border-color 0.2s, transform 0.15s;
+            aspect-ratio: 16/10;
+            position: relative;
+        }
+        .bg-option:hover { transform: scale(1.03); }
+        .bg-option.selected { border-color: var(--md-sys-color-primary); }
+        .bg-option-inner {
+            width: 100%; height: 100%;
+            display: flex; align-items: flex-end;
+            padding: 8px;
+        }
+        .bg-option-label {
+            font-size: 11px; font-weight: 600;
+            color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.35); padding: 3px 7px; border-radius: 6px;
+        }
+        .bg-none-opt {
+            background: repeating-conic-gradient(var(--yt-surface2) 0% 25%, var(--md-sys-color-surface) 0% 50%) 0 0 / 14px 14px;
+        }
+        .bg-1  { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+        .bg-2  { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460, #533483); }
+        .bg-3  { background: linear-gradient(135deg, #0d1117, #1f4037, #99f2c8); }
+        .bg-4  { background: linear-gradient(160deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3); }
+        .bg-5  { background: radial-gradient(ellipse at top, #1a0533 0%, #0d0d0d 60%); }
+        .bg-6  { background: linear-gradient(135deg, #005c97, #363795); }
+        .bg-7  { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%); background-image: radial-gradient(circle at 20% 50%, rgba(255,165,0,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,100,0,0.08) 0%, transparent 40%), linear-gradient(135deg, #0a0a0a, #1a1a1a); }
+        .bg-8  { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .bg-9  { background: conic-gradient(from 180deg at 50% 50%, #f3e7e9 0deg, #e3eeff 120deg, #f3e7e9 240deg, #e3eeff 360deg); }
+        .bg-10 { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .bg-11 { background: linear-gradient(160deg, #2c3e50, #fd746c); }
+        .bg-12 { background: repeating-linear-gradient(45deg, #0a0a0a 0px, #0a0a0a 2px, #111 2px, #111 12px); }
+        .bg-13 { background: url('./bg13.png') center/cover no-repeat; }
+        .bg-14 { background: url('./bg14.png') center/cover no-repeat; }
+        .bg-15 { background: url('./bg15.png') center/cover no-repeat; }
+        .bg-16 { background: url('./bg16.png') center/cover no-repeat; }
+        .bg-17 { background: url('./bg17.png') center/cover no-repeat; }
+
+        .bg-custom-row {
+            margin-top: 12px;
+            border-top: 1px solid var(--yt-border2);
+            padding-top: 12px;
+        }
+        .bg-custom-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--yt-border2);
+            background: var(--md-sys-color-surface-container-low);
+            color: var(--md-sys-color-on-surface);
+            font-family: var(--font-ui); font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-top: 6px;
+        }
+        .bg-custom-input:focus { border-color: var(--md-sys-color-primary); }
+        .field-label-sm {
+            font-size: 11px; color: var(--md-sys-color-on-surface-variant);
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+        }
+
+        .settings-section { margin: 12px 0; }
+        .settings-section-title {
+            font-size: 11px; color: var(--md-sys-color-on-surface-variant);
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+            margin-bottom: 8px; padding-bottom: 4px;
+            border-bottom: 1px solid var(--yt-border2);
+        }
+        .setting-row {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 14px; padding: 10px 2px;
+            border-bottom: 1px solid var(--yt-border);
+        }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-info { flex: 1; }
+        .setting-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+        .setting-desc { font-size: 12px; color: var(--md-sys-color-on-surface-variant); line-height: 1.4; }
+
+        .toggle-switch {
+            position: relative; width: 44px; height: 24px;
+            flex-shrink: 0; margin-top: 2px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; cursor: pointer;
+            inset: 0; border-radius: 24px;
+            background: var(--md-sys-color-surface-container-highest);
+            border: 1px solid var(--md-sys-color-outline);
+            transition: background 0.3s;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: var(--md-sys-color-outline); left: 3px; bottom: 3px;
+            transition: transform 0.3s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: var(--md-sys-color-primary); }
+        .toggle-switch input:checked + .toggle-slider::before { background: var(--md-sys-color-on-primary); }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+        .hide-status {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 11px; font-weight: 600; padding: 3px 8px;
+            border-radius: 100px; margin-top: 4px;
+        }
+        .hide-status.active { background: color-mix(in srgb, #4caf50 15%, transparent); color: #4caf50; }
+        .hide-status.inactive { background: color-mix(in srgb, var(--md-sys-color-outline) 15%, transparent); color: var(--md-sys-color-outline); }
+        .hide-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+        .main-content {
+            width: 100%; max-width: 600px;
+            display: flex; flex-direction: column;
+            align-items: center; text-align: center; padding: 0 20px;
+            transition: all 0.4s ease;
+        }
+        .logo {
+            font-family: var(--font-logo);
+            font-size: 6.5rem;
+            color: var(--md-sys-color-primary);
+            margin-bottom: 10px;
+            user-select: none;
+            transition: color 0.4s;
+        }
+        .search-container { position: relative; width: 100%; margin-bottom: 30px; }
+        .search-bar {
+            width: 100%; padding: 20px 24px 20px 64px;
+            font-size: 1.1rem; font-family: var(--font-ui);
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: 32px; background: var(--md-sys-color-surface-container-low);
+            color: var(--md-sys-color-on-surface); outline: none;
+            transition: all 0.3s;
+        }
+        .search-bar::placeholder { color: var(--md-sys-color-on-surface-variant); opacity: 0.72; }
+        .search-bar:focus {
+            border-color: var(--md-sys-color-primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+        }
+        .search-icon {
+            position: absolute; left: 24px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--md-sys-color-primary);
+        }
+        .btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+        .home-btn {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border: 1px solid var(--yt-border2); padding: 12px 28px; border-radius: 100px;
+            cursor: pointer; font-family: var(--font-ui); font-weight: 600; font-size: 15px;
+            transition: transform 0.1s, opacity 0.2s, background 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .home-btn:active { transform: scale(0.95); }
+        .home-btn:hover { opacity: 0.85; }
+        .home-btn-primary {
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+        }
+        .home-btn-youtube { background: #FF0000; color: #FFFFFF; }
+        .home-btn-youtube:hover { opacity: 0.88; }
+
+        footer {
+            position: absolute; bottom: 20px;
+            font-size: 0.85rem; opacity: 0.7;
+            text-align: center; min-height: 24px;
+            transition: opacity 0.6s ease-in-out;
+        }
+
+        .apps-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.42);
+            justify-content: center; align-items: center; z-index: 200;
+        }
+        .apps-panel {
+            background: var(--md-sys-color-surface-container-high);
+            color: var(--md-sys-color-on-surface);
+            padding: 24px; border-radius: 28px;
+            width: 380px;
+            border: 1px solid var(--yt-border2);
+            box-shadow: 0 18px 48px rgba(0,0,0,0.24);
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .apps-panel h2 { margin: 0 0 8px 0; font-weight: 600; }
+        .app-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 16px; border-radius: 16px;
+            color: var(--md-sys-color-on-surface);
+            cursor: pointer; transition: background 0.2s; font-weight: 500;
+        }
+        .app-item:hover { background: var(--md-sys-color-primary-container); }
+        .app-icon {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .apps-close-btn {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border: 1px solid var(--yt-border2); padding: 12px; border-radius: 100px;
+            cursor: pointer; font-family: var(--font-ui); font-weight: 500;
+            margin-top: 8px; width: 100%;
+        }
+
+        #sunlit-page { width: 100%; height: 100vh; }
+        #sunlit-page iframe { width: 100%; height: 100%; border: none; display: block; }
+        #hollow-knight-page, #snow-rider-page { width: 100%; height: 100vh; }
+        #hollow-knight-page iframe, #snow-rider-page iframe { width: 100%; height: 100%; border: none; display: block; }
+        .sunlit-back {
+            position: fixed; top: 12px; left: 12px; z-index: 9999;
+            background: rgba(0,0,0,0.65); color: #fff;
+            border: none; padding: 8px 18px; border-radius: 100px;
+            cursor: pointer; font-size: 14px; font-weight: 500;
+            backdrop-filter: blur(8px); transition: background 0.2s;
+        }
+
+        #youtube-page.active { display: flex; }
+        #youtube-page { min-height: 100vh; flex-direction: column; }
+
+        .yt-topbar {
+            display: flex; align-items: center; gap: 0;
+            background: var(--md-sys-color-surface);
+            border-bottom: 1px solid var(--yt-border2);
+            padding: 0 24px;
+            height: 64px;
+            position: sticky; top: 0; z-index: 40;
+            flex-shrink: 0;
+        }
+        .yt-topbar-menu {
+            background: none; border: none;
+            color: var(--md-sys-color-on-surface);
+            cursor: pointer;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 16px;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .yt-topbar-menu:hover { background: color-mix(in srgb, var(--md-sys-color-outline) 15%, transparent); }
+
+        .yt-topbar-back {
+            display: flex; align-items: center; gap: 8px;
+            background: none; border: none;
+            color: var(--md-sys-color-primary);
+            font-family: var(--font-ui); font-weight: 600; font-size: 14px;
+            cursor: pointer; padding: 8px 16px 8px 0;
+            border-right: 1px solid var(--yt-border2);
+            margin-right: 20px;
+            transition: opacity 0.2s;
+        }
+        .yt-topbar-back:hover { opacity: 0.7; }
+        .yt-topbar-logo {
+            font-family: var(--font-logo);
+            font-size: 2rem;
+            color: var(--md-sys-color-primary);
+            user-select: none;
+            margin-right: 8px;
+        }
+        .yt-topbar-subtitle {
+            font-size: 12px;
+            color: var(--md-sys-color-outline);
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            margin-right: auto;
+        }
+
+        .yt-shell { display: flex; flex: 1; min-height: 0; }
+
+        .yt-sidebar {
+            background: var(--yt-surface);
+            border-right: 1px solid var(--yt-border2);
+            display: flex; flex-direction: column;
+            position: sticky; top: 64px;
+            height: calc(100vh - 64px);
+            overflow: hidden;
+            width: 220px;
+            flex-shrink: 0;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .yt-sidebar.collapsed { width: 72px; }
+
+        .yt-nav { padding: 8px 0; flex: 1; overflow-y: auto; overflow-x: hidden; }
+
+        .yt-nav-section-label {
+            font-size: 10px; text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--md-sys-color-outline);
+            padding: 12px 20px 4px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            opacity: 1;
+            transition: opacity 0.15s, padding 0.25s;
+        }
+        .yt-sidebar.collapsed .yt-nav-section-label {
+            opacity: 0; padding-top: 0; height: 0; padding-bottom: 0;
+        }
+
+        .yt-nav-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 10px 20px;
+            cursor: pointer;
+            color: var(--md-sys-color-outline);
+            font-size: 14px; font-weight: 600;
+            transition: color 0.15s, background 0.15s;
+            border-radius: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            position: relative;
+        }
+        .yt-sidebar.collapsed .yt-nav-item { padding: 10px 0; justify-content: center; gap: 0; }
+        .yt-nav-item:hover { color: var(--md-sys-color-on-surface); background: color-mix(in srgb, var(--md-sys-color-primary) 6%, transparent); }
+        .yt-nav-item.active { color: var(--md-sys-color-primary); background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent); }
+        .yt-nav-item.active::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; border-radius: 0 3px 3px 0; background: var(--md-sys-color-primary); }
+
+        .yt-nav-icon { font-size: 20px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .yt-nav-icon.material-symbols-outlined { font-size: 21px; font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
+        .yt-nav-label { overflow: hidden; opacity: 1; transition: opacity 0.15s; white-space: nowrap; }
+        .yt-sidebar.collapsed .yt-nav-label { opacity: 0; width: 0; pointer-events: none; }
+        .yt-sidebar.collapsed .yt-nav-item:hover::after {
+            content: attr(data-label);
+            position: absolute; left: 76px; top: 50%; transform: translateY(-50%);
+            background: var(--md-sys-color-on-surface); color: var(--md-sys-color-surface);
+            font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 8px;
+            white-space: nowrap; pointer-events: none; z-index: 100;
+        }
+
+        .yt-main { padding: 36px 44px; overflow-y: auto; height: calc(100vh - 64px); flex: 1; min-width: 0; }
+        .yt-page { display: none; animation: fadein 0.2s ease; }
+        .yt-page.active { display: block; }
+        @keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+        .yt-page-header { margin-bottom: 24px; }
+        .yt-page-title { font-size: 24px; font-weight: 700; letter-spacing: 0; }
+        .yt-page-sub { color: var(--md-sys-color-outline); font-size: 14px; margin-top: 4px; }
+
+        .search-row { display: flex; gap: 10px; align-items: flex-start; }
+        .search-row input { flex: 1; }
+
+        .filters-panel { display: none; background: var(--yt-surface); border: 1px solid var(--yt-border2); border-radius: 16px; padding: 16px; margin-top: 10px; }
+        .filters-panel.open { display: block; }
+        .filters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .field-row { display: flex; gap: 10px; align-items: flex-start; }
+        .field-row input { flex: 1; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+
+        .field-label { font-size: 11px; color: var(--md-sys-color-outline); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+
+        #youtube-page input[type=text], #youtube-page input[type=password] {
+            background: transparent; border: 1px solid var(--md-sys-color-outline);
+            border-radius: 32px; color: var(--md-sys-color-on-surface);
+            font-family: var(--font-ui); font-size: 1rem; padding: 12px 20px;
+            outline: none; transition: border-color 0.3s; width: 100%;
+        }
+        #youtube-page input[type=text]:focus, #youtube-page input[type=password]:focus { border-color: var(--md-sys-color-primary); }
+        #youtube-page select, #youtube-page textarea {
+            background: var(--yt-surface2); border: 1px solid var(--yt-border2);
+            border-radius: 12px; color: var(--md-sys-color-on-surface);
+            font-family: var(--font-ui); font-size: 14px; padding: 11px 14px;
+            outline: none; transition: border-color 0.2s;
+        }
+        #youtube-page select:focus, #youtube-page textarea:focus { border-color: var(--md-sys-color-primary); }
+        select { cursor: pointer; }
+        textarea { resize: vertical; font-family: 'Courier New', monospace; font-size: 12px; }
+
+        .yt-btn { background: var(--md-sys-color-primary-container); border: 1px solid var(--yt-border2); border-radius: 100px; color: var(--md-sys-color-on-primary-container); font-family: var(--font-ui); font-size: 13px; font-weight: 600; padding: 10px 20px; cursor: pointer; white-space: nowrap; transition: opacity 0.15s, transform 0.1s; display: inline-flex; align-items: center; gap: 6px; }
+        .yt-btn:hover { opacity: 0.8; }
+        .yt-btn:active { transform: scale(0.97); }
+        .yt-btn-accent { background: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+        .yt-btn-sm { font-size: 12px; padding: 6px 14px; }
+        .yt-btn-filter { background: var(--yt-surface2); border-color: var(--yt-border2); color: var(--md-sys-color-on-surface); }
+        .yt-btn-filter.active-filters { border-color: var(--md-sys-color-primary); color: var(--md-sys-color-primary); }
+
+        .results { margin-top: 20px; }
+        .result-count { font-size: 12px; color: var(--md-sys-color-outline); margin-bottom: 14px; font-family: 'Courier New', monospace; }
+
+        .result-card { display: flex; gap: 14px; padding: 16px; background: var(--yt-surface); border: 1px solid var(--yt-border); border-radius: 16px; margin-bottom: 10px; transition: border-color 0.2s; }
+        .result-card:hover { border-color: var(--md-sys-color-primary); }
+        .result-thumb { width: 132px; height: 74px; border-radius: 10px; object-fit: cover; background: var(--yt-surface2); flex-shrink: 0; }
+        .result-body { flex: 1; min-width: 0; }
+        .result-title { font-size: 14px; font-weight: 600; line-height: 1.4; margin-bottom: 4px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .result-meta { font-size: 12px; color: var(--md-sys-color-outline); }
+        .result-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+
+        .channel-card { background: var(--yt-surface); border: 1px solid var(--yt-border); border-radius: 16px; padding: 20px; margin-bottom: 12px; transition: border-color 0.2s; }
+        .channel-card:hover { border-color: var(--md-sys-color-primary); }
+        .channel-top { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
+        .channel-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: var(--yt-surface2); flex-shrink: 0; }
+        .channel-name { font-size: 17px; font-weight: 700; }
+        .channel-handle { font-size: 13px; color: var(--md-sys-color-outline); }
+
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+        .stat-box { background: var(--yt-surface2); border-radius: 12px; padding: 12px; text-align: center; }
+        .stat-num { font-size: 18px; font-weight: 700; color: var(--md-sys-color-primary); }
+        .stat-lbl { font-size: 11px; color: var(--md-sys-color-outline); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .video-card-detail { background: var(--yt-surface); border: 1px solid var(--yt-border); border-radius: 16px; overflow: hidden; margin-bottom: 12px; }
+        .video-hero { width: 100%; max-height: 320px; object-fit: cover; display: block; }
+        .video-body { padding: 20px; }
+        .video-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+        .video-meta { font-size: 13px; color: var(--md-sys-color-outline); margin-bottom: 16px; }
+        .video-desc { font-size: 13px; color: var(--md-sys-color-outline); line-height: 1.7; margin-top: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .comment-item { padding: 14px 0; border-bottom: 1px solid var(--yt-border); }
+        .comment-author { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+        .comment-text { font-size: 13px; color: var(--md-sys-color-outline); line-height: 1.6; }
+        .comment-likes { font-size: 11px; color: var(--md-sys-color-outline); margin-top: 4px; }
+
+        .code-box { background: var(--yt-surface); border: 1px solid var(--yt-border); border-radius: 12px; padding: 16px; font-family: 'Courier New', monospace; font-size: 12px; color: var(--md-sys-color-outline); overflow-x: auto; white-space: pre; line-height: 1.7; margin: 10px 0 16px; }
+        .code-box .kw { color: var(--md-sys-color-primary); font-weight: 700; }
+        .code-box .str { color: #3ecf8e; }
+        .response-box { background: var(--yt-surface); border: 1px solid var(--yt-border); border-radius: 12px; padding: 16px; font-family: 'Courier New', monospace; font-size: 11px; color: var(--md-sys-color-outline); overflow: auto; max-height: 400px; white-space: pre; line-height: 1.6; margin-top: 14px; }
+
+        .status-msg { font-size: 13px; color: var(--md-sys-color-outline); padding: 20px 0; }
+        .status-msg.err { color: #ff6b6b; }
+
+        .playlist-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--yt-border); font-size: 13px; }
+        .playlist-item:last-child { border-bottom: none; }
+
+        .tag { font-size: 11px; padding: 3px 9px; border-radius: 20px; display: inline-block; }
+        .tag-primary { background: color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent); color: var(--md-sys-color-primary); }
+
+        @media (max-width: 900px) {
+            .yt-shell { grid-template-columns: 1fr; }
+            .yt-sidebar { position: static; height: auto; }
+            .yt-main { padding: 20px 16px; height: auto; }
+        }
+
+        .yt-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
+        .video-card { background: var(--yt-surface); border: 1px solid var(--yt-border); border-radius: 16px; overflow: hidden; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+        .video-card:hover { border-color: var(--md-sys-color-primary); }
+        .video-card img { width: 100%; display: block; }
+        .video-card-body { padding: 12px; }
+        .video-card h3 { font-size: 14px; margin: 0 0 4px 0; color: var(--md-sys-color-on-surface); }
+        .video-card p { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin: 0 0 10px 0; }
+        .video-card-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .vc-btn { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border: 1px solid var(--yt-border2); padding: 7px 14px; border-radius: 100px; cursor: pointer; font-family: var(--font-ui); font-size: 12px; font-weight: 600; transition: opacity 0.2s, transform 0.1s; }
+        .vc-btn:hover { opacity: 0.75; }
+        .vc-btn:active { transform: scale(0.96); }
+        .yt-status { text-align: center; padding: 40px; opacity: 0.6; font-size: 1rem; }
+        #yt-inline-player { margin-top: 16px; }
+
+        /* ===== PANIC BUTTON ===== */
+        #panic-btn {
+            position: fixed;
+            z-index: 99999;
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: #BA1A1A;
+            color: #FFFFFF;
+            border: 1px solid rgba(255,255,255,0.38);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 6px 20px rgba(186,26,26,0.42), 0 2px 6px rgba(0,0,0,0.26);
+            transition: transform 0.12s, box-shadow 0.12s, opacity 0.2s;
+            user-select: none;
+        }
+        #panic-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 26px rgba(186,26,26,0.54), 0 2px 8px rgba(0,0,0,0.28);
+        }
+        #panic-btn:active { transform: scale(0.95); }
+        #panic-btn.hidden { display: none; }
+
+        #panic-btn.corner-tl { top: 16px; left: 16px; }
+        #panic-btn.corner-tr { top: 16px; right: 16px; }
+        #panic-btn.corner-bl { bottom: 16px; left: 16px; }
+        #panic-btn.corner-br { bottom: 16px; right: 16px; }
+
+        /* ===== PANIC OVERLAY — full-screen iframe cover ===== */
+        #panic-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            z-index: 99998;
+            background: #fff;
+        }
+        #panic-overlay.active { display: block; }
+        #panic-iframe {
+            width: 100%; height: 100%;
+            border: none; display: block;
+        }
+        #panic-hint {
+            position: fixed; bottom: 8px; right: 12px;
+            z-index: 100000;
+            font-size: 10px; color: rgba(0,0,0,0.18);
+            font-family: monospace; pointer-events: none;
+            display: none;
+        }
+        #panic-overlay.active ~ #panic-hint { display: block; }
+
+        .corner-picker {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 8px;
+            width: 160px;
+            margin-top: 8px;
+        }
+        .corner-opt {
+            padding: 10px 8px;
+            border-radius: 10px;
+            border: 2px solid var(--yt-border2);
+            background: var(--yt-surface2);
+            cursor: pointer;
+            font-size: 11px; font-weight: 600;
+            text-align: center;
+            color: var(--md-sys-color-outline);
+            transition: all 0.15s;
+            font-family: var(--font-ui);
+        }
+        .corner-opt:hover { border-color: var(--md-sys-color-primary); color: var(--md-sys-color-primary); }
+        .corner-opt.selected { border-color: var(--md-sys-color-primary); background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent); color: var(--md-sys-color-primary); }
+
+        /* Permission banner for hide mode */
+        #hide-permission-banner {
+            display: none;
+            position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+            z-index: 99997;
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            padding: 12px 20px; border-radius: 14px;
+            font-size: 13px; font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: none; align-items: center; gap: 12px;
+            max-width: 90vw;
+        }
+        #hide-permission-banner button {
+            background: var(--md-sys-color-on-primary);
+            color: var(--md-sys-color-primary);
+            border: none; padding: 6px 14px; border-radius: 100px;
+            cursor: pointer; font-weight: 700; font-size: 12px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body data-theme="orange-light">
+
+<div id="bg-layer" class="bg-none"></div>
+
+<!-- Panic overlay (clickable to dismiss) -->
+<div id="panic-overlay" onclick="panicDeactivate()">
+    <iframe id="panic-iframe" src="about:blank" allow="fullscreen" onclick="event.stopPropagation()"></iframe>
+</div>
+<div id="panic-hint">Press } to return</div>
+
+<!-- Panic button -->
+<button id="panic-btn" class="corner-br" title="Panic — press } to return">
+    <span class="material-symbols-outlined" style="font-size:24px;">school</span>
+</button>
+
+<!-- Hide mode permission banner -->
+<div id="hide-permission-banner">
+    <span>⚠️ Allow popups for Hide Mode to work</span>
+    <button onclick="retryHideMode()">Retry</button>
+    <button onclick="dismissBanner()" style="background:transparent;color:var(--md-sys-color-on-primary);border:1px solid rgba(255,255,255,0.4);">✕</button>
+</div>
+
+<!-- Transient hint shown before attempting to open the popup -->
+<div id="popup-allow-hint" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100000;background:rgba(0,0,0,0.85);color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;font-weight:700;max-width:90vw;text-align:center;">You may need to allow pop-ups by clicking the pop-up blocked icon in your browser</div>
+
+<!-- Top-right icon cluster -->
+<div class="topbar-icons">
+    <div class="icon-btn" onclick="toggleApps()" title="Apps">
+        <span class="material-symbols-outlined" style="font-size:20px;">grid_view</span>
+    </div>
+    <div class="icon-btn" onclick="openModal('themes')" title="Themes">
+        <span class="material-symbols-outlined" style="font-size:20px;">palette</span>
+    </div>
+    <div class="icon-btn" onclick="openModal('backgrounds')" title="Backgrounds">
+        <span class="material-symbols-outlined" style="font-size:20px;">image</span>
+    </div>
+    <div class="icon-btn" onclick="openModal('settings')" title="Settings">
+        <span class="material-symbols-outlined" style="font-size:20px;">settings</span>
+    </div>
+</div>
+
+<!-- Combined Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h2 style="margin:0; font-weight:700; font-size:18px;">Customize</h2>
+
+        <div class="modal-tabs">
+            <button class="modal-tab active" id="tab-themes" onclick="switchTab('themes')">Themes</button>
+            <button class="modal-tab" id="tab-backgrounds" onclick="switchTab('backgrounds')">Backgrounds</button>
+            <button class="modal-tab" id="tab-settings" onclick="switchTab('settings')">Settings</button>
+        </div>
+
+        <!-- THEMES TAB -->
+        <div class="modal-tab-content active" id="content-themes">
+            <div class="theme-list">
+                <div class="theme-option" onclick="setTheme('orange-light')"><div class="color-preview" style="background:#8B5000;"></div> Winter Sun</div>
+                <div class="theme-option" onclick="setTheme('orange-dark')"><div class="color-preview" style="background:#FFB870;"></div> Winter Night</div>
+                <div class="theme-option" onclick="setTheme('blue-light')"><div class="color-preview" style="background:#0061A4;"></div> Ocean Breeze</div>
+                <div class="theme-option" onclick="setTheme('blue-dark')"><div class="color-preview" style="background:#A4C9FE;"></div> Deep Sea</div>
+                <div class="theme-option" onclick="setTheme('green-light')"><div class="color-preview" style="background:#006D3A;"></div> Forest Path</div>
+                <div class="theme-option" onclick="setTheme('green-dark')"><div class="color-preview" style="background:#7CDB96;"></div> Emerald Dark</div>
+                <div class="theme-option" onclick="setTheme('lavender-light')"><div class="color-preview" style="background:#6750A4;"></div> Lavender Mist</div>
+                <div class="theme-option" onclick="setTheme('lavender-dark')"><div class="color-preview" style="background:#D0BCFF;"></div> Twilight Purple</div>
+                <div class="theme-option" onclick="setTheme('amoled')"><div class="color-preview" style="background:#000000;"></div> Midnight Noire</div>
+                <div class="theme-option" onclick="setTheme('amoled-inverted')"><div class="color-preview" style="background:#FFFFFF;border-color:#8A8A8A;"></div> Snow White</div>
+            </div>
+        </div>
+
+        <!-- BACKGROUNDS TAB -->
+        <div class="modal-tab-content" id="content-backgrounds">
+            <div class="bg-grid">
+                <div class="bg-option selected" id="bg-opt-none" onclick="setBg('none')">
+                    <div class="bg-option-inner bg-none-opt">
+                        <span class="bg-option-label">None</span>
+                    </div>
+                </div>
+                <div class="bg-option" id="bg-opt-1" onclick="setBg('bg-1')"><div class="bg-option-inner bg-1"><span class="bg-option-label">Deep Space</span></div></div>
+                <div class="bg-option" id="bg-opt-2" onclick="setBg('bg-2')"><div class="bg-option-inner bg-2"><span class="bg-option-label">Cosmic</span></div></div>
+                <div class="bg-option" id="bg-opt-3" onclick="setBg('bg-3')"><div class="bg-option-inner bg-3"><span class="bg-option-label">Aurora</span></div></div>
+                <div class="bg-option" id="bg-opt-4" onclick="setBg('bg-4')"><div class="bg-option-inner bg-4"><span class="bg-option-label">Candy</span></div></div>
+                <div class="bg-option" id="bg-opt-5" onclick="setBg('bg-5')"><div class="bg-option-inner bg-5"><span class="bg-option-label">Nebula</span></div></div>
+                <div class="bg-option" id="bg-opt-6" onclick="setBg('bg-6')"><div class="bg-option-inner bg-6"><span class="bg-option-label">Ocean Deep</span></div></div>
+                <div class="bg-option" id="bg-opt-7" onclick="setBg('bg-7')"><div class="bg-option-inner bg-7"><span class="bg-option-label">Ember</span></div></div>
+                <div class="bg-option" id="bg-opt-8" onclick="setBg('bg-8')"><div class="bg-option-inner bg-8"><span class="bg-option-label">Violet Haze</span></div></div>
+                <div class="bg-option" id="bg-opt-9" onclick="setBg('bg-9')"><div class="bg-option-inner bg-9"><span class="bg-option-label">Pearl</span></div></div>
+                <div class="bg-option" id="bg-opt-10" onclick="setBg('bg-10')"><div class="bg-option-inner bg-10"><span class="bg-option-label">Emerald</span></div></div>
+                <div class="bg-option" id="bg-opt-11" onclick="setBg('bg-11')"><div class="bg-option-inner bg-11"><span class="bg-option-label">Dusk</span></div></div>
+                <div class="bg-option" id="bg-opt-12" onclick="setBg('bg-12')"><div class="bg-option-inner bg-12"><span class="bg-option-label">Matrix</span></div></div>
+                <div class="bg-option" id="bg-opt-13" onclick="setBg('bg-13')"><div class="bg-option-inner bg-13"><span class="bg-option-label">Winter Sunset</span></div></div>
+                <div class="bg-option" id="bg-opt-14" onclick="setBg('bg-14')"><div class="bg-option-inner bg-14"><span class="bg-option-label">Spring Blossom</span></div></div>
+                <div class="bg-option" id="bg-opt-15" onclick="setBg('bg-15')"><div class="bg-option-inner bg-15"><span class="bg-option-label">Mountain Meadow</span></div></div>
+                <div class="bg-option" id="bg-opt-16" onclick="setBg('bg-16')"><div class="bg-option-inner bg-16"><span class="bg-option-label">Pine Forest</span></div></div>
+                <div class="bg-option" id="bg-opt-17" onclick="setBg('bg-17')"><div class="bg-option-inner bg-17"><span class="bg-option-label">Misty Forest</span></div></div>
+            </div>
+            <div class="bg-custom-row">
+                <div class="field-label-sm">Custom image URL</div>
+                <input type="text" class="bg-custom-input" id="bgCustomUrl" placeholder="https://example.com/image.jpg"
+                    onkeydown="if(event.key==='Enter')applyCustomBg()" />
+                <button class="home-btn home-btn-primary" style="width:100%;margin-top:8px;justify-content:center;font-size:13px;padding:10px;" onclick="applyCustomBg()">Apply Image</button>
+            </div>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div class="modal-tab-content" id="content-settings">
+            <div class="settings-section">
+                <div class="settings-section-title">Tab Cloaking</div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">Hide Mode</div>
+                        <div class="setting-desc">Opens Apricity in a new popup tab, then replaces the current tab with a blank page so Apricity stays hidden in the background. Requires popup permission.</div>
+                        <div class="hide-status inactive" id="hideStatusBadge">
+                            <div class="hide-status-dot"></div>
+                            <span id="hideStatusText">Inactive</span>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="hideModeToggle" onchange="onHideModeChange()" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">Anti-Close</div>
+                        <div class="setting-desc">Shows a "Are you sure?" prompt when you try to close or navigate away from the tab.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="antiCloseToggle" onchange="onAntiCloseChange()" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Tab Appearance</div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">Tab Title</div>
+                        <div class="setting-desc">Change what the browser tab shows as the page title.</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;">
+                    <input type="text" class="bg-custom-input" id="tabTitleInput" placeholder="e.g. Google Classroom" style="flex:1;margin-top:0;" />
+                    <button class="home-btn" style="padding:10px 16px;font-size:13px;" onclick="applyTabTitle()">Apply</button>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">Tab Icon (Favicon)</div>
+                        <div class="setting-desc">Change the icon shown in the browser tab.</div>
+                    </div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px;" id="faviconPresets">
+                    <button class="yt-btn yt-btn-sm" onclick="setFavicon('https://www.google.com/favicon.ico')">Google</button>
+                    <button class="yt-btn yt-btn-sm" onclick="setFavicon('https://www.youtube.com/favicon.ico')">YouTube</button>
+                    <button class="yt-btn yt-btn-sm" onclick="setFavicon('https://classroom.google.com/favicon.ico')">Classroom</button>
+                    <button class="yt-btn yt-btn-sm" onclick="setFavicon('https://docs.google.com/favicon.ico')">Docs</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Panic Button</div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">Enable Panic Button</div>
+                        <div class="setting-desc">Shows a button that instantly covers the screen. Press <strong>}</strong> or click anywhere to return.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="panicToggle" checked onchange="onPanicToggleChange()" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row" id="panicCornerRow">
+                    <div class="setting-info">
+                        <div class="setting-name">Button Position</div>
+                        <div class="setting-desc">Which corner the panic button sits in.</div>
+                        <div class="corner-picker">
+                            <button class="corner-opt" id="cp-tl" onclick="setPanicCorner('tl')">↖ Top Left</button>
+                            <button class="corner-opt" id="cp-tr" onclick="setPanicCorner('tr')">↗ Top Right</button>
+                            <button class="corner-opt" id="cp-bl" onclick="setPanicCorner('bl')">↙ Bottom Left</button>
+                            <button class="corner-opt selected" id="cp-br" onclick="setPanicCorner('br')">↘ Bottom Right</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-row" id="panicUrlRow">
+                    <div class="setting-info" style="width:100%">
+                        <div class="setting-name">Panic URL</div>
+                        <div class="setting-desc">The site that loads when the panic button is pressed.</div>
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <input type="text" class="bg-custom-input" id="panicUrlInput" placeholder="https://goformative.com/?show-formatives=to-do" style="flex:1;margin-top:0;" />
+                            <button class="yt-btn yt-btn-sm" onclick="savePanicUrl()">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="home-btn" style="width:100%;margin-top:16px;justify-content:center;" onclick="closeModal()">Close</button>
+    </div>
+</div>
+
+<!-- Apps Panel -->
+<div class="apps-overlay" id="appsOverlay" onclick="toggleApps()">
+    <div class="apps-panel" onclick="event.stopPropagation()">
+        <h2>Apps</h2>
+        <div class="app-item" onclick="openSunlit()">
+            <div class="app-icon"><span class="material-symbols-outlined">wb_sunny</span></div>
+            Sunlit OS
+        </div>
+        <div class="app-item" onclick="openGemini()">
+            <div class="app-icon" style="background:linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335);color:#fff;">
+                <span class="material-symbols-outlined" style="color:#fff;">auto_awesome</span>
+            </div>
+            Gemini AI
+        </div>
+        <div class="app-item" onclick="openMeetStable()">
+            <div class="app-icon" style="background:#00897B;color:#fff;">
+                <span class="material-symbols-outlined">video_call</span>
+            </div>
+            Meet Stable
+        </div>
+        <button class="apps-close-btn" onclick="toggleApps()">Close</button>
+    </div>
+</div>
+
+<!-- Games Panel -->
+<div class="apps-overlay" id="gamesOverlay" onclick="toggleGames()">
+    <div class="apps-panel" onclick="event.stopPropagation()">
+        <h2>Games</h2>
+        <div class="app-item" onclick="openGame('hollow-knight', './hollow_knight.html')">
+            <div class="app-icon"><span class="material-symbols-outlined">sports_esports</span></div>
+            Hollow Knight
+        </div>
+        <div class="app-item" onclick="openGame('snow-rider', './snow_rider.html')">
+            <div class="app-icon"><span class="material-symbols-outlined">downhill_skiing</span></div>
+            Snow Rider
+        </div>
+        <button class="apps-close-btn" onclick="toggleGames()">Close</button>
+    </div>
+</div>
+
+<!-- Hollow Knight Page -->
+<div id="hollow-knight-page" class="page">
+    <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+    <iframe id="hollow-knight-frame" src="about:blank"></iframe>
+</div>
+
+<!-- Snow Rider Page -->
+<div id="snow-rider-page" class="page">
+    <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+    <iframe id="snow-rider-frame" src="about:blank"></iframe>
+</div>
+
+<!-- Sunlit OS Page -->
+<div id="sunlit-page" class="page">
+    <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+    <iframe id="sunlit-frame" src="about:blank"></iframe>
+</div>
+
+<!-- Gemini Page -->
+<div id="gemini-page" class="page">
+    <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+    <div id="gemini-app" style="width:100%;height:100vh;display:flex;flex-direction:column;font-family:var(--font-ui);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);">
+        <div style="padding:16px 24px;border-bottom:1px solid var(--yt-border2);display:flex;align-items:center;gap:12px;flex-shrink:0;">
+            <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335);display:flex;align-items:center;justify-content:center;">
+                <span style="color:#fff;font-size:14px;font-weight:700;">G</span>
+            </div>
+            <span style="font-size:18px;font-weight:700;color:var(--md-sys-color-primary);">Gemini AI</span>
+            <button onclick="openGeminiSettings()" style="margin-left:auto;background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:100px;padding:6px 14px;cursor:pointer;font-family:var(--font-ui);font-size:13px;color:var(--md-sys-color-on-surface);">&#9881; API Key</button>
+        </div>
+        <div id="gemini-setup" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;">
+            <div style="font-size:48px;">&#10024;</div>
+            <div style="font-size:20px;font-weight:600;">Set your Gemini API Key</div>
+            <div style="color:var(--md-sys-color-outline);font-size:14px;text-align:center;max-width:340px;">Paste your Google AI Studio key below to start chatting. It's saved locally in your browser.</div>
+            <div style="display:flex;gap:8px;width:100%;max-width:420px;">
+                <input type="password" id="geminiKeyInput" placeholder="AQ.Ab8RN6IJUqc7clhzFxJV0oh7qc9wu4lrSby0dngdC4qeJnPeGw" style="flex:1;padding:12px 16px;border-radius:16px;border:1px solid var(--yt-border2);background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface);font-family:var(--font-ui);font-size:14px;outline:none;" />
+                <button onclick="saveGeminiKey()" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);border:none;border-radius:16px;padding:12px 20px;cursor:pointer;font-family:var(--font-ui);font-weight:600;font-size:14px;">Save</button>
+            </div>
+        </div>
+        <div id="gemini-chat" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
+            <div id="gemini-messages" style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:12px;"></div>
+            <div style="padding:16px 24px;border-top:1px solid var(--yt-border2);display:flex;gap:10px;align-items:flex-end;">
+                <textarea id="geminiInput" placeholder="Message Gemini&#8230;" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendGemini();}" style="flex:1;padding:12px 16px;border-radius:20px;border:1px solid var(--yt-border2);background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface);font-family:var(--font-ui);font-size:14px;outline:none;resize:none;max-height:140px;overflow-y:auto;line-height:1.5;"></textarea>
+                <button onclick="sendGemini()" id="geminiSendBtn" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);border:none;border-radius:50%;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <span class="material-symbols-outlined" style="font-size:20px;">send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Meet Stable Page -->
+<div id="meet-stable-page" class="page">
+    <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+    <iframe id="meet-stable-frame" src="about:blank" style="width:100%;height:100vh;border:none;display:block;"></iframe>
+</div>
+
+<!-- HOME PAGE -->
+<div id="home-page" class="page active">
+    <div class="main-content">
+        <div class="logo">Apricity</div>
+        <div class="search-container">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" class="search-bar" id="homeSearch" placeholder="Type to start searching..." autofocus
+                onkeydown="if(event.key==='Enter') goSearch()">
+        </div>
+        <div class="btn-group">
+            <button class="home-btn" onclick="toggleApps()">Apps</button>
+            <button class="home-btn" onclick="toggleGames()">Games</button>
+            <button class="home-btn home-btn-youtube" onclick="showYouTube()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/>
+                </svg>
+                YouTube
+            </button>
+        </div>
+    </div>
+    <footer id="rotating-footer"></footer>
+</div>
+
+<!-- YOUTUBE EXPLORER PAGE -->
+<div id="youtube-page" class="page">
+    <div class="yt-topbar">
+        <button class="yt-topbar-menu" onclick="toggleSidebar()" title="Toggle menu">
+            <span class="material-symbols-outlined" style="font-size:22px;">menu</span>
+        </button>
+        <button class="yt-topbar-back" onclick="showHome()">
+            <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span>
+            Back
+        </button>
+        <span class="yt-topbar-logo">Apricity</span>
+        <span class="yt-topbar-subtitle">/ YouTube Explorer</span>
+    </div>
+
+    <div class="yt-shell">
+        <aside class="yt-sidebar">
+            <nav class="yt-nav">
+                <div class="yt-nav-section-label">Endpoints</div>
+                <div class="yt-nav-item active" data-label="Search" onclick="gotoYT('search')"><span class="yt-nav-icon material-symbols-outlined">search</span><span class="yt-nav-label">Search</span></div>
+                <div class="yt-nav-item" data-label="Channel" onclick="gotoYT('channel')"><span class="yt-nav-icon material-symbols-outlined">subscriptions</span><span class="yt-nav-label">Channel</span></div>
+                <div class="yt-nav-item" data-label="Video" onclick="gotoYT('video')"><span class="yt-nav-icon material-symbols-outlined">play_circle</span><span class="yt-nav-label">Video</span></div>
+                <div class="yt-nav-item" data-label="Playlists" onclick="gotoYT('playlists')"><span class="yt-nav-icon material-symbols-outlined">playlist_play</span><span class="yt-nav-label">Playlists</span></div>
+                <div class="yt-nav-item" data-label="Comments" onclick="gotoYT('comments')"><span class="yt-nav-icon material-symbols-outlined">comment</span><span class="yt-nav-label">Comments</span></div>
+                <div class="yt-nav-section-label" style="margin-top:8px;">Advanced</div>
+                <div class="yt-nav-item" data-label="Raw Request" onclick="gotoYT('raw')"><span class="yt-nav-icon material-symbols-outlined">bolt</span><span class="yt-nav-label">Raw Request</span></div>
+                <div class="yt-nav-item" data-label="Quick Docs" onclick="gotoYT('docs')"><span class="yt-nav-icon material-symbols-outlined">menu_book</span><span class="yt-nav-label">Quick Docs</span></div>
+            </nav>
+        </aside>
+
+        <main class="yt-main">
+            <div id="yt-page-search" class="yt-page active">
+                <div class="yt-page-header">
+                    <div class="yt-page-title">Search</div>
+                    <div class="yt-page-sub">Search videos, channels, and playlists across YouTube.</div>
+                </div>
+                <div class="search-row">
+                    <input type="text" id="searchQ" placeholder="Enter search query…" onkeydown="if(event.key==='Enter')doSearch()" />
+                    <button class="yt-btn yt-btn-filter" id="filtersToggle" onclick="toggleFilters()">
+                        <span class="material-symbols-outlined" style="font-size:16px;">tune</span>
+                        Filters
+                    </button>
+                    <button class="yt-btn yt-btn-accent" onclick="doSearch()">Search →</button>
+                </div>
+                <div class="filters-panel" id="filtersPanel">
+                    <div class="filters-grid">
+                        <div><div class="field-label">Type</div><select id="sType" style="width:100%"><option value="video">Video</option><option value="channel">Channel</option><option value="playlist">Playlist</option></select></div>
+                        <div><div class="field-label">Max Results</div><select id="sMax" style="width:100%"><option value="5">5</option><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option></select></div>
+                        <div><div class="field-label">Order By</div><select id="sOrder" style="width:100%"><option value="relevance" selected>Relevance</option><option value="date">Date</option><option value="viewCount">View Count</option><option value="rating">Rating</option><option value="title">Title</option></select></div>
+                        <div><div class="field-label">Safe Search</div><select id="sSafe" style="width:100%"><option value="moderate" selected>Moderate</option><option value="none">None</option><option value="strict">Strict</option></select></div>
+                    </div>
+                </div>
+                <div id="yt-inline-player"></div>
+                <div id="search-results" class="results"></div>
+            </div>
+
+            <div id="yt-page-channel" class="yt-page">
+                <div class="yt-page-header"><div class="yt-page-title">Channel</div><div class="yt-page-sub">Fetch channel info by ID or @handle.</div></div>
+                <div class="field-row"><input type="text" id="channelId" placeholder="UCxxxxxx or @channelname" onkeydown="if(event.key==='Enter')doChannel()" /><button class="yt-btn yt-btn-accent" onclick="doChannel()">Fetch →</button></div>
+                <div id="channel-results" class="results"></div>
+            </div>
+
+            <div id="yt-page-video" class="yt-page">
+                <div class="yt-page-header"><div class="yt-page-title">Video Details</div><div class="yt-page-sub">Get stats, metadata, and content details for any video.</div></div>
+                <div class="field-row"><input type="text" id="videoId" placeholder="Video ID or full YouTube URL" onkeydown="if(event.key==='Enter')doVideo()" /><button class="yt-btn yt-btn-accent" onclick="doVideo()">Fetch →</button></div>
+                <div style="margin-top:14px;"><div class="field-label">Parts (Ctrl+click to multi-select)</div><select id="vParts" multiple style="width:100%;max-width:400px;height:90px;"><option value="snippet" selected>snippet</option><option value="statistics" selected>statistics</option><option value="contentDetails" selected>contentDetails</option><option value="status">status</option><option value="player">player</option><option value="topicDetails">topicDetails</option></select></div>
+                <div id="video-results" class="results"></div>
+            </div>
+
+            <div id="yt-page-playlists" class="yt-page">
+                <div class="yt-page-header"><div class="yt-page-title">Playlists</div><div class="yt-page-sub">List playlists for a channel, or fetch items from a playlist.</div></div>
+                <div style="margin-bottom:20px;"><div class="field-label">Channel Playlists</div><div class="field-row"><input type="text" id="plChannelId" placeholder="Channel ID (UCxxxxxx)" /><button class="yt-btn yt-btn-accent" onclick="doPlaylists()">Fetch →</button></div></div>
+                <div><div class="field-label">Playlist Items</div><div class="field-row"><input type="text" id="plId" placeholder="Playlist ID (PLxxxxxx)" /><button class="yt-btn" onclick="doPlaylistItems()">Get Items →</button></div></div>
+                <div id="playlist-results" class="results"></div>
+            </div>
+
+            <div id="yt-page-comments" class="yt-page">
+                <div class="yt-page-header"><div class="yt-page-title">Comments</div><div class="yt-page-sub">Fetch top-level comment threads for any video.</div></div>
+                <div class="field-row"><input type="text" id="commentVideoId" placeholder="Video ID or YouTube URL" /><button class="yt-btn yt-btn-accent" onclick="doComments()">Fetch →</button></div>
+                <div class="grid2" style="margin-top:14px;"><div><div class="field-label">Order</div><select id="cOrder" style="width:100%"><option value="relevance" selected>Relevance</option><option value="time">Time</option></select></div><div><div class="field-label">Max Results</div><select id="cMax" style="width:100%"><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></div></div>
+                <div id="comment-results" class="results"></div>
+            </div>
+
+            <div id="yt-page-raw" class="yt-page">
+                <div class="yt-page-header"><div class="yt-page-title">Raw API Request</div><div class="yt-page-sub">Build any YouTube Data API v3 call manually.</div></div>
+                <div style="margin-bottom:14px;"><div class="field-label">Endpoint</div><select id="rawEndpoint" style="width:100%;" onchange="updateRaw()"><option value="videos?part=snippet,statistics&id=">videos – by ID</option><option value="search?part=snippet&q=">search – query</option><option value="channels?part=snippet,statistics&id=">channels – by ID</option><option value="playlists?part=snippet&channelId=">playlists – by channel</option><option value="playlistItems?part=snippet&playlistId=">playlistItems – by playlist</option><option value="commentThreads?part=snippet&videoId=">commentThreads – by video</option><option value="captions?part=snippet&videoId=">captions – by video</option><option value="videoCategories?part=snippet&regionCode=US">videoCategories – US</option><option value="i18nLanguages?part=snippet">i18nLanguages</option><option value="i18nRegions?part=snippet">i18nRegions</option></select></div>
+                <div style="margin-bottom:14px;"><div class="field-label">Extra Parameters</div><textarea id="rawParams" style="width:100%;height:80px;" placeholder="maxResults=10&#10;order=date" oninput="updateRaw()"></textarea></div>
+                <div class="field-label">Preview URL</div>
+                <div class="code-box" id="rawPreview">GET https://www.googleapis.com/youtube/v3/…</div>
+                <button class="yt-btn yt-btn-accent" onclick="doRaw()">Send Request →</button>
+                <button class="yt-btn" onclick="copyRaw()" style="margin-left:8px;">Copy URL</button>
+                <div id="raw-response" style="display:none; margin-top:16px;"></div>
+            </div>
+
+            <div id="yt-page-docs" class="yt-page">
+                <div class="yt-page-header"><div class="yt-page-title">Quick Reference</div><div class="yt-page-sub">Common patterns and how to get your API key.</div></div>
+                <div style="margin-bottom:28px;"><div style="font-size:16px;font-weight:700;margin-bottom:10px;">Getting an API Key</div><ol style="font-size:14px;color:var(--md-sys-color-outline);line-height:2;padding-left:20px;"><li>Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--md-sys-color-primary);">console.cloud.google.com</a></li><li>Create a new project (or select existing)</li><li>Go to <strong style="color:var(--md-sys-color-on-surface);">APIs &amp; Services → Library</strong></li><li>Search for <strong style="color:var(--md-sys-color-on-surface);">YouTube Data API v3</strong> and enable it</li><li>Go to <strong style="color:var(--md-sys-color-on-surface);">Credentials → Create Credentials → API Key</strong></li><li>Copy the key and paste it into your code</li></ol></div>
+                <div style="font-size:16px;font-weight:700;margin-bottom:12px;">API Quota</div>
+                <div style="font-size:14px;color:var(--md-sys-color-outline);margin-bottom:20px;">Free tier: <strong style="color:var(--md-sys-color-on-surface);">10,000 units/day</strong>. Each search costs 100 units; reads cost 1–3 units.</div>
+                <div style="font-size:16px;font-weight:700;margin-bottom:12px;">Common Endpoints</div>
+                <div class="code-box"><span class="kw">GET</span> /youtube/v3/<span class="str">search</span>?part=snippet&q=cats&type=video&key=KEY
+<span class="kw">GET</span> /youtube/v3/<span class="str">videos</span>?part=snippet,statistics&id=VIDEO_ID&key=KEY
+<span class="kw">GET</span> /youtube/v3/<span class="str">channels</span>?part=snippet,statistics&id=CHANNEL_ID&key=KEY
+<span class="kw">GET</span> /youtube/v3/<span class="str">playlists</span>?part=snippet&channelId=UC…&key=KEY
+<span class="kw">GET</span> /youtube/v3/<span class="str">playlistItems</span>?part=snippet&playlistId=PL…&key=KEY
+<span class="kw">GET</span> /youtube/v3/<span class="str">commentThreads</span>?part=snippet&videoId=VIDEO_ID&key=KEY</div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    // ===== SIDEBAR TOGGLE =====
+    function toggleSidebar() {
+        document.querySelector('.yt-sidebar').classList.toggle('collapsed');
+    }
+
+    // ===== API KEY =====
+    const YT_KEY = 'AIzaSyB7x5zyGdt3_9JnaIWqQYrvNkcB6lef_xA';
+
+    // ===== MODAL SYSTEM =====
+    function openModal(tab) {
+        document.getElementById('modalOverlay').style.display = 'flex';
+        switchTab(tab);
+    }
+    function closeModal() {
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+    function switchTab(tab) {
+        ['themes','backgrounds','settings'].forEach(t => {
+            document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+            document.getElementById('content-' + t).classList.toggle('active', t === tab);
+        });
+    }
+
+    // ===== NAVIGATION =====
+    function showYouTube() {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('youtube-page').classList.add('active');
+    }
+    function showHome() {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('home-page').classList.add('active');
+    }
+    function goSearch() {
+        const q = document.getElementById('homeSearch').value.trim();
+        if (q) window.open('https://www.google.com/search?q=' + encodeURIComponent(q), '_blank');
+    }
+
+    // ===== APPS =====
+    function toggleApps() {
+        const o = document.getElementById('appsOverlay');
+        o.style.display = o.style.display === 'flex' ? 'none' : 'flex';
+    }
+    function openSunlit() {
+        toggleApps();
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('sunlit-page').classList.add('active');
+        const frame = document.getElementById('sunlit-frame');
+        if (!frame.dataset.loaded) { frame.src = './sunlit_os.html'; frame.dataset.loaded = '1'; }
+    }
+
+    // ===== GAMES =====
+    function toggleGames() {
+        const o = document.getElementById('gamesOverlay');
+        o.style.display = o.style.display === 'flex' ? 'none' : 'flex';
+    }
+    function openGame(id, src) {
+        toggleGames();
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id + '-page').classList.add('active');
+        const frame = document.getElementById(id + '-frame');
+        if (!frame.dataset.loaded) { frame.src = src; frame.dataset.loaded = '1'; }
+    }
+
+    // ===== THEME =====
+    function setTheme(theme) {
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('apricity-theme-choice', theme);
+    }
+
+    // ===== BACKGROUND SYSTEM =====
+    let currentBg = 'none';
+
+    const BG_CSS = {
+        'none': '',
+        'bg-1':  'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
+        'bg-2':  'linear-gradient(135deg, #1a1a2e, #16213e, #0f3460, #533483)',
+        'bg-3':  'linear-gradient(135deg, #0d1117, #1f4037, #99f2c8)',
+        'bg-4':  'linear-gradient(160deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3)',
+        'bg-5':  'radial-gradient(ellipse at top, #1a0533 0%, #0d0d0d 60%)',
+        'bg-6':  'linear-gradient(135deg, #005c97, #363795)',
+        'bg-7':  'radial-gradient(circle at 20% 50%, rgba(255,165,0,0.18) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,100,0,0.12) 0%, transparent 40%), linear-gradient(135deg, #0a0a0a, #1a1a1a)',
+        'bg-8':  'linear-gradient(135deg, #667eea, #764ba2)',
+        'bg-9':  'conic-gradient(from 180deg at 50% 50%, #f3e7e9 0deg, #e3eeff 120deg, #f3e7e9 240deg, #e3eeff 360deg)',
+        'bg-10': 'linear-gradient(135deg, #11998e, #38ef7d)',
+        'bg-11': 'linear-gradient(160deg, #2c3e50, #fd746c)',
+        'bg-12': 'repeating-linear-gradient(45deg, #0a0a0a 0px, #0a0a0a 2px, #111 2px, #111 12px)',
+        'bg-13': "url('./bg13.png') center/cover no-repeat",
+        'bg-14': "url('./bg14.png') center/cover no-repeat",
+        'bg-15': "url('./bg15.png') center/cover no-repeat",
+        'bg-16': "url('./bg16.png') center/cover no-repeat",
+        'bg-17': "url('./bg17.png') center/cover no-repeat",
+    };
+
+    function setBg(key) {
+        currentBg = key;
+        const layer = document.getElementById('bg-layer');
+        document.querySelectorAll('.bg-option').forEach(el => el.classList.remove('selected'));
+        const optEl = document.getElementById('bg-opt-' + (key === 'none' ? 'none' : key.replace('bg-','')));
+        if (optEl) optEl.classList.add('selected');
+
+        if (key === 'none') {
+            layer.style.background = '';
+            layer.className = 'bg-none';
+            document.body.classList.remove('has-bg');
+        } else {
+            layer.style.background = BG_CSS[key] || '';
+            layer.className = 'bg-active';
+            document.body.classList.add('has-bg');
+        }
+        localStorage.setItem('apricity-bg', key);
+        localStorage.removeItem('apricity-bg-custom');
+    }
+
+    function applyCustomBg() {
+        const url = document.getElementById('bgCustomUrl').value.trim();
+        if (!url) return;
+        const layer = document.getElementById('bg-layer');
+        document.querySelectorAll('.bg-option').forEach(el => el.classList.remove('selected'));
+        layer.style.background = `url(${url}) center/cover no-repeat`;
+        layer.className = 'bg-active';
+        document.body.classList.add('has-bg');
+        currentBg = 'custom';
+        localStorage.setItem('apricity-bg-custom', url);
+        localStorage.removeItem('apricity-bg');
+    }
+
+    // ===== FILTERS TOGGLE =====
+    function toggleFilters() {
+        const panel = document.getElementById('filtersPanel');
+        const btn = document.getElementById('filtersToggle');
+        const isOpen = panel.classList.toggle('open');
+        btn.classList.toggle('active-filters', isOpen);
+    }
+
+    // ===== HIDE MODE =====
+    let hideModeEnabled = false;
+    let antiCloseEnabled = false;
+    let hideApplied = false;
+
+    /**
+     * Hide Mode opens a disguised popup only when the user explicitly requests it.
+     * Keeping it opt-in prevents normal navigation buttons from being hijacked.
+     */
+    function tryActivateHideMode() {
+        if (!hideModeEnabled || hideApplied) return;
+
+        // Open a new tab to about:blank first, then navigate that tab to the site.
+        // This avoids replacing the current tab with about:blank.
+        const popup = window.open('about:blank', '_blank');
+
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+            // Popup was blocked — show the banner
+            showPermissionBanner();
+        } else {
+            // Popup opened — navigate the new tab to this page and mark hide applied.
+            hideApplied = true;
+            updateHideStatusBadge(true);
+            // Small delay so the popup has time to initialize before changing its location.
+            setTimeout(() => {
+                try {
+                    // Inject a fullscreen iframe into the about:blank popup that loads this page.
+                    // about:blank opened by script is same-origin, so we can write into it.
+                    const doc = popup.document;
+                    try {
+                        doc.open();
+                        const title = (document.title || 'Apricity').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const src = String(window.location.href).replace(/"/g, '&quot;');
+                        doc.write('<!doctype html><html><head><meta charset="utf-8"><title>' + title + '</title><meta name="viewport" content="width=device-width,initial-scale=1">');
+                        doc.write('<style>html,body{height:100%;margin:0}iframe{position:fixed;inset:0;width:100%;height:100%;border:0}</style>');
+                        doc.write('</head><body><iframe src="' + src + '" allowfullscreen></iframe></body></html>');
+                        doc.close();
+                    } catch (writeErr) {
+                        // If writing fails, fall back to navigating the popup.
+                        try { popup.location = window.location.href; } catch (e2) {}
+                    }
+                    popup.focus && popup.focus();
+                    // After injecting the iframe, replace the original tab with Google Canada.
+                    try { window.location.replace('https://www.google.ca'); } catch (e) {}
+                } catch (e) {
+                    // General fallback: try navigating the popup, then replace current tab.
+                    try { popup.location = window.location.href; } catch (e2) {}
+                    try { window.location.replace('https://www.google.ca'); } catch (e3) {}
+                }
+            }, 300);
+        }
+    }
+
+    function showPermissionBanner() {
+        const banner = document.getElementById('hide-permission-banner');
+        banner.style.display = 'flex';
+        updateHideStatusBadge(false);
+        // Update status text to show blocked
+        document.getElementById('hideStatusText').textContent = 'Blocked — allow popups';
+    }
+
+    function dismissBanner() {
+        document.getElementById('hide-permission-banner').style.display = 'none';
+    }
+
+    function retryHideMode() {
+        dismissBanner();
+        tryActivateHideMode();
+    }
+
+    // Show a brief on-screen hint telling the user they may need to allow pop-ups,
+    // then attempt to activate hide mode. This is an in-page message (not an alert).
+    function showPopupAllowHint(timeout = 1800) {
+        const hint = document.getElementById('popup-allow-hint');
+        if (!hint) return tryActivateHideMode();
+        hint.style.display = 'flex';
+        // Ensure it's centered and visible
+        hint.style.opacity = '1';
+        // After the timeout, hide the hint and try to open hide mode
+        setTimeout(() => {
+            hint.style.display = 'none';
+            tryActivateHideMode();
+        }, timeout);
+    }
+
+    function onHideModeChange() {
+        hideModeEnabled = document.getElementById('hideModeToggle').checked;
+        localStorage.setItem('apricity-hide-mode', hideModeEnabled ? '1' : '0');
+        if (hideModeEnabled) {
+            updateHideStatusBadge(false);
+            // Show an on-screen hint before attempting to open the popup/tab
+            showPopupAllowHint();
+        } else {
+            hideApplied = false;
+            updateHideStatusBadge(false);
+            dismissBanner();
+        }
+    }
+
+    function onAntiCloseChange() {
+        antiCloseEnabled = document.getElementById('antiCloseToggle').checked;
+        localStorage.setItem('apricity-anti-close', antiCloseEnabled ? '1' : '0');
+    }
+
+    function updateHideStatusBadge(active) {
+        const badge = document.getElementById('hideStatusBadge');
+        const text = document.getElementById('hideStatusText');
+        badge.className = 'hide-status ' + (active ? 'active' : 'inactive');
+        if (active) {
+            text.textContent = 'Active — tab is hidden';
+        } else if (hideModeEnabled) {
+            text.textContent = 'Ready - click Open Now';
+        } else {
+            text.textContent = 'Off';
+        }
+    }
+
+    // ===== ANTI-CLOSE =====
+    window.addEventListener('beforeunload', function(e) {
+        if (antiCloseEnabled) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    // ===== TAB TITLE / FAVICON =====
+    function applyTabTitle() {
+        const val = document.getElementById('tabTitleInput').value.trim();
+        if (val) {
+            document.title = val;
+            localStorage.setItem('apricity-tab-title', val);
+        }
+    }
+
+    function setFavicon(url, silent) {
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+        }
+        link.href = url;
+        if (!silent) localStorage.setItem('apricity-favicon', url);
+    }
+
+    // ===== YOUTUBE EXPLORER =====
+    function gotoYT(name) {
+        const pages = ['search','channel','video','playlists','comments','raw','docs'];
+        document.querySelectorAll('.yt-nav-item').forEach((el, i) => {
+            el.classList.toggle('active', pages[i] === name);
+        });
+        document.querySelectorAll('.yt-page').forEach(el => el.classList.remove('active'));
+        document.getElementById('yt-page-' + name).classList.add('active');
+    }
+
+    function requireKey() {
+        if (!YT_KEY || YT_KEY === 'YOUR_API_KEY_HERE') {
+            alert('Please set your YouTube API key in the YT_KEY variable.');
+            return false;
+        }
+        return true;
+    }
+
+    async function ytFetch(endpoint, params) {
+        const p = new URLSearchParams({ ...params, key: YT_KEY });
+        const r = await fetch(`https://www.googleapis.com/youtube/v3/${endpoint}?${p}`);
+        return r.json();
+    }
+
+    async function doSearch() {
+        if (!requireKey()) return;
+        const q = document.getElementById('searchQ').value.trim();
+        if (!q) return;
+        const el = document.getElementById('search-results');
+        el.innerHTML = '<div class="status-msg">Searching…</div>';
+        try {
+            const d = await ytFetch('search', { part: 'snippet', q, type: document.getElementById('sType').value, maxResults: document.getElementById('sMax').value, order: document.getElementById('sOrder').value, safeSearch: document.getElementById('sSafe').value });
+            if (d.error) { el.innerHTML = `<div class="status-msg err">Error ${d.error.code}: ${esc(d.error.message)}</div>`; return; }
+            if (!d.items?.length) { el.innerHTML = '<div class="status-msg">No results found.</div>'; return; }
+            el.innerHTML = `<div class="result-count">${d.pageInfo.totalResults.toLocaleString()} total results — showing ${d.items.length}</div><div class="yt-results" id="search-results-grid"></div>`;
+            const grid = document.getElementById('search-results-grid');
+            d.items.forEach(item => {
+                const vid = item.id.videoId || '', cid = item.id.channelId || '', thumb = item.snippet.thumbnails?.medium?.url || '';
+                const div = document.createElement('div'); div.className = 'video-card';
+                div.innerHTML = `${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" />` : ''}<div class="video-card-body"><h3>${esc(item.snippet.title)}</h3><p>${esc(item.snippet.channelTitle)}</p><div class="video-card-btns">${vid ? `<button class="vc-btn" onclick="playInline('${vid}')">Play</button>` : ''}${vid ? `<button class="vc-btn" onclick="openLink('https://youtube.com/watch?v=${vid}')">Open</button>` : ''}${vid ? `<button class="vc-btn" onclick="loadVideo('${vid}')">Details</button>` : ''}${cid ? `<button class="vc-btn" onclick="loadChannel('${cid}')">Channel</button>` : ''}</div></div>`;
+                grid.appendChild(div);
+            });
+        } catch(e) { el.innerHTML = `<div class="status-msg err">Network error: ${e.message}</div>`; }
+    }
+
+    async function doChannel() {
+        if (!requireKey()) return;
+        const id = document.getElementById('channelId').value.trim();
+        if (!id) return;
+        const el = document.getElementById('channel-results');
+        el.innerHTML = '<div class="status-msg">Fetching…</div>';
+        try {
+            const params = { part: 'snippet,statistics,brandingSettings' };
+            if (id.startsWith('@')) params.forHandle = id; else params.id = id;
+            const d = await ytFetch('channels', params);
+            renderChannel(d, el);
+        } catch(e) { el.innerHTML = `<div class="status-msg err">${e.message}</div>`; }
+    }
+
+    function renderChannel(d, el) {
+        if (d.error) { el.innerHTML = `<div class="status-msg err">Error ${d.error.code}: ${esc(d.error.message)}</div>`; return; }
+        if (!d.items?.length) { el.innerHTML = '<div class="status-msg">Channel not found.</div>'; return; }
+        el.innerHTML = '';
+        d.items.forEach(ch => {
+            const sub = parseInt(ch.statistics?.subscriberCount || 0), views = parseInt(ch.statistics?.viewCount || 0), vids = parseInt(ch.statistics?.videoCount || 0), thumb = ch.snippet.thumbnails?.medium?.url || '';
+            const card = document.createElement('div'); card.className = 'channel-card';
+            card.innerHTML = `<div class="channel-top"><img class="channel-avatar" src="${esc(thumb)}" alt="" onerror="this.style.visibility='hidden'" /><div><div class="channel-name">${esc(ch.snippet.title)}</div><div class="channel-handle">${esc(ch.snippet.customUrl || ch.id)}</div>${ch.statistics?.hiddenSubscriberCount ? '<div style="margin-top:4px;"><span class="tag tag-primary">Subs hidden</span></div>' : ''}</div></div><div class="stats-row"><div class="stat-box"><div class="stat-num">${fmt(sub)}</div><div class="stat-lbl">Subscribers</div></div><div class="stat-box"><div class="stat-num">${fmt(views)}</div><div class="stat-lbl">Total Views</div></div><div class="stat-box"><div class="stat-num">${vids.toLocaleString()}</div><div class="stat-lbl">Videos</div></div></div>${ch.snippet.description ? `<div style="font-size:13px;color:var(--md-sys-color-outline);line-height:1.7;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${esc(ch.snippet.description)}</div>` : ''}<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="yt-btn yt-btn-sm yt-btn-accent" onclick="openLink('https://youtube.com/channel/${ch.id}')">Open Channel ↗</button><button class="yt-btn yt-btn-sm" onclick="loadPlaylists('${ch.id}')">View Playlists</button></div>`;
+            el.appendChild(card);
+        });
+    }
+
+    async function doVideo() {
+        if (!requireKey()) return;
+        let id = document.getElementById('videoId').value.trim();
+        const m = id.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        if (m) id = m[1];
+        id = id.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 11);
+        if (!id) return;
+        const el = document.getElementById('video-results');
+        el.innerHTML = '<div class="status-msg">Fetching…</div>';
+        const parts = Array.from(document.getElementById('vParts').selectedOptions).map(o => o.value).join(',') || 'snippet,statistics';
+        try {
+            const d = await ytFetch('videos', { part: parts, id });
+            if (d.error) { el.innerHTML = `<div class="status-msg err">Error ${d.error.code}: ${esc(d.error.message)}</div>`; return; }
+            if (!d.items?.length) { el.innerHTML = '<div class="status-msg">Video not found.</div>'; return; }
+            el.innerHTML = '';
+            d.items.forEach(v => {
+                const s = v.statistics || {}, dur = parseDur(v.contentDetails?.duration || ''), pub = v.snippet?.publishedAt ? new Date(v.snippet.publishedAt).toLocaleDateString() : '', thumb = v.snippet?.thumbnails?.maxres?.url || v.snippet?.thumbnails?.high?.url || '';
+                const card = document.createElement('div'); card.className = 'video-card-detail';
+                card.innerHTML = `${thumb ? `<img class="video-hero" src="${esc(thumb)}" alt="" />` : ''}<div class="video-body"><div class="video-title">${esc(v.snippet?.title || id)}</div><div class="video-meta">${esc(v.snippet?.channelTitle || '')}${pub ? ' · ' + pub : ''}${dur ? ' · ' + dur : ''}</div><div class="stats-row"><div class="stat-box"><div class="stat-num">${fmt(s.viewCount)}</div><div class="stat-lbl">Views</div></div><div class="stat-box"><div class="stat-num">${fmt(s.likeCount)}</div><div class="stat-lbl">Likes</div></div><div class="stat-box"><div class="stat-num">${fmt(s.commentCount)}</div><div class="stat-lbl">Comments</div></div></div>${v.snippet?.description ? `<div class="video-desc">${esc(v.snippet.description)}</div>` : ''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;"><button class="yt-btn yt-btn-sm yt-btn-accent" onclick="openLink('https://youtube.com/watch?v=${v.id}')">Watch on YouTube ↗</button><button class="yt-btn yt-btn-sm" onclick="quickComments('${v.id}')">Load Comments</button>${v.snippet?.channelId ? `<button class="yt-btn yt-btn-sm" onclick="loadChannel('${v.snippet.channelId}')">Channel</button>` : ''}</div><div id="inline-comments-${v.id}"></div></div>`;
+                el.appendChild(card);
+            });
+        } catch(e) { el.innerHTML = `<div class="status-msg err">${e.message}</div>`; }
+    }
+
+    async function quickComments(vid) {
+        if (!requireKey()) return;
+        const el = document.getElementById('inline-comments-' + vid);
+        if (el.children.length) { el.innerHTML = ''; return; }
+        el.innerHTML = '<div class="status-msg">Loading comments…</div>';
+        try {
+            const d = await ytFetch('commentThreads', { part: 'snippet', videoId: vid, maxResults: 5, order: 'relevance' });
+            if (!d.items?.length) { el.innerHTML = ''; return; }
+            el.innerHTML = '<div style="font-size:13px;font-weight:600;margin:16px 0 8px;">Top Comments</div>';
+            d.items.forEach(t => { const c = t.snippet.topLevelComment.snippet; el.innerHTML += `<div class="comment-item"><div class="comment-author">${esc(c.authorDisplayName)}</div><div class="comment-text">${esc(c.textDisplay||'')}</div><div class="comment-likes">👍 ${parseInt(c.likeCount||0).toLocaleString()}</div></div>`; });
+        } catch(e) {}
+    }
+
+    async function doPlaylists() {
+        if (!requireKey()) return;
+        const id = document.getElementById('plChannelId').value.trim(); if (!id) return;
+        const el = document.getElementById('playlist-results');
+        el.innerHTML = '<div class="status-msg">Fetching playlists…</div>';
+        try {
+            const d = await ytFetch('playlists', { part: 'snippet,contentDetails', channelId: id, maxResults: 25 });
+            if (d.error) { el.innerHTML = `<div class="status-msg err">Error: ${esc(d.error.message)}</div>`; return; }
+            if (!d.items?.length) { el.innerHTML = '<div class="status-msg">No playlists found.</div>'; return; }
+            el.innerHTML = `<div class="result-count">${d.items.length} playlists</div>`;
+            d.items.forEach(pl => { const div = document.createElement('div'); div.className = 'playlist-item'; div.innerHTML = `<span style="font-size:14px;font-weight:600;">${esc(pl.snippet.title)}</span><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--md-sys-color-outline);">${pl.contentDetails.itemCount} videos</span><button class="yt-btn yt-btn-sm" onclick="document.getElementById('plId').value='${pl.id}';doPlaylistItems()">Items</button><button class="yt-btn yt-btn-sm" onclick="openLink('https://youtube.com/playlist?list=${pl.id}')">Open ↗</button></div>`; el.appendChild(div); });
+        } catch(e) { el.innerHTML = `<div class="status-msg err">${e.message}</div>`; }
+    }
+
+    async function doPlaylistItems() {
+        if (!requireKey()) return;
+        const id = document.getElementById('plId').value.trim(); if (!id) return;
+        const el = document.getElementById('playlist-results');
+        el.innerHTML = '<div class="status-msg">Fetching playlist items…</div>';
+        try {
+            const d = await ytFetch('playlistItems', { part: 'snippet', playlistId: id, maxResults: 25 });
+            if (d.error) { el.innerHTML = `<div class="status-msg err">Error: ${esc(d.error.message)}</div>`; return; }
+            if (!d.items?.length) { el.innerHTML = '<div class="status-msg">Playlist is empty or not found.</div>'; return; }
+            el.innerHTML = `<div class="result-count">${d.pageInfo.totalResults} items — showing ${d.items.length}</div>`;
+            d.items.forEach((item, i) => { const vid = item.snippet.resourceId?.videoId || '', thumb = item.snippet.thumbnails?.medium?.url || ''; const div = document.createElement('div'); div.className = 'result-card'; div.innerHTML = `${thumb ? `<img class="result-thumb" src="${esc(thumb)}" style="width:100px;height:56px;" alt="" loading="lazy" />` : ''}<div class="result-body"><div style="font-size:12px;color:var(--md-sys-color-outline);margin-bottom:3px;">#${i+1}</div><div class="result-title">${esc(item.snippet.title)}</div><div class="result-actions">${vid ? `<button class="yt-btn yt-btn-sm yt-btn-accent" onclick="openLink('https://youtube.com/watch?v=${vid}')">Watch ↗</button>` : ''}${vid ? `<button class="yt-btn yt-btn-sm" onclick="loadVideo('${vid}')">Details</button>` : ''}</div></div>`; el.appendChild(div); });
+        } catch(e) { el.innerHTML = `<div class="status-msg err">${e.message}</div>`; }
+    }
+
+    async function doComments() {
+        if (!requireKey()) return;
+        let id = document.getElementById('commentVideoId').value.trim();
+        const m = id.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/); if (m) id = m[1];
+        if (!id) return;
+        const el = document.getElementById('comment-results');
+        el.innerHTML = '<div class="status-msg">Fetching comments…</div>';
+        try {
+            const d = await ytFetch('commentThreads', { part: 'snippet', videoId: id, maxResults: document.getElementById('cMax').value, order: document.getElementById('cOrder').value });
+            if (d.error) { el.innerHTML = `<div class="status-msg err">Error: ${esc(d.error.message)}</div>`; return; }
+            if (!d.items?.length) { el.innerHTML = '<div class="status-msg">No comments found (may be disabled).</div>'; return; }
+            el.innerHTML = `<div class="result-count">${d.pageInfo.totalResults.toLocaleString()} total comments — showing ${d.items.length}</div>`;
+            d.items.forEach(t => { const c = t.snippet.topLevelComment.snippet, replies = t.snippet.totalReplyCount; el.innerHTML += `<div class="comment-item"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">${c.authorProfileImageUrl ? `<img src="${esc(c.authorProfileImageUrl)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" alt="" />` : ''}<div class="comment-author">${esc(c.authorDisplayName)}</div><div style="font-size:11px;color:var(--md-sys-color-outline);margin-left:auto;">${c.publishedAt ? new Date(c.publishedAt).toLocaleDateString() : ''}</div></div><div class="comment-text">${esc(c.textDisplay||'')}</div><div class="comment-likes">${parseInt(c.likeCount||0).toLocaleString()} likes${replies ? ` · ${replies} replies` : ''}</div></div>`; });
+        } catch(e) { el.innerHTML = `<div class="status-msg err">${e.message}</div>`; }
+    }
+
+    function updateRaw() {
+        const ep = document.getElementById('rawEndpoint').value, extra = document.getElementById('rawParams').value.trim();
+        let url = `https://www.googleapis.com/youtube/v3/${ep}`;
+        if (extra) extra.split('\n').forEach(line => { const eq = line.indexOf('='); if (eq > 0) url += (url.includes('?') ? '&' : '?') + line.trim(); });
+        url += (url.includes('?') ? '&' : '?') + 'key=YOUR_KEY';
+        document.getElementById('rawPreview').textContent = 'GET ' + url;
+    }
+
+    async function doRaw() {
+        if (!requireKey()) return;
+        const ep = document.getElementById('rawEndpoint').value, extra = document.getElementById('rawParams').value.trim();
+        const params = { key: YT_KEY };
+        if (extra) extra.split('\n').forEach(line => { const eq = line.indexOf('='); if (eq > 0) params[line.slice(0,eq).trim()] = line.slice(eq+1).trim(); });
+        const url = `https://www.googleapis.com/youtube/v3/${ep}&${new URLSearchParams(params)}`;
+        const el = document.getElementById('raw-response');
+        el.style.display = 'block'; el.className = 'response-box'; el.textContent = 'Fetching…';
+        try { const r = await fetch(url); el.textContent = JSON.stringify(await r.json(), null, 2); } catch(e) { el.textContent = 'Error: ' + e.message; }
+    }
+
+    function copyRaw() {
+        const txt = document.getElementById('rawPreview').textContent.replace('GET ', '').replace('YOUR_KEY', YT_KEY);
+        navigator.clipboard.writeText(txt).then(() => alert('URL copied!'));
+    }
+
+    function playInline(videoId) {
+        const player = document.getElementById('yt-inline-player');
+        player.innerHTML = `<iframe width="100%" height="480" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:16px;display:block;"></iframe>`;
+        player.scrollIntoView({ behavior: 'smooth' });
+    }
+    function loadVideo(id) { document.getElementById('videoId').value = id; gotoYT('video'); doVideo(); }
+    function loadChannel(id) { document.getElementById('channelId').value = id; gotoYT('channel'); doChannel(); }
+    function loadPlaylists(id) { document.getElementById('plChannelId').value = id; gotoYT('playlists'); doPlaylists(); }
+    function openLink(url) { window.open(url, '_blank'); }
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function fmt(n) { if (!n) return '—'; const v = parseInt(n); if (v >= 1e9) return (v/1e9).toFixed(1)+'B'; if (v >= 1e6) return (v/1e6).toFixed(1)+'M'; if (v >= 1e3) return (v/1e3).toFixed(1)+'K'; return v.toLocaleString(); }
+    function parseDur(iso) { const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/); if (!m) return ''; const h=parseInt(m[1]||0),mn=parseInt(m[2]||0),s=parseInt(m[3]||0); return h ? `${h}:${String(mn).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${mn}:${String(s).padStart(2,'0')}`; }
+
+    // ===== GEMINI =====
+    let geminiHistory = [];
+
+    function openGemini() {
+        toggleApps();
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('gemini-page').classList.add('active');
+        const key = localStorage.getItem('apricity-gemini-key');
+        if (key) {
+            document.getElementById('gemini-setup').style.display = 'none';
+            document.getElementById('gemini-chat').style.display = 'flex';
+        } else {
+            document.getElementById('gemini-setup').style.display = 'flex';
+            document.getElementById('gemini-chat').style.display = 'none';
+        }
+    }
+
+    function openGeminiSettings() {
+        document.getElementById('gemini-setup').style.display = 'flex';
+        document.getElementById('gemini-chat').style.display = 'none';
+        const key = localStorage.getItem('apricity-gemini-key');
+        if (key) document.getElementById('geminiKeyInput').value = key;
+    }
+
+    function saveGeminiKey() {
+        const val = document.getElementById('geminiKeyInput').value.trim();
+        if (!val) return;
+        localStorage.setItem('apricity-gemini-key', val);
+        document.getElementById('gemini-setup').style.display = 'none';
+        document.getElementById('gemini-chat').style.display = 'flex';
+        geminiHistory = [];
+        document.getElementById('gemini-messages').innerHTML = '';
+        appendGeminiMsg('model', 'Hi! I\'m Gemini. How can I help you today?');
+    }
+
+    function appendGeminiMsg(role, text) {
+        const msgs = document.getElementById('gemini-messages');
+        const bubble = document.createElement('div');
+        const isUser = role === 'user';
+        bubble.style.cssText = `
+            max-width:75%;align-self:${isUser?'flex-end':'flex-start'};
+            background:${isUser?'var(--md-sys-color-primary)':'var(--md-sys-color-surface-container-high)'};
+            color:${isUser?'var(--md-sys-color-on-primary)':'var(--md-sys-color-on-surface)'};
+            padding:10px 16px;border-radius:${isUser?'20px 20px 4px 20px':'20px 20px 20px 4px'};
+            font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;
+        `;
+        bubble.textContent = text;
+        msgs.appendChild(bubble);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    async function sendGemini() {
+        const input = document.getElementById('geminiInput');
+        const text = input.value.trim();
+        if (!text) return;
+        const key = localStorage.getItem('apricity-gemini-key');
+        if (!key) { openGeminiSettings(); return; }
+
+        input.value = '';
+        input.style.height = '';
+        appendGeminiMsg('user', text);
+        geminiHistory.push({ role: 'user', parts: [{ text }] });
+
+        const btn = document.getElementById('geminiSendBtn');
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+
+        // Typing indicator
+        const msgs = document.getElementById('gemini-messages');
+        const typing = document.createElement('div');
+        typing.id = 'gemini-typing';
+        typing.style.cssText = 'align-self:flex-start;background:var(--md-sys-color-surface-container-high);padding:10px 16px;border-radius:20px 20px 20px 4px;font-size:14px;color:var(--md-sys-color-outline);';
+        typing.textContent = '...';
+        msgs.appendChild(typing);
+        msgs.scrollTop = msgs.scrollHeight;
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: geminiHistory })
+            });
+            const data = await res.json();
+            typing.remove();
+            if (data.error) {
+                appendGeminiMsg('model', 'Error: ' + data.error.message);
+            } else {
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '(no response)';
+                geminiHistory.push({ role: 'model', parts: [{ text: reply }] });
+                appendGeminiMsg('model', reply);
+            }
+        } catch(e) {
+            typing.remove();
+            appendGeminiMsg('model', 'Network error: ' + e.message);
+        }
+        btn.disabled = false;
+        btn.style.opacity = '';
+    }
+
+    // ===== MEET STABLE =====
+    function openMeetStable() {
+        toggleApps();
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('meet-stable-page').classList.add('active');
+        const frame = document.getElementById('meet-stable-frame');
+        if (!frame.dataset.loaded) { frame.src = './meet_stable.html'; frame.dataset.loaded = '1'; }
+    }
+
+    // ===== PANIC BUTTON =====
+    let panicEnabled = true;
+    let panicActive = false;
+    let panicCorner = 'br';
+
+    const DEFAULT_PANIC_URL = 'https://goformative.com/?show-formatives=to-do';
+    let PANIC_URL = DEFAULT_PANIC_URL;
+
+    function savePanicUrl() {
+        const val = document.getElementById('panicUrlInput').value.trim();
+        PANIC_URL = val || DEFAULT_PANIC_URL;
+        localStorage.setItem('apricity-panic-url', PANIC_URL);
+        // Reset iframe so next activation reloads the new URL
+        document.getElementById('panic-iframe').src = 'about:blank';
+    }
+
+    function onPanicToggleChange() {
+        panicEnabled = document.getElementById('panicToggle').checked;
+        localStorage.setItem('apricity-panic-enabled', panicEnabled ? '1' : '0');
+        const btn = document.getElementById('panic-btn');
+        btn.classList.toggle('hidden', !panicEnabled);
+        const opacity = panicEnabled ? '1' : '0.4';
+        const pe = panicEnabled ? '' : 'none';
+        document.getElementById('panicCornerRow').style.opacity = opacity;
+        document.getElementById('panicCornerRow').style.pointerEvents = pe;
+        document.getElementById('panicUrlRow').style.opacity = opacity;
+        document.getElementById('panicUrlRow').style.pointerEvents = pe;
+    }
+
+    function setPanicCorner(corner) {
+        panicCorner = corner;
+        localStorage.setItem('apricity-panic-corner', corner);
+        const btn = document.getElementById('panic-btn');
+        // Strip old corner class and apply new one, keep 'hidden' if present
+        btn.className = (btn.classList.contains('hidden') ? 'hidden ' : '') + 'corner-' + corner;
+        ['tl','tr','bl','br'].forEach(c => {
+            document.getElementById('cp-' + c).classList.toggle('selected', c === corner);
+        });
+    }
+
+    function panicActivate() {
+        if (!panicEnabled) return;
+        panicActive = true;
+        const overlay = document.getElementById('panic-overlay');
+        const iframe = document.getElementById('panic-iframe');
+        overlay.classList.add('active');
+        if (iframe.src === 'about:blank' || iframe.src === '') {
+            iframe.src = PANIC_URL;
+        }
+        // Hide the panic button while overlay is active
+        const btn = document.getElementById('panic-btn');
+        btn.style.display = 'none';
+    }
+
+    function panicDeactivate() {
+        panicActive = false;
+        document.getElementById('panic-overlay').classList.remove('active');
+        const btn = document.getElementById('panic-btn');
+        btn.style.display = '';
+        btn.onclick = panicActivate;
+    }
+
+    // Wire up initial onclick (avoids inline onclick attribute conflict with deactivate swap)
+    document.getElementById('panic-btn').onclick = panicActivate;
+
+    // Keyboard shortcut: }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '}') {
+            if (panicActive) panicDeactivate();
+            else if (panicEnabled) panicActivate();
+        }
+    });
+
+    // ===== FOOTER =====
+    const footerMessages = [
+        "shoutout to utopia and aspen","made with love by bored middle schoolers, for everyone else","goonguardian &amp; freakurely","better than kahoot, blooket, and gimkit","if ur school blocks this, be proactive and (dont) send them an email","&quot;erm i use arch btw&quot; like sthu","like i guess bro","we're not responsible if you get in trouble lol","props to t-hops","join our discord server","with the power of proxies","print(&quot;Hello, World!&quot;)","check out capticlient-pybricks-custom-client.pages.dev","why are you even reading this"
+    ];
+    let currentIndex = 0;
+    const footer = document.getElementById('rotating-footer');
+    function rotateFooter() {
+        footer.style.opacity = 0;
+        setTimeout(() => { currentIndex = (currentIndex + 1) % footerMessages.length; footer.innerHTML = footerMessages[currentIndex]; footer.style.opacity = 1; }, 600);
+    }
+
+    // ===== INIT =====
+    window.onload = () => {
+        // Restore theme
+        const savedTheme = localStorage.getItem('apricity-theme-choice');
+        if (savedTheme) setTheme(savedTheme);
+
+        // Restore background
+        const savedBgCustom = localStorage.getItem('apricity-bg-custom');
+        if (savedBgCustom) {
+            document.getElementById('bgCustomUrl').value = savedBgCustom;
+            applyCustomBg();
+        } else {
+            const savedBg = localStorage.getItem('apricity-bg');
+            if (savedBg && savedBg !== 'none') setBg(savedBg);
+        }
+
+        // Restore settings (hide mode defaults ON if never saved)
+        const savedHide = localStorage.getItem('apricity-hide-mode');
+        hideModeEnabled = savedHide === null ? true : savedHide === '1';
+        if (savedHide === null) localStorage.setItem('apricity-hide-mode', '1');
+        document.getElementById('hideModeToggle').checked = hideModeEnabled;
+
+        const savedAntiClose = localStorage.getItem('apricity-anti-close');
+        antiCloseEnabled = savedAntiClose === '1';
+        document.getElementById('antiCloseToggle').checked = antiCloseEnabled;
+
+        const savedTitle = localStorage.getItem('apricity-tab-title');
+        if (savedTitle) { document.title = savedTitle; document.getElementById('tabTitleInput').value = savedTitle; }
+
+        const savedFavicon = localStorage.getItem('apricity-favicon');
+        if (savedFavicon) setFavicon(savedFavicon, true);
+
+        // Restore panic settings
+        const savedPanic = localStorage.getItem('apricity-panic-enabled');
+        panicEnabled = savedPanic !== '0';
+        document.getElementById('panicToggle').checked = panicEnabled;
+        const btn = document.getElementById('panic-btn');
+        btn.classList.toggle('hidden', !panicEnabled);
+
+        const savedCorner = localStorage.getItem('apricity-panic-corner') || 'br';
+        panicCorner = savedCorner;
+        btn.className = (panicEnabled ? '' : 'hidden ') + 'corner-' + savedCorner;
+        ['tl','tr','bl','br'].forEach(c => {
+            document.getElementById('cp-' + c).classList.toggle('selected', c === savedCorner);
+        });
+        document.getElementById('panicCornerRow').style.opacity = panicEnabled ? '1' : '0.4';
+        document.getElementById('panicCornerRow').style.pointerEvents = panicEnabled ? '' : 'none';
+        document.getElementById('panicUrlRow').style.opacity = panicEnabled ? '1' : '0.4';
+        document.getElementById('panicUrlRow').style.pointerEvents = panicEnabled ? '' : 'none';
+
+        const savedPanicUrl = localStorage.getItem('apricity-panic-url');
+        if (savedPanicUrl) {
+            PANIC_URL = savedPanicUrl;
+            document.getElementById('panicUrlInput').value = savedPanicUrl;
+        } else {
+            document.getElementById('panicUrlInput').placeholder = DEFAULT_PANIC_URL;
+        }
+
+        // Update hide status and auto-activate if enabled
+        // Skip if already inside an iframe (i.e. we ARE the hidden tab — don't recurse)
+        const inIframe = window.self !== window.top;
+        if (hideModeEnabled && !inIframe) {
+            updateHideStatusBadge(false);
+            showPopupAllowHint();
+        } else {
+            updateHideStatusBadge(false);
+        }
+
+        // Footer
+        footer.innerHTML = footerMessages[0];
+        setInterval(rotateFooter, 4000);
+        updateRaw();
+    };
+</script>
+</body>
+</html>
