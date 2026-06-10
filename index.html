@@ -1932,7 +1932,7 @@
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${key}`
                 },
-                body: JSON.stringify({ model: 'gemma2-9b-it', messages })
+                body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages })
             });
             const data = await res.json();
             typing.remove();
