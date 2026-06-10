@@ -1094,7 +1094,7 @@
             <div class="app-icon" style="background:linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335);color:#fff;">
                 <span class="material-symbols-outlined" style="color:#fff;">auto_awesome</span>
             </div>
-            Gemini AI
+            Groq AI
         </div>
         <div class="app-item" onclick="openMeetStable()">
             <div class="app-icon" style="background:#00897B;color:#fff;">
@@ -1140,7 +1140,7 @@
     <iframe id="sunlit-frame" src="about:blank"></iframe>
 </div>
 
-<!-- Gemini Page -->
+<!-- Groq Page -->
 <div id="gemini-page" class="page">
     <style>
         #gemini-page.active {
@@ -1213,22 +1213,22 @@
         <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <span style="color:#fff;font-size:12px;font-weight:700;">G</span>
         </div>
-        <span style="font-size:17px;font-weight:700;color:var(--md-sys-color-primary);">Gemini AI</span>
+        <span style="font-size:17px;font-weight:700;color:var(--md-sys-color-primary);">Groq AI</span>
         <button onclick="openGeminiSettings()" style="margin-left:auto;background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:100px;padding:6px 14px;cursor:pointer;font-family:var(--font-ui);font-size:13px;color:var(--md-sys-color-on-surface);">&#9881; API Key</button>
     </div>
     <div id="gemini-setup-screen">
         <div style="font-size:48px;">&#10024;</div>
-        <div style="font-size:20px;font-weight:600;">Set your Gemini API Key</div>
+        <div style="font-size:20px;font-weight:600;">Set your Groq API Key</div>
         <div style="color:var(--md-sys-color-outline);font-size:14px;text-align:center;max-width:340px;">Paste your Google AI Studio key below to start chatting. Saved locally in your browser.</div>
         <div style="display:flex;gap:8px;width:100%;max-width:420px;">
-            <input type="password" id="geminiKeyInput" placeholder="AQ..." value="AQ.Ab8RN6lsjGLEamcEjdJ8UG09Zy3sJPd-5l0aZA41fG9oCLQGxQ" />
+            <input type="password" id="geminiKeyInput" placeholder="gsk_..." value="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" />
             <button onclick="saveGeminiKey()" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);border:none;border-radius:16px;padding:12px 20px;cursor:pointer;font-family:var(--font-ui);font-weight:600;font-size:14px;">Save</button>
         </div>
     </div>
     <div id="gemini-chat-screen">
         <div id="gemini-messages"></div>
         <div id="gemini-input-row">
-            <textarea id="geminiInput" placeholder="Message Gemini..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendGemini();}"></textarea>
+            <textarea id="geminiInput" placeholder="Message Groq..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendGemini();}"></textarea>
             <button id="geminiSendBtn" onclick="sendGemini()">
                 <span class="material-symbols-outlined" style="font-size:20px;">send</span>
             </button>
@@ -1921,19 +1921,25 @@
         msgs.scrollTop = msgs.scrollHeight;
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
-            const contents = geminiHistory.map(m => ({ role: m.role, parts: m.parts }));
+            const url = 'https://api.groq.com/openai/v1/chat/completions';
+            const messages = geminiHistory.map(m => ({
+                role: m.role === 'model' ? 'assistant' : 'user',
+                content: m.parts[0].text
+            }));
             const res = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-                body: JSON.stringify({ contents })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${key}`
+                },
+                body: JSON.stringify({ model: 'gemma2-9b-it', messages })
             });
             const data = await res.json();
             typing.remove();
             if (data.error) {
                 appendGeminiMsg('model', 'Error: ' + data.error.message);
             } else {
-                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '(no response)';
+                const reply = data.choices?.[0]?.message?.content || '(no response)';
                 geminiHistory.push({ role: 'model', parts: [{ text: reply }] });
                 appendGeminiMsg('model', reply);
             }
@@ -2041,7 +2047,7 @@
     // ===== INIT =====
     window.onload = () => {
         // Always force latest key
-        localStorage.setItem('apricity-gemini-key', 'AQ.Ab8RN6lsjGLEamcEjdJ8UG09Zy3sJPd-5l0aZA41fG9oCLQGxQ');
+        localStorage.setItem('apricity-gemini-key', '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');
         console.log('[Apricity] Gemini key set:', localStorage.getItem('apricity-gemini-key').substring(0,20) + '...');
 
         // Restore theme
