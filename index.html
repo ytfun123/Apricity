@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apricity</title>
@@ -1921,15 +1921,10 @@
         msgs.scrollTop = msgs.scrollHeight;
 
         try {
-            const isOAuth = key.startsWith('AQ.') || key.startsWith('ya29.');
-            const url = isOAuth
-                ? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
-                : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-            const headers = { 'Content-Type': 'application/json' };
-            if (isOAuth) headers['Authorization'] = `Bearer ${key}`;
+            const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
             const res = await fetch(url, {
                 method: 'POST',
-                headers,
+                headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
                 body: JSON.stringify({ contents: geminiHistory })
             });
             const data = await res.json();
@@ -2046,7 +2041,7 @@
     window.onload = () => {
         // Pre-load Gemini key if not already saved
         if (!localStorage.getItem('apricity-gemini-key')) {
-            localStorage.setItem('apricity-gemini-key', 'AIzaSyDJdktTi3p_HKjckWKt-hglT5uzXI5lBvs');
+            localStorage.setItem('apricity-gemini-key', 'AQ.Ab8RN6IsjGLEamcEjdJ8UG09Zy3sJPd-5l0aZA41fG9oCLQGxQ');
         }
 
         // Restore theme
