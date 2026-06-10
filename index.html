@@ -271,7 +271,22 @@
         .topbar-icons {
             position: fixed; top: 16px; right: 16px;
             display: flex; gap: 6px; z-index: 50;
+            transition: top 0.15s;
         }
+        body.tabs-active .topbar-icons {
+            top: calc(36px + 16px);
+        }
+        body.tabs-active #page-menu-dropdown {
+            top: calc(36px + 16px) !important;
+        }
+        .page-menu-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 14px; border-radius: 10px;
+            font-size: 14px; font-family: var(--font-ui);
+            color: var(--md-sys-color-on-surface);
+            cursor: pointer; transition: background 0.15s;
+        }
+        .page-menu-item:hover { background: var(--md-sys-color-surface-container-highest); }
         .icon-btn {
             cursor: pointer; width: 44px; height: 44px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
@@ -877,19 +892,22 @@
         /* ===== TAB BAR ===== */
         #tab-bar {
             position: fixed; top: 0; left: 0; right: 0;
-            height: 38px; z-index: 10000;
+            height: 36px; z-index: 99999;
             background: var(--md-sys-color-surface-container-high);
             border-bottom: 1px solid var(--yt-border2);
-            display: flex; align-items: stretch;
+            display: flex; flex-direction: row; align-items: stretch;
             overflow-x: auto; overflow-y: hidden;
             scrollbar-width: none;
         }
         #tab-bar::-webkit-scrollbar { display: none; }
         #tab-bar.hidden { display: none; }
+        #tab-items {
+            display: flex; flex-direction: row; align-items: stretch; flex: 1;
+        }
         .tab-item {
-            display: flex; align-items: center; gap: 6px;
-            padding: 0 10px 0 14px;
-            min-width: 120px; max-width: 200px;
+            display: flex; flex-direction: row; align-items: center; gap: 6px;
+            padding: 0 8px 0 12px;
+            min-width: 110px; max-width: 180px;
             font-size: 12px; font-family: var(--font-ui);
             color: var(--md-sys-color-on-surface-variant);
             cursor: pointer; border-right: 1px solid var(--yt-border);
@@ -908,32 +926,58 @@
             height: 2px; background: var(--md-sys-color-primary);
         }
         .tab-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-        .tab-favicon { width: 14px; height: 14px; font-size: 13px; flex-shrink: 0; }
+        .tab-favicon { font-size: 12px; flex-shrink: 0; }
         .tab-close {
-            width: 16px; height: 16px; border-radius: 50%;
+            width: 15px; height: 15px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 11px; flex-shrink: 0;
+            font-size: 10px; flex-shrink: 0;
             color: var(--md-sys-color-outline);
-            opacity: 0; transition: opacity 0.15s;
+            opacity: 0; transition: opacity 0.15s; cursor: pointer;
         }
-        .tab-item:hover .tab-close { opacity: 1; }
-        .tab-item.active .tab-close { opacity: 0.6; }
+        .tab-item:hover .tab-close,
+        .tab-item.active .tab-close { opacity: 0.7; }
         .tab-close:hover { background: var(--md-sys-color-surface-container-low); opacity: 1 !important; color: var(--md-sys-color-on-surface); }
         #tab-new-btn {
-            width: 38px; flex-shrink: 0;
+            width: 36px; height: 36px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px; cursor: pointer;
+            font-size: 20px; cursor: pointer; line-height: 1;
             color: var(--md-sys-color-outline);
             border: none; background: none;
         }
         #tab-new-btn:hover { color: var(--md-sys-color-on-surface); background: var(--md-sys-color-surface-container-highest); }
-        /* Push all pages down when tab bar is visible */
-        body.tabs-active .page.active,
-        body.tabs-active #tab-bar ~ * .page.active {
-            padding-top: 0;
+        /* Empty tab bar — show open button */
+        #tab-bar-empty {
+            display: none; flex: 1; align-items: center; justify-content: center;
+            font-size: 12px; color: var(--md-sys-color-outline);
+            font-family: var(--font-ui); gap: 8px;
         }
+        #tab-bar.show-empty #tab-bar-empty { display: flex; }
+        #tab-bar.show-empty #tab-items,
+        #tab-bar.show-empty #tab-new-btn { display: none; }
+        /* Offset all fixed/full pages when tab bar active */
         body.tabs-active {
-            padding-top: 38px;
+            --tab-h: 36px;
+        }
+        body.tabs-active .page.active {
+            padding-top: var(--tab-h) !important;
+            height: 100vh !important;
+            box-sizing: border-box !important;
+        }
+        /* Pages that are position:fixed full-screen need top offset */
+        body.tabs-active #gemini-page.active,
+        body.tabs-active #sunlit-page.active,
+        body.tabs-active #hollow-knight-page.active,
+        body.tabs-active #snow-rider-page.active,
+        body.tabs-active #meet-stable-page.active,
+        body.tabs-active #youtube-page.active {
+            top: var(--tab-h) !important;
+            height: calc(100vh - var(--tab-h)) !important;
+            padding-top: 0 !important;
+        }
+        body.tabs-active #home-page.active {
+            padding-top: var(--tab-h) !important;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
     </style>
@@ -944,6 +988,10 @@
 <div id="tab-bar" class="hidden">
     <div id="tab-items"></div>
     <button id="tab-new-btn" onclick="tabNew()" title="New tab">+</button>
+    <div id="tab-bar-empty">
+        <span>No open tabs</span>
+        <button onclick="tabNew()" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:var(--font-ui);">+ New Tab</button>
+    </div>
 </div>
 
 <div id="bg-layer" class="bg-none"></div>
@@ -969,8 +1017,8 @@
 <!-- Transient hint shown before attempting to open the popup -->
 <div id="popup-allow-hint" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100000;background:rgba(0,0,0,0.85);color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;font-weight:700;max-width:90vw;text-align:center;">You may need to allow pop-ups by clicking the pop-up blocked icon in your browser</div>
 
-<!-- Top-right icon cluster -->
-<div class="topbar-icons">
+<!-- Top-right icon cluster (home only) -->
+<div class="topbar-icons" id="topbar-home-icons">
     <div class="icon-btn" onclick="toggleApps()" title="Apps">
         <span class="material-symbols-outlined" style="font-size:20px;">grid_view</span>
     </div>
@@ -982,6 +1030,28 @@
     </div>
     <div class="icon-btn" onclick="openModal('settings')" title="Settings">
         <span class="material-symbols-outlined" style="font-size:20px;">settings</span>
+    </div>
+</div>
+
+<!-- Compact menu button (non-home pages) -->
+<div class="topbar-icons" id="topbar-menu-btn" style="display:none;">
+    <div class="icon-btn" onclick="togglePageMenu()" title="Menu" id="page-menu-trigger">
+        <span class="material-symbols-outlined" style="font-size:20px;">more_vert</span>
+    </div>
+</div>
+<!-- Page menu dropdown -->
+<div id="page-menu-dropdown" style="display:none;position:fixed;right:16px;z-index:100001;background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:16px;padding:8px;display:none;flex-direction:column;gap:4px;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
+    <div class="page-menu-item" onclick="toggleApps();closePageMenu()">
+        <span class="material-symbols-outlined" style="font-size:18px;">grid_view</span> Apps
+    </div>
+    <div class="page-menu-item" onclick="openModal('themes');closePageMenu()">
+        <span class="material-symbols-outlined" style="font-size:18px;">palette</span> Themes
+    </div>
+    <div class="page-menu-item" onclick="openModal('backgrounds');closePageMenu()">
+        <span class="material-symbols-outlined" style="font-size:18px;">image</span> Backgrounds
+    </div>
+    <div class="page-menu-item" onclick="openModal('settings');closePageMenu()">
+        <span class="material-symbols-outlined" style="font-size:18px;">settings</span> Settings
     </div>
 </div>
 
@@ -1048,6 +1118,20 @@
 
         <!-- SETTINGS TAB -->
         <div class="modal-tab-content" id="content-settings">
+            <div class="settings-section">
+                <div class="settings-section-title">Tab System</div>
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">Enable Tab Bar</div>
+                        <div class="setting-desc">Show a tab bar at the top to open multiple pages at once. Default: on.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="tabSystemToggle" checked onchange="onTabSystemToggle()" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
             <div class="settings-section">
                 <div class="settings-section-title">Tab Cloaking</div>
 
@@ -1337,7 +1421,6 @@
             <span style="color:#fff;font-size:12px;font-weight:700;">Q</span>
         </div>
         <span style="font-size:17px;font-weight:700;color:var(--md-sys-color-primary);">Groq AI</span>
-        <button onclick="openGeminiSettings()" style="margin-left:auto;background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:100px;padding:6px 14px;cursor:pointer;font-family:var(--font-ui);font-size:13px;color:var(--md-sys-color-on-surface);">&#9881; API Key</button>
     </div>
     <div id="groq-body">
         <div id="groq-sidebar">
@@ -1544,6 +1627,38 @@
         tabNew('youtube-page', 'YouTube', '▶️');
     }
 
+    // ===== PAGE MENU =====
+    function updateTopbarVisibility() {
+        const isHome = document.getElementById('home-page').classList.contains('active');
+        document.getElementById('topbar-home-icons').style.display = isHome ? 'flex' : 'none';
+        document.getElementById('topbar-menu-btn').style.display = isHome ? 'none' : 'flex';
+        closePageMenu();
+    }
+
+    function togglePageMenu() {
+        const d = document.getElementById('page-menu-dropdown');
+        const trigger = document.getElementById('page-menu-trigger');
+        const rect = trigger.getBoundingClientRect();
+        const isVisible = d.style.display === 'flex';
+        d.style.display = isVisible ? 'none' : 'flex';
+        d.style.flexDirection = 'column';
+        d.style.top = (rect.bottom + 6) + 'px';
+        d.style.right = '16px';
+    }
+
+    function closePageMenu() {
+        document.getElementById('page-menu-dropdown').style.display = 'none';
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('page-menu-dropdown');
+        const trigger = document.getElementById('page-menu-trigger');
+        if (menu && trigger && !menu.contains(e.target) && !trigger.contains(e.target)) {
+            closePageMenu();
+        }
+    });
+
     // ===== TAB SYSTEM =====
     const TAB_ICONS = {
         home: '🏠', youtube: '▶️', groq: '🤖',
@@ -1559,9 +1674,15 @@
         const bar = document.getElementById('tab-bar');
         const container = document.getElementById('tab-items');
         container.innerHTML = '';
-        if (tabs.length === 0) { bar.classList.add('hidden'); document.body.classList.remove('tabs-active'); return; }
+        const tabsEnabled = localStorage.getItem('apricity-tabs-enabled') !== '0';
+        if (!tabsEnabled) { bar.classList.add('hidden'); document.body.classList.remove('tabs-active'); return; }
         bar.classList.remove('hidden');
         document.body.classList.add('tabs-active');
+        if (tabs.length === 0) {
+            bar.classList.add('show-empty');
+            return;
+        }
+        bar.classList.remove('show-empty');
         tabs.forEach(tab => {
             const el = document.createElement('div');
             el.className = 'tab-item' + (tab.id === activeTabId ? ' active' : '');
@@ -1589,6 +1710,7 @@
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         const page = document.getElementById(tab.pageId);
         if (page) page.classList.add('active');
+        updateTopbarVisibility();
         // Handle extra logic per page type
         if (tab.pageId === 'home-page') { /* nothing extra */ }
         else if (tab.pageId === 'youtube-page') { /* already loaded */ }
@@ -1652,6 +1774,7 @@
         const existing = tabs.find(t => t.pageId === 'home-page');
         if (existing) { tabSwitch(existing.id); return; }
         tabNew('home-page', 'Home', '🏠');
+        updateTopbarVisibility();
     }
     function goSearch() {
         const q = document.getElementById('homeSearch').value.trim();
@@ -2093,6 +2216,16 @@
     function fmt(n) { if (!n) return '—'; const v = parseInt(n); if (v >= 1e9) return (v/1e9).toFixed(1)+'B'; if (v >= 1e6) return (v/1e6).toFixed(1)+'M'; if (v >= 1e3) return (v/1e3).toFixed(1)+'K'; return v.toLocaleString(); }
     function parseDur(iso) { const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/); if (!m) return ''; const h=parseInt(m[1]||0),mn=parseInt(m[2]||0),s=parseInt(m[3]||0); return h ? `${h}:${String(mn).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${mn}:${String(s).padStart(2,'0')}`; }
 
+    function onTabSystemToggle() {
+        const enabled = document.getElementById('tabSystemToggle').checked;
+        localStorage.setItem('apricity-tabs-enabled', enabled ? '1' : '0');
+        tabRender();
+        if (!enabled) {
+            document.body.classList.remove('tabs-active');
+            document.getElementById('tab-bar').classList.add('hidden');
+        }
+    }
+
     // ===== GROQ CHAT =====
     let geminiHistory = [];
     let groqCurrentId = null;
@@ -2407,8 +2540,14 @@
     window.onload = () => {
         // Always force latest key
         localStorage.setItem('apricity-gemini-key', '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');
+        // Restore tab system toggle
+        const tabsEnabled = localStorage.getItem('apricity-tabs-enabled');
+        if (tabsEnabled === '0') {
+            document.getElementById('tabSystemToggle').checked = false;
+        }
         // Open initial home tab
         tabNew('home-page', 'Home', '🏠');
+        updateTopbarVisibility();
 
         // Restore theme
         const savedTheme = localStorage.getItem('apricity-theme-choice');
