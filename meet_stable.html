@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Meet Stable+</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+body{margin:0;font-family:Arial;background:#0b1220;color:white;height:100vh;display:flex;flex-direction:column}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#111a2e;flex-wrap:wrap;gap:8px}
+#main{display:flex;flex:1;height:calc(100vh - 60px)}
+#videos{flex:3;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;padding:10px;overflow:auto}
+video{width:100%;border-radius:12px;background:black}
+#chat{width:320px;background:#0f172a;border-left:1px solid #1f2a44;display:flex;flex-direction:column}
+#messages{flex:1;overflow:auto;padding:10px;font-size:14px}
+.msg{margin-bottom:8px}
+input,button{padding:8px;border-radius:8px;border:none}
+
+button{background:#3b82f6;color:white;cursor:pointer}
+button:hover{opacity:0.9}
+button.active{background:#22c55e}
+button.off{background:#ef4444}
+
+#tools{display:flex;gap:5px;flex-wrap:wrap;padding:5px}
+img,video.file{max-width:100%;border-radius:10px;margin-top:5px}
+</style>
+</head>
+<body>
+
+<header>
+<div>
+<b>Meet Stable+</b>
+<div id="status">offline</div>
+</div>
+
+<div>
+<input id="name" placeholder="name"/>
+<input id="room" placeholder="room"/>
+<button onclick="createRoom()">Create</button>
+<button onclick="joinRoom()">Join</button>
+
+<button id="micBtn" onclick="toggleMic()">🎤 Mic</button>
+<button id="camBtn" onclick="toggleCam()">📷 Cam</button>
+<button onclick="capturePhoto()">📸 Photo</button>
+<button id="recBtn" onclick="toggleRecord()">⏺ Rec</button>
+</div>
+</header>
+
+<div id="main">
+<div id="videos"></div>
+
+<div id="chat">
+<div id="messages"></div>
+
+<div id="tools">
+<input type="file" id="file" />
+<button onclick="sendFile()">Send file</button>
+</div>
+
+<input id="msg" placeholder="message..." onkeydown="if(event.key==='Enter')sendMsg()"/>
+</div>
+</div>
+
+<script>
+let peer;
+let stream;
+let name="User";
+let roomId;
+let isHost=false;
+
+let dataConns={};
+let callConns={};
+let peers=[];
+
+let mic=false;
+let cam=true;
+let recording=false;
+let recorder;
+let chunks=[];
+
+const videos=document.getElementById("videos");
+const messages=document.getElementById("messages");
+const status=document.getElementById("status");
+
+const micBtn=document.getElementById("micBtn");
+const camBtn=document.getElementById("camBtn");
+const recBtn=document.getElementById("recBtn");
+
+function log(t){status.innerText=t}
+
+// ---------------- MEDIA ----------------
+async function initMedia(){
+if(stream) return;
+stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+
+// DEFAULTS: cam ON, mic OFF
+stream.getVideoTracks()[0].enabled=true;
+stream.getAudioTracks()[0].enabled=false;
+
+addVideo(stream,true,"me");
+setMicUI(false);
+setCamUI(true);
+}
+
+function addVideo(s,muted,id){
+if(document.getElementById(id)) return;
+const v=document.createElement("video");
+v.id=id;
+v.srcObject=s;
+v.autoplay=true;
+v.playsInline=true;
+v.muted=muted;
+videos.appendChild(v);
+}
+
+// ---------------- PEER ----------------
+function startPeer(id){
+peer=new Peer(id,{host:"0.peerjs.com",secure:true,port:443});
+
+peer.on("open",()=>log("online: "+id));
+
+peer.on("call",call=>{
+call.answer(stream);
+call.on("stream",s=>addVideo(s,false,call.peer));
+callConns[call.peer]=call;
+});
+
+peer.on("connection",conn=>{
+conn.on("data",handleData);
+});
+}
+
+function handleData(d){
+if(d.type==="room"){
+if(!peers.includes(d.id)) peers.push(d.id);
+if(isHost) broadcastRoom();
+connectToPeers();
+}
+if(d.type==="roomList"){
+peers=d.list;
+connectToPeers();
+}
+if(d.type==="msg") showMsg(d);
+if(d.type==="file") showFile(d);
+}
+
+function sendToAll(data){Object.values(dataConns).forEach(c=>c.send(data));}
+function broadcastRoom(){sendToAll({type:"roomList",list:peers});}
+
+// ---------------- CONNECTIONS ----------------
+function connectToPeers(){
+peers.forEach(id=>{
+if(id!==peer.id && !dataConns[id]){
+const c=peer.connect(id);
+dataConns[id]=c;
+
+c.on("open",()=>{
+const call=peer.call(id,stream);
+callConns[id]=call;
+call.on("stream",s=>addVideo(s,false,id));
+});
+
+c.on("data",handleData);
+}
+});
+}
+
+// ---------------- ROOM ----------------
+async function createRoom(){
+await initMedia();
+name=document.getElementById("name").value||"User";
+roomId=Math.random().toString(36).substr(2,6);
+document.getElementById("room").value=roomId;
+
+isHost=true;
+peers=[roomId];
+
+startPeer(roomId);
+history.replaceState({},"","?room="+roomId);
+log("room created");
+}
+
+async function joinRoom(){
+await initMedia();
+name=document.getElementById("name").value||"User";
+const room=document.getElementById("room").value;
+if(!room) return;
+
+startPeer(Math.random().toString(36).substr(2,8));
+
+peer.on("open",()=>{
+const c=peer.connect(room);
+dataConns[room]=c;
+
+c.on("open",()=>{
+c.send({type:"room",id:peer.id});
+log("joined");
+});
+});
+}
+
+// ---------------- CHAT ----------------
+function sendMsg(){
+name=document.getElementById("name").value||"User";
+const i=document.getElementById("msg");
+if(!i.value) return;
+const d={type:"msg",name,text:i.value};
+showMsg(d);
+sendToAll(d);
+i.value="";
+}
+
+function showMsg(d){
+const div=document.createElement("div");
+div.className="msg";
+div.innerHTML=`<b>${d.name}</b>: ${d.text}`;
+messages.appendChild(div);
+messages.scrollTop=messages.scrollHeight;
+}
+
+// ---------------- FILES (ANY TYPE) ----------------
+function sendFile(){
+const f=document.getElementById("file").files[0];
+if(!f) return;
+
+const r=new FileReader();
+r.onload=()=>{
+const d={
+type:"file",
+name:f.name,
+file:r.result,
+mime:f.type
+};
+showFile(d);
+sendToAll(d);
+};
+r.readAsDataURL(f);
+}
+
+function showFile(d){
+const div=document.createElement("div");
+div.className="msg";
+
+const name=d.name||"file";
+
+if(d.mime && d.mime.startsWith("image")){
+div.innerHTML=`<b>${name}</b><br><img src="${d.file}">`;
+}
+else if(d.mime && d.mime.startsWith("video")){
+div.innerHTML=`<b>${name}</b><br><video class='file' controls src="${d.file}"></video>`;
+}
+else if(d.mime && d.mime.startsWith("audio")){
+div.innerHTML=`<b>${name}</b><br><audio controls src="${d.file}"></audio>`;
+}
+else{
+div.innerHTML=`<b>${name}</b><br>📎 <a download="${name}" href="${d.file}" style="color:#60a5fa">Download</a>`;
+}
+
+messages.appendChild(div);
+messages.scrollTop=messages.scrollHeight;
+}
+
+// ---------------- CONTROLS ----------------
+function setMicUI(v){micBtn.classList.toggle("active",v);micBtn.classList.toggle("off",!v);}
+function setCamUI(v){camBtn.classList.toggle("active",v);camBtn.classList.toggle("off",!v);}
+function setRecUI(v){recBtn.classList.toggle("active",v);recBtn.classList.toggle("off",!v);}
+
+function toggleMic(){
+if(!stream) return;
+mic=!mic;
+stream.getAudioTracks()[0].enabled=mic;
+setMicUI(mic);
+}
+
+function toggleCam(){
+if(!stream) return;
+cam=!cam;
+stream.getVideoTracks()[0].enabled=cam;
+setCamUI(cam);
+}
+
+// ---------------- PHOTO ----------------
+function capturePhoto(){
+if(!stream) return;
+const v=document.createElement("video");
+v.srcObject=stream;
+v.play();
+
+setTimeout(()=>{
+const c=document.createElement("canvas");
+c.width=640;c.height=480;
+const ctx=c.getContext("2d");
+ctx.drawImage(v,0,0,c.width,c.height);
+
+c.toBlob(b=>{
+const r=new FileReader();
+r.onload=()=>{
+const d={type:"file",name:"photo.jpg",file:r.result,mime:"image/jpeg"};
+showFile(d);
+sendToAll(d);
+};
+r.readAsDataURL(b);
+});
+},500);
+}
+
+// ---------------- RECORD ----------------
+function toggleRecord(){
+if(!stream) return;
+
+if(!recording){
+chunks=[];
+recorder=new MediaRecorder(stream);
+
+recorder.ondataavailable=e=>chunks.push(e.data);
+
+recorder.onstop=()=>{
+const blob=new Blob(chunks,{type:"video/webm"});
+const r=new FileReader();
+r.onload=()=>{
+const d={type:"file",name:"recording.webm",file:r.result,mime:"video/webm"};
+showFile(d);
+sendToAll(d);
+};
+r.readAsDataURL(blob);
+};
+
+recorder.start();
+recording=true;
+setRecUI(true);
+log("recording...");
+}else{
+recorder.stop();
+recording=false;
+setRecUI(false);
+log("online");
+}
+}
+
+</script>
+
+</body>
+</html>
