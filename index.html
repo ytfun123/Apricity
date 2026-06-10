@@ -1935,7 +1935,7 @@
                     'HTTP-Referer': window.location.origin,
                     'X-Title': 'Apricity'
                 },
-                body: JSON.stringify({ model: 'google/gemini-flash-1.5', messages })
+                body: JSON.stringify({ model: 'google/gemini-2.5-flash', messages })
             });
             const data = await res.json();
             typing.remove();
