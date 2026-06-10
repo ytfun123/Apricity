@@ -1921,11 +1921,11 @@
         msgs.scrollTop = msgs.scrollHeight;
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
             const contents = geminiHistory.map(m => ({ role: m.role, parts: m.parts }));
             const res = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
                 body: JSON.stringify({ contents })
             });
             const data = await res.json();
