@@ -1221,7 +1221,7 @@
         <div style="font-size:20px;font-weight:600;">Set your Gemini API Key</div>
         <div style="color:var(--md-sys-color-outline);font-size:14px;text-align:center;max-width:340px;">Paste your Google AI Studio key below to start chatting. Saved locally in your browser.</div>
         <div style="display:flex;gap:8px;width:100%;max-width:420px;">
-            <input type="password" id="geminiKeyInput" placeholder="AIza..." value="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" />
+            <input type="password" id="geminiKeyInput" placeholder="AQ..." value="AQ.Ab8RN6lsjGLEamcEjdJ8UG09Zy3sJPd-5l0aZA41fG9oCLQGxQ" />
             <button onclick="saveGeminiKey()" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);border:none;border-radius:16px;padding:12px 20px;cursor:pointer;font-family:var(--font-ui);font-weight:600;font-size:14px;">Save</button>
         </div>
     </div>
@@ -1921,28 +1921,19 @@
         msgs.scrollTop = msgs.scrollHeight;
 
         try {
-            const url = 'https://openrouter.ai/api/v1/chat/completions';
-            // Convert Gemini-style history to OpenAI-style messages
-            const messages = geminiHistory.map(m => ({
-                role: m.role === 'model' ? 'assistant' : 'user',
-                content: m.parts[0].text
-            }));
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+            const contents = geminiHistory.map(m => ({ role: m.role, parts: m.parts }));
             const res = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${key}`,
-                    'HTTP-Referer': window.location.origin,
-                    'X-Title': 'Apricity'
-                },
-                body: JSON.stringify({ model: 'google/gemma-4-26b-a4b-it:free', messages })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents })
             });
             const data = await res.json();
             typing.remove();
             if (data.error) {
                 appendGeminiMsg('model', 'Error: ' + data.error.message);
             } else {
-                const reply = data.choices?.[0]?.message?.content || '(no response)';
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '(no response)';
                 geminiHistory.push({ role: 'model', parts: [{ text: reply }] });
                 appendGeminiMsg('model', reply);
             }
@@ -2050,7 +2041,7 @@
     // ===== INIT =====
     window.onload = () => {
         // Always force latest key
-        localStorage.setItem('apricity-gemini-key', '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');
+        localStorage.setItem('apricity-gemini-key', 'AQ.Ab8RN6lsjGLEamcEjdJ8UG09Zy3sJPd-5l0aZA41fG9oCLQGxQ');
         console.log('[Apricity] Gemini key set:', localStorage.getItem('apricity-gemini-key').substring(0,20) + '...');
 
         // Restore theme
