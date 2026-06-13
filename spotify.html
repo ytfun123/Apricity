@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sift — Spotify Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0f0c;
+    --bg-alt:#15170f;
+    --ink:#eef0e6;
+    --ink-dim:#9aa190;
+    --line:#2a2d22;
+    --acid:#c6ff3a;
+    --card:#181a13;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk',sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  header{
+    padding:2.5rem 1.5rem 1.5rem;
+    border-bottom:1px solid var(--line);
+  }
+  .header-inner{
+    max-width:760px;
+    margin:0 auto;
+  }
+  .tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.75rem;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+    color:var(--acid);
+    display:block;
+    margin-bottom:.6rem;
+  }
+  h1{
+    font-size:clamp(2rem,6vw,3rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    line-height:1.05;
+  }
+  h1 span{color:var(--ink-dim);font-weight:400;}
+
+  main{
+    flex:1;
+    max-width:760px;
+    width:100%;
+    margin:0 auto;
+    padding:1.5rem;
+  }
+
+  form{
+    display:flex;
+    gap:.6rem;
+    margin-bottom:1.5rem;
+  }
+  input[type="text"]{
+    flex:1;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--ink);
+    font-family:'Space Grotesk',sans-serif;
+    font-size:1rem;
+    padding:.9rem 1rem;
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  input[type="text"]::placeholder{color:var(--ink-dim);}
+  input[type="text"]:focus{border-color:var(--acid);}
+
+  button{
+    background:var(--acid);
+    color:#1a1f0a;
+    border:none;
+    border-radius:6px;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:1rem;
+    padding:.9rem 1.6rem;
+    cursor:pointer;
+    transition:transform .1s ease, filter .15s ease;
+  }
+  button:hover{filter:brightness(1.08);}
+  button:active{transform:scale(.97);}
+  button:disabled{opacity:.5;cursor:default;}
+
+  .status{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.8rem;
+    color:var(--ink-dim);
+    margin-bottom:1rem;
+    min-height:1.2em;
+  }
+  .status.error{color:#ff6a5a;}
+
+  .results{
+    display:flex;
+    flex-direction:column;
+    gap:.6rem;
+  }
+  .track{
+    display:flex;
+    align-items:center;
+    gap:1rem;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:.8rem 1rem;
+    transition:border-color .15s ease;
+  }
+  .track:hover{border-color:var(--acid);}
+  .track img{
+    width:54px;
+    height:54px;
+    border-radius:4px;
+    object-fit:cover;
+    background:var(--bg-alt);
+    flex-shrink:0;
+  }
+  .track-info{
+    flex:1;
+    min-width:0;
+  }
+  .track-title{
+    font-weight:600;
+    font-size:.95rem;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .track-artist{
+    font-size:.82rem;
+    color:var(--ink-dim);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .track-meta{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.75rem;
+    color:var(--ink-dim);
+    flex-shrink:0;
+  }
+  .track a{
+    color:var(--acid);
+    text-decoration:none;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.8rem;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:.4rem .7rem;
+    flex-shrink:0;
+    transition:background .15s ease,color .15s ease;
+  }
+  .track a:hover{background:var(--acid);color:#1a1f0a;}
+
+  .empty{
+    text-align:center;
+    padding:3rem 1rem;
+    color:var(--ink-dim);
+    font-family:'JetBrains Mono',monospace;
+    font-size:.85rem;
+  }
+
+  .config{
+    margin-top:2.5rem;
+    padding-top:1.5rem;
+    border-top:1px solid var(--line);
+  }
+  .config summary{
+    cursor:pointer;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.78rem;
+    color:var(--ink-dim);
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+  .config-body{
+    margin-top:1rem;
+    display:flex;
+    flex-direction:column;
+    gap:.6rem;
+  }
+  .config-body label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.78rem;
+    color:var(--ink-dim);
+  }
+  .config-body input{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--ink);
+    font-family:'JetBrains Mono',monospace;
+    font-size:.85rem;
+    padding:.6rem .8rem;
+    outline:none;
+  }
+  .config-body input:focus{border-color:var(--acid);}
+  .config-note{
+    font-size:.75rem;
+    color:var(--ink-dim);
+    line-height:1.5;
+  }
+
+  footer{
+    padding:1.5rem;
+    text-align:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.72rem;
+    color:var(--ink-dim);
+    border-top:1px solid var(--line);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <span class="tag mono">// track lookup</span>
+    <h1>Sift<span>.find tracks via Apify</span></h1>
+  </div>
+</header>
+
+<main>
+  <form id="searchForm">
+    <input type="text" id="query" placeholder="Search a song, artist, or album…" autocomplete="off">
+    <button type="submit" id="searchBtn">Search</button>
+  </form>
+
+  <div class="status mono" id="status"></div>
+  <div class="results" id="results"></div>
+
+  <details class="config">
+    <summary>Apify token setup</summary>
+    <div class="config-body">
+      <label for="tokenInput">Apify API token</label>
+      <input type="text" id="tokenInput" placeholder="apify_api_...">
+      <p class="config-note">
+        Your token is stored only in this browser's local storage — it is never sent anywhere except directly to Apify's API when you search. Get a token from your Apify account settings.
+      </p>
+    </div>
+  </details>
+</main>
+
+<footer>
+  sift · powered by apify · canadesk/spotify
+</footer>
+
+<script>
+  // For quick local testing only — remove before sharing/deploying
+  const APIFY_TOKEN_TEST = 'apify_api_j67sg3OItNaLogVrbT7eXcQVQOTEvT3Q3FqB';
+
+  const form = document.getElementById('searchForm');
+  const queryInput = document.getElementById('query');
+  const statusEl = document.getElementById('status');
+  const resultsEl = document.getElementById('results');
+  const tokenInput = document.getElementById('tokenInput');
+  const searchBtn = document.getElementById('searchBtn');
+
+  // Restore saved token
+  const savedToken = localStorage.getItem('sift-apify-token');
+  if (savedToken) {
+    tokenInput.value = savedToken;
+  } else if (APIFY_TOKEN_TEST && APIFY_TOKEN_TEST !== 'YOUR_APIFY_TOKEN_HERE') {
+    tokenInput.value = APIFY_TOKEN_TEST;
+  }
+
+  tokenInput.addEventListener('input', () => {
+    localStorage.setItem('sift-apify-token', tokenInput.value.trim());
+  });
+
+  function setStatus(msg, isError = false) {
+    statusEl.textContent = msg;
+    statusEl.classList.toggle('error', isError);
+  }
+
+  function msToTime(ms) {
+    if (!ms) return '';
+    const totalSec = Math.floor(ms / 1000);
+    const min = Math.floor(totalSec / 60);
+    const sec = String(totalSec % 60).padStart(2, '0');
+    return `${min}:${sec}`;
+  }
+
+  function renderResults(items) {
+    resultsEl.innerHTML = '';
+    if (!items || items.length === 0) {
+      resultsEl.innerHTML = '<div class="empty">No tracks found. Try a different search.</div>';
+      return;
+    }
+    for (const item of items) {
+      const title = item.title || item.name || item.trackName || 'Untitled';
+      const artist = item.artist || item.artistName || (Array.isArray(item.artists) ? item.artists.join(', ') : '') || '';
+      const image = item.image || item.albumArt || item.cover || item.thumbnail || '';
+      const duration = item.duration || item.durationMs || item.length;
+      const url = item.url || item.spotifyUrl || item.link || '#';
+
+      const card = document.createElement('div');
+      card.className = 'track';
+      card.innerHTML = `
+        ${image ? `<img src="${image}" alt="" loading="lazy">` : `<div class="track-info-placeholder" style="width:54px;height:54px;border-radius:4px;background:var(--bg-alt);flex-shrink:0;"></div>`}
+        <div class="track-info">
+          <div class="track-title">${escapeHtml(title)}</div>
+          <div class="track-artist">${escapeHtml(artist)}</div>
+        </div>
+        <div class="track-meta">${msToTime(duration)}</div>
+        ${url !== '#' ? `<a href="${url}" target="_blank" rel="noopener">Open</a>` : ''}
+      `;
+      resultsEl.appendChild(card);
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const query = queryInput.value.trim();
+    const token = tokenInput.value.trim();
+
+    if (!query) return;
+    if (!token) {
+      setStatus('Add your Apify API token below before searching.', true);
+      return;
+    }
+
+    searchBtn.disabled = true;
+    setStatus('Searching…');
+    resultsEl.innerHTML = '';
+
+    try {
+      const res = await fetch(`https://api.apify.com/v2/acts/canadesk~spotify/run-sync-get-dataset-items?token=${encodeURIComponent(token)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ search: query })
+      });
+
+      if (!res.ok) {
+        throw new Error(`Apify responded with status ${res.status}`);
+      }
+
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : (data.items || []);
+
+      setStatus(`${items.length} result${items.length === 1 ? '' : 's'} for "${query}"`);
+      renderResults(items);
+    } catch (err) {
+      setStatus(`Error: ${err.message}`, true);
+      resultsEl.innerHTML = '';
+    } finally {
+      searchBtn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
