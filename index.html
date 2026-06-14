@@ -2750,7 +2750,14 @@
     // ---------------- MEDIA ----------------
     async function msInitMedia() {
         if (msStream) return;
-        msStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        msLog("requesting camera/mic…");
+        try {
+            msStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        } catch (err) {
+            msLog("media error: " + err.message);
+            console.error("getUserMedia failed:", err);
+            throw err;
+        }
 
         // DEFAULTS: cam ON, mic OFF
         msStream.getVideoTracks()[0].enabled = true;
@@ -2778,6 +2785,11 @@
         msPeer = new Peer(id, { host: "0.peerjs.com", secure: true, port: 443 });
 
         msPeer.on("open", () => msLog("online: " + id));
+
+        msPeer.on("error", err => {
+            msLog("peer error: " + err.type);
+            console.error("PeerJS error:", err);
+        });
 
         msPeer.on("call", call => {
             call.answer(msStream);
@@ -2827,7 +2839,9 @@
 
     // ---------------- ROOM ----------------
     async function msCreateRoom() {
-        await msInitMedia();
+        try {
+            await msInitMedia();
+        } catch (e) { return; }
         msName = document.getElementById("ms-name").value || "User";
         msRoomId = Math.random().toString(36).substr(2, 6);
         document.getElementById("ms-room").value = msRoomId;
@@ -2840,7 +2854,9 @@
     }
 
     async function msJoinRoom() {
-        await msInitMedia();
+        try {
+            await msInitMedia();
+        } catch (e) { return; }
         msName = document.getElementById("ms-name").value || "User";
         const room = document.getElementById("ms-room").value;
         if (!room) return;
