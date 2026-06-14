@@ -192,7 +192,7 @@
                 rgba(0, 0, 0, 0.18);
         }
 
-        #home-page, #sunlit-page, #youtube-page, #hollow-knight-page, #snow-rider-page, .settings-trigger, .modal-overlay, .apps-overlay {
+        #home-page, #sunlit-page, #youtube-page, #hollow-knight-page, #snow-rider-page, #spotify-page, .settings-trigger, .modal-overlay, .apps-overlay {
             position: relative;
             z-index: 1;
         }
@@ -260,6 +260,9 @@
         .page.active { display: block; }
         #gemini-page.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         #meet-stable-page.active { display: flex; flex-direction: column; height: 100vh; }
+        #spotify-page.active { display: flex; flex-direction: column; height: 100vh; }
+        #spotify-page { width: 100%; height: 100vh; }
+        #spotify-page iframe { width: 100%; height: 100%; border: none; display: block; }
 
         #home-page {
             display: flex; flex-direction: column;
