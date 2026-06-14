@@ -1726,8 +1726,9 @@
     function updateTopbarVisibility() {
         const activeTab = tabs.find(t => t.id === activeTabId);
         const isHome = !activeTab || activeTab.pageId === 'home-page';
+        const isMeet = activeTab && activeTab.pageId === 'meet-stable-page';
         document.getElementById('topbar-home-icons').style.display = isHome ? 'flex' : 'none';
-        document.getElementById('topbar-menu-btn').style.display = isHome ? 'none' : 'flex';
+        document.getElementById('topbar-menu-btn').style.display = (isHome || isMeet) ? 'none' : 'flex';
         closePageMenu();
     }
 
