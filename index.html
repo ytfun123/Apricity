@@ -969,7 +969,7 @@
         body.tabs-active #hollow-knight-page.active,
         body.tabs-active #snow-rider-page.active,
         body.tabs-active #meet-stable-page.active,
-        body.tabs-active #youtube-page.active {
+        body.tabs-active #spotify-page.active {
             top: var(--tab-h) !important;
             height: calc(100vh - var(--tab-h)) !important;
             padding-top: 0 !important;
@@ -978,6 +978,17 @@
             padding-top: var(--tab-h) !important;
             min-height: 100vh;
             box-sizing: border-box;
+        }
+        /* YouTube page: not fixed, has its own internal scroll regions that
+           use 100vh / 64px math — shrink those by the tab bar height */
+        body.tabs-active #youtube-page.active {
+            padding-top: 0 !important;
+            height: 100vh !important;
+        }
+        body.tabs-active #youtube-page.active .yt-sidebar,
+        body.tabs-active #youtube-page.active .yt-main {
+            top: calc(64px + var(--tab-h));
+            height: calc(100vh - 64px - var(--tab-h)) !important;
         }
 
     </style>
@@ -1126,7 +1137,7 @@
                         <div class="setting-desc">Show a tab bar at the top to open multiple pages at once. Default: on.</div>
                     </div>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="tabSystemToggle" checked onchange="onTabSystemToggle()" />
+                        <input type="checkbox" id="tabSystemToggle" onchange="onTabSystemToggle()" />
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -1253,6 +1264,12 @@
                 <span class="material-symbols-outlined">video_call</span>
             </div>
             Meet Stable
+        </div>
+        <div class="app-item" onclick="openSpotify()">
+            <div class="app-icon" style="background:#1DB954;color:#fff;">
+                <span class="material-symbols-outlined">graphic_eq</span>
+            </div>
+            Spotify
         </div>
         <button class="apps-close-btn" onclick="toggleApps()">Close</button>
     </div>
@@ -1459,6 +1476,12 @@
 <div id="meet-stable-page" class="page">
     <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
     <iframe id="meet-stable-frame" src="about:blank" style="width:100%;height:100vh;border:none;display:block;"></iframe>
+</div>
+
+<!-- Spotify Page -->
+<div id="spotify-page" class="page">
+    <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+    <iframe id="spotify-frame" src="about:blank" style="width:100%;height:100vh;border:none;display:block;"></iframe>
 </div>
 
 <!-- HOME PAGE -->
@@ -1675,7 +1698,7 @@
         const bar = document.getElementById('tab-bar');
         const container = document.getElementById('tab-items');
         container.innerHTML = '';
-        const tabsEnabled = localStorage.getItem('apricity-tabs-enabled') !== '0';
+        const tabsEnabled = localStorage.getItem('apricity-tabs-enabled') === '1';
         if (!tabsEnabled) { bar.classList.add('hidden'); document.body.classList.remove('tabs-active'); return; }
         bar.classList.remove('hidden');
         document.body.classList.add('tabs-active');
@@ -2453,6 +2476,16 @@
         tabNew('meet-stable-page', 'Meet Stable', '📹');
     }
 
+    // ===== SPOTIFY =====
+    function openSpotify() {
+        toggleApps();
+        const existing = tabs.find(t => t.pageId === 'spotify-page');
+        if (existing) { tabSwitch(existing.id); return; }
+        const frame = document.getElementById('spotify-frame');
+        if (!frame.dataset.loaded) { frame.src = './spotify.html'; frame.dataset.loaded = '1'; }
+        tabNew('spotify-page', 'Spotify', '🎵');
+    }
+
     // ===== PANIC BUTTON =====
     let panicEnabled = true;
     let panicActive = false;
@@ -2543,9 +2576,7 @@
         localStorage.setItem('apricity-gemini-key', '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');
         // Restore tab system toggle
         const tabsEnabled = localStorage.getItem('apricity-tabs-enabled');
-        if (tabsEnabled === '0') {
-            document.getElementById('tabSystemToggle').checked = false;
-        }
+        document.getElementById('tabSystemToggle').checked = (tabsEnabled === '1');
         // Open initial home tab
         tabNew('home-page', 'Home', '🏠');
         updateTopbarVisibility();
