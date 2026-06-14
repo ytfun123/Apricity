@@ -2751,21 +2751,37 @@
     async function msInitMedia() {
         if (msStream) return;
         msLog("requesting camera/mic…");
+
+        // Try full video+audio first, then fall back to whichever is available.
         try {
             msStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         } catch (err) {
-            msLog("media error: " + err.message);
-            console.error("getUserMedia failed:", err);
-            throw err;
+            console.warn("video+audio getUserMedia failed:", err);
+            try {
+                msStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                msLog("no mic found — joined with camera only");
+            } catch (err2) {
+                console.warn("video-only getUserMedia failed:", err2);
+                try {
+                    msStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+                    msLog("no camera found — joined with mic only");
+                } catch (err3) {
+                    msLog("media error: " + err3.message);
+                    console.error("getUserMedia failed completely:", err3);
+                    throw err3;
+                }
+            }
         }
 
-        // DEFAULTS: cam ON, mic OFF
-        msStream.getVideoTracks()[0].enabled = true;
-        msStream.getAudioTracks()[0].enabled = false;
+        // DEFAULTS: cam ON, mic OFF (only if tracks exist)
+        const vTrack = msStream.getVideoTracks()[0];
+        const aTrack = msStream.getAudioTracks()[0];
+        if (vTrack) vTrack.enabled = true;
+        if (aTrack) aTrack.enabled = false;
 
         msAddVideo(msStream, true, "ms-me");
         msSetMicUI(false);
-        msSetCamUI(true);
+        msSetCamUI(!!vTrack);
     }
 
     function msAddVideo(s, muted, id) {
@@ -2953,15 +2969,19 @@
 
     function msToggleMic() {
         if (!msStream) return;
+        const t = msStream.getAudioTracks()[0];
+        if (!t) { msLog("no microphone available"); return; }
         msMic = !msMic;
-        msStream.getAudioTracks()[0].enabled = msMic;
+        t.enabled = msMic;
         msSetMicUI(msMic);
     }
 
     function msToggleCam() {
         if (!msStream) return;
+        const t = msStream.getVideoTracks()[0];
+        if (!t) { msLog("no camera available"); return; }
         msCam = !msCam;
-        msStream.getVideoTracks()[0].enabled = msCam;
+        t.enabled = msCam;
         msSetCamUI(msCam);
     }
 
