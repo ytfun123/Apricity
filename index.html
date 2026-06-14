@@ -6,6 +6,7 @@
     <title>Apricity</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -259,10 +260,50 @@
         .page { display: none; }
         .page.active { display: block; }
         #gemini-page.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        #meet-stable-page.active { display: flex; flex-direction: column; height: 100vh; }
+        #meet-stable-page.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         #spotify-page.active { display: flex; flex-direction: column; height: 100vh; }
         #spotify-page { width: 100%; height: 100vh; }
         #spotify-page iframe { width: 100%; height: 100%; border: none; display: block; }
+
+        /* ===== MEET STABLE+ (inlined) ===== */
+        #ms-root {
+            font-family: Arial, sans-serif;
+            background: #0b1220;
+            color: #fff;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #ms-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; background: #111a2e; flex-wrap: wrap; gap: 8px;
+            flex-shrink: 0;
+        }
+        #ms-main { display: flex; flex: 1; min-height: 0; }
+        #ms-videos {
+            flex: 3; display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 10px; padding: 10px; overflow: auto;
+        }
+        #ms-videos video { width: 100%; border-radius: 12px; background: #000; }
+        #ms-chat {
+            width: 320px; background: #0f172a; border-left: 1px solid #1f2a44;
+            display: flex; flex-direction: column; flex-shrink: 0;
+        }
+        #ms-messages { flex: 1; overflow: auto; padding: 10px; font-size: 14px; }
+        #ms-root .msg { margin-bottom: 8px; }
+        #ms-root input, #ms-root button {
+            padding: 8px; border-radius: 8px; border: none; font-family: inherit;
+        }
+        #ms-root button { background: #3b82f6; color: #fff; cursor: pointer; }
+        #ms-root button:hover { opacity: 0.9; }
+        #ms-root button.active { background: #22c55e; }
+        #ms-root button.off { background: #ef4444; }
+        #ms-tools { display: flex; gap: 5px; flex-wrap: wrap; padding: 5px; }
+        #ms-root img, #ms-root video.file { max-width: 100%; border-radius: 10px; margin-top: 5px; }
+
 
         #home-page {
             display: flex; flex-direction: column;
@@ -1478,7 +1519,35 @@
 <!-- Meet Stable Page -->
 <div id="meet-stable-page" class="page">
     <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
-    <iframe id="meet-stable-frame" src="about:blank" style="width:100%;height:100vh;border:none;display:block;"></iframe>
+    <div id="ms-root">
+        <header id="ms-header">
+            <div>
+                <b>Meet Stable+</b>
+                <div id="ms-status">offline</div>
+            </div>
+            <div>
+                <input id="ms-name" placeholder="name"/>
+                <input id="ms-room" placeholder="room"/>
+                <button onclick="msCreateRoom()">Create</button>
+                <button onclick="msJoinRoom()">Join</button>
+                <button id="ms-micBtn" onclick="msToggleMic()">🎤 Mic</button>
+                <button id="ms-camBtn" onclick="msToggleCam()">📷 Cam</button>
+                <button onclick="msCapturePhoto()">📸 Photo</button>
+                <button id="ms-recBtn" onclick="msToggleRecord()">⏺ Rec</button>
+            </div>
+        </header>
+        <div id="ms-main">
+            <div id="ms-videos"></div>
+            <div id="ms-chat">
+                <div id="ms-messages"></div>
+                <div id="ms-tools">
+                    <input type="file" id="ms-file" />
+                    <button onclick="msSendFile()">Send file</button>
+                </div>
+                <input id="ms-msg" placeholder="message..." onkeydown="if(event.key==='Enter')msSendMsg()"/>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Spotify Page -->
@@ -2474,8 +2543,6 @@
         toggleApps();
         const existing = tabs.find(t => t.pageId === 'meet-stable-page');
         if (existing) { tabSwitch(existing.id); return; }
-        const frame = document.getElementById('meet-stable-frame');
-        if (!frame.dataset.loaded) { frame.src = './meet_stable.html'; frame.dataset.loaded = '1'; }
         tabNew('meet-stable-page', 'Meet Stable', '📹');
     }
 
@@ -2655,6 +2722,290 @@
         setInterval(rotateFooter, 4000);
         updateRaw();
     };
+
+    // ===================================================================
+    // MEET STABLE+ (inlined from meet_stable.html)
+    // ===================================================================
+    let msPeer;
+    let msStream;
+    let msName = "User";
+    let msRoomId;
+    let msIsHost = false;
+
+    let msDataConns = {};
+    let msCallConns = {};
+    let msPeers = [];
+
+    let msMic = false;
+    let msCam = true;
+    let msRecording = false;
+    let msRecorder;
+    let msChunks = [];
+
+    function msLog(t) {
+        const el = document.getElementById("ms-status");
+        if (el) el.innerText = t;
+    }
+
+    // ---------------- MEDIA ----------------
+    async function msInitMedia() {
+        if (msStream) return;
+        msStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        // DEFAULTS: cam ON, mic OFF
+        msStream.getVideoTracks()[0].enabled = true;
+        msStream.getAudioTracks()[0].enabled = false;
+
+        msAddVideo(msStream, true, "ms-me");
+        msSetMicUI(false);
+        msSetCamUI(true);
+    }
+
+    function msAddVideo(s, muted, id) {
+        if (document.getElementById(id)) return;
+        const videos = document.getElementById("ms-videos");
+        const v = document.createElement("video");
+        v.id = id;
+        v.srcObject = s;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.muted = muted;
+        videos.appendChild(v);
+    }
+
+    // ---------------- PEER ----------------
+    function msStartPeer(id) {
+        msPeer = new Peer(id, { host: "0.peerjs.com", secure: true, port: 443 });
+
+        msPeer.on("open", () => msLog("online: " + id));
+
+        msPeer.on("call", call => {
+            call.answer(msStream);
+            call.on("stream", s => msAddVideo(s, false, "ms-" + call.peer));
+            msCallConns[call.peer] = call;
+        });
+
+        msPeer.on("connection", conn => {
+            conn.on("data", msHandleData);
+        });
+    }
+
+    function msHandleData(d) {
+        if (d.type === "room") {
+            if (!msPeers.includes(d.id)) msPeers.push(d.id);
+            if (msIsHost) msBroadcastRoom();
+            msConnectToPeers();
+        }
+        if (d.type === "roomList") {
+            msPeers = d.list;
+            msConnectToPeers();
+        }
+        if (d.type === "msg") msShowMsg(d);
+        if (d.type === "file") msShowFile(d);
+    }
+
+    function msSendToAll(data) { Object.values(msDataConns).forEach(c => c.send(data)); }
+    function msBroadcastRoom() { msSendToAll({ type: "roomList", list: msPeers }); }
+
+    // ---------------- CONNECTIONS ----------------
+    function msConnectToPeers() {
+        msPeers.forEach(id => {
+            if (id !== msPeer.id && !msDataConns[id]) {
+                const c = msPeer.connect(id);
+                msDataConns[id] = c;
+
+                c.on("open", () => {
+                    const call = msPeer.call(id, msStream);
+                    msCallConns[id] = call;
+                    call.on("stream", s => msAddVideo(s, false, "ms-" + id));
+                });
+
+                c.on("data", msHandleData);
+            }
+        });
+    }
+
+    // ---------------- ROOM ----------------
+    async function msCreateRoom() {
+        await msInitMedia();
+        msName = document.getElementById("ms-name").value || "User";
+        msRoomId = Math.random().toString(36).substr(2, 6);
+        document.getElementById("ms-room").value = msRoomId;
+
+        msIsHost = true;
+        msPeers = [msRoomId];
+
+        msStartPeer(msRoomId);
+        msLog("room created");
+    }
+
+    async function msJoinRoom() {
+        await msInitMedia();
+        msName = document.getElementById("ms-name").value || "User";
+        const room = document.getElementById("ms-room").value;
+        if (!room) return;
+
+        msStartPeer(Math.random().toString(36).substr(2, 8));
+
+        msPeer.on("open", () => {
+            const c = msPeer.connect(room);
+            msDataConns[room] = c;
+
+            c.on("open", () => {
+                c.send({ type: "room", id: msPeer.id });
+                msLog("joined");
+            });
+        });
+    }
+
+    // ---------------- CHAT ----------------
+    function msSendMsg() {
+        msName = document.getElementById("ms-name").value || "User";
+        const i = document.getElementById("ms-msg");
+        if (!i.value) return;
+        const d = { type: "msg", name: msName, text: i.value };
+        msShowMsg(d);
+        msSendToAll(d);
+        i.value = "";
+    }
+
+    function msShowMsg(d) {
+        const messages = document.getElementById("ms-messages");
+        const div = document.createElement("div");
+        div.className = "msg";
+        div.innerHTML = `<b>${esc(d.name)}</b>: ${esc(d.text)}`;
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    // ---------------- FILES (ANY TYPE) ----------------
+    function msSendFile() {
+        const f = document.getElementById("ms-file").files[0];
+        if (!f) return;
+
+        const r = new FileReader();
+        r.onload = () => {
+            const d = {
+                type: "file",
+                name: f.name,
+                file: r.result,
+                mime: f.type
+            };
+            msShowFile(d);
+            msSendToAll(d);
+        };
+        r.readAsDataURL(f);
+    }
+
+    function msShowFile(d) {
+        const messages = document.getElementById("ms-messages");
+        const div = document.createElement("div");
+        div.className = "msg";
+
+        const name = d.name || "file";
+
+        if (d.mime && d.mime.startsWith("image")) {
+            div.innerHTML = `<b>${esc(name)}</b><br><img src="${d.file}">`;
+        } else if (d.mime && d.mime.startsWith("video")) {
+            div.innerHTML = `<b>${esc(name)}</b><br><video class='file' controls src="${d.file}"></video>`;
+        } else if (d.mime && d.mime.startsWith("audio")) {
+            div.innerHTML = `<b>${esc(name)}</b><br><audio controls src="${d.file}"></audio>`;
+        } else {
+            div.innerHTML = `<b>${esc(name)}</b><br>📎 <a download="${esc(name)}" href="${d.file}" style="color:#60a5fa">Download</a>`;
+        }
+
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    // ---------------- CONTROLS ----------------
+    function msSetMicUI(v) {
+        const b = document.getElementById("ms-micBtn");
+        b.classList.toggle("active", v);
+        b.classList.toggle("off", !v);
+    }
+    function msSetCamUI(v) {
+        const b = document.getElementById("ms-camBtn");
+        b.classList.toggle("active", v);
+        b.classList.toggle("off", !v);
+    }
+    function msSetRecUI(v) {
+        const b = document.getElementById("ms-recBtn");
+        b.classList.toggle("active", v);
+        b.classList.toggle("off", !v);
+    }
+
+    function msToggleMic() {
+        if (!msStream) return;
+        msMic = !msMic;
+        msStream.getAudioTracks()[0].enabled = msMic;
+        msSetMicUI(msMic);
+    }
+
+    function msToggleCam() {
+        if (!msStream) return;
+        msCam = !msCam;
+        msStream.getVideoTracks()[0].enabled = msCam;
+        msSetCamUI(msCam);
+    }
+
+    // ---------------- PHOTO ----------------
+    function msCapturePhoto() {
+        if (!msStream) return;
+        const v = document.createElement("video");
+        v.srcObject = msStream;
+        v.play();
+
+        setTimeout(() => {
+            const c = document.createElement("canvas");
+            c.width = 640; c.height = 480;
+            const ctx = c.getContext("2d");
+            ctx.drawImage(v, 0, 0, c.width, c.height);
+
+            c.toBlob(b => {
+                const r = new FileReader();
+                r.onload = () => {
+                    const d = { type: "file", name: "photo.jpg", file: r.result, mime: "image/jpeg" };
+                    msShowFile(d);
+                    msSendToAll(d);
+                };
+                r.readAsDataURL(b);
+            });
+        }, 500);
+    }
+
+    // ---------------- RECORD ----------------
+    function msToggleRecord() {
+        if (!msStream) return;
+
+        if (!msRecording) {
+            msChunks = [];
+            msRecorder = new MediaRecorder(msStream);
+
+            msRecorder.ondataavailable = e => msChunks.push(e.data);
+
+            msRecorder.onstop = () => {
+                const blob = new Blob(msChunks, { type: "video/webm" });
+                const r = new FileReader();
+                r.onload = () => {
+                    const d = { type: "file", name: "recording.webm", file: r.result, mime: "video/webm" };
+                    msShowFile(d);
+                    msSendToAll(d);
+                };
+                r.readAsDataURL(blob);
+            };
+
+            msRecorder.start();
+            msRecording = true;
+            msSetRecUI(true);
+            msLog("recording...");
+        } else {
+            msRecorder.stop();
+            msRecording = false;
+            msSetRecUI(false);
+            msLog("online");
+        }
+    }
 </script>
 </body>
 </html>
