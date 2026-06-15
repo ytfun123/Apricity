@@ -1617,6 +1617,7 @@
 <!-- Snow Rider Page -->
 <div id="snow-rider-page" class="page">
     <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+    <button class="sunlit-back" id="snow-rider-mute-btn" onclick="toggleSnowRiderMute()" style="left:auto;right:12px;">🔊 Mute</button>
     <iframe id="snow-rider-frame" src="about:blank"></iframe>
 </div>
 
@@ -2288,6 +2289,39 @@
         const names = {'hollow-knight':'Hollow Knight','snow-rider':'Snow Rider'};
         tabNew(pageId, names[id] || id, '🎮', { gameId: id, gameSrc: src });
     }
+
+    // ===== SNOW RIDER MUTE =====
+    let snowRiderMuted = false;
+    function applySnowRiderMute() {
+        const frame = document.getElementById('snow-rider-frame');
+        if (!frame) return;
+        try {
+            const doc = frame.contentDocument;
+            if (!doc) return;
+            doc.querySelectorAll('audio, video').forEach(el => { el.muted = snowRiderMuted; });
+            const win = frame.contentWindow;
+            if (win) {
+                // Mute any Howler.js / WebAudio-based sound managers commonly used in HTML5 games
+                if (win.Howler && typeof win.Howler.mute === 'function') win.Howler.mute(snowRiderMuted);
+                if (win.AudioContext || win.webkitAudioContext) {
+                    // best-effort: nothing else to do generically for raw AudioContext
+                }
+            }
+        } catch (e) {
+            // cross-origin or not yet loaded — ignore
+        }
+    }
+    function toggleSnowRiderMute() {
+        snowRiderMuted = !snowRiderMuted;
+        const btn = document.getElementById('snow-rider-mute-btn');
+        btn.textContent = snowRiderMuted ? '🔇 Unmute' : '🔊 Mute';
+        applySnowRiderMute();
+    }
+    // Re-apply mute whenever the iframe (re)loads new content
+    (function attachSnowRiderMuteListener() {
+        const frame = document.getElementById('snow-rider-frame');
+        if (frame) frame.addEventListener('load', () => setTimeout(applySnowRiderMute, 300));
+    })();
 
     // ===== THEME =====
     function setTheme(theme) {
