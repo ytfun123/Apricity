@@ -2290,38 +2290,122 @@
         tabNew(pageId, names[id] || id, '🎮', { gameId: id, gameSrc: src });
     }
 
-    // ===== SNOW RIDER MUTE =====
+    // ===== SNOW RIDER MUTE (Unity WebGL via UnityLoader) =====
     let snowRiderMuted = false;
+    let snowRiderAudioCtx = null;
+    let snowRiderMutePollInterval = null;
+
+    function snowRiderFindAudioContext(win) {
+        if (!win) return null;
+        const AC = win.AudioContext || win.webkitAudioContext;
+        if (!AC) return null;
+        try {
+            // Common locations across UnityLoader / emscripten versions
+            const candidates = [
+                win.gameInstance?.Module?.ctx,
+                win.Module?.ctx,
+                win.gameInstance?.Module?.SDL2?.audioContext,
+                win.gameInstance?.Module?.WEBAudio?.audioContext,
+                win.Module?.WEBAudio?.audioContext,
+                win._wlAudioCtx
+            ];
+            for (const c of candidates) {
+                if (c instanceof AC) return c;
+            }
+            // Deep scan: search Module's own properties for any AudioContext instance
+            const mod = win.gameInstance?.Module || win.Module;
+            if (mod) {
+                for (const key in mod) {
+                    try {
+                        if (mod[key] instanceof AC) return mod[key];
+                    } catch (e) {}
+                }
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    // Tracks every AudioContext the game ever creates (patched in via constructor override)
+    let snowRiderAllContexts = [];
+
+    function snowRiderPatchAudioContext(win) {
+        if (!win || win._wlAudioPatched) return;
+        const Native = win.AudioContext || win.webkitAudioContext;
+        if (!Native) return;
+        try {
+            const Patched = function(...args) {
+                const ctx = new Native(...args);
+                snowRiderAllContexts.push(ctx);
+                if (snowRiderMuted && ctx.state === 'running') ctx.suspend().catch(()=>{});
+                return ctx;
+            };
+            Patched.prototype = Native.prototype;
+            if (win.AudioContext) win.AudioContext = Patched;
+            if (win.webkitAudioContext) win.webkitAudioContext = Patched;
+            win._wlAudioPatched = true;
+        } catch (e) {}
+    }
+
     function applySnowRiderMute() {
         const frame = document.getElementById('snow-rider-frame');
         if (!frame) return;
         try {
-            const doc = frame.contentDocument;
-            if (!doc) return;
-            doc.querySelectorAll('audio, video').forEach(el => { el.muted = snowRiderMuted; });
             const win = frame.contentWindow;
-            if (win) {
-                // Mute any Howler.js / WebAudio-based sound managers commonly used in HTML5 games
-                if (win.Howler && typeof win.Howler.mute === 'function') win.Howler.mute(snowRiderMuted);
-                if (win.AudioContext || win.webkitAudioContext) {
-                    // best-effort: nothing else to do generically for raw AudioContext
-                }
-            }
+            const doc = frame.contentDocument;
+            if (doc) doc.querySelectorAll('audio, video').forEach(el => { el.muted = snowRiderMuted; });
+            if (win?.Howler && typeof win.Howler.mute === 'function') win.Howler.mute(snowRiderMuted);
+
+            if (!snowRiderAudioCtx) snowRiderAudioCtx = snowRiderFindAudioContext(win);
+
+            // Apply to every captured AudioContext (patched constructor) + the found one
+            const all = snowRiderAudioCtx ? [...snowRiderAllContexts, snowRiderAudioCtx] : snowRiderAllContexts;
+            all.forEach(ctx => {
+                try {
+                    if (snowRiderMuted) {
+                        if (ctx.state === 'running') ctx.suspend().catch(()=>{});
+                    } else {
+                        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+                    }
+                } catch (e) {}
+            });
         } catch (e) {
             // cross-origin or not yet loaded — ignore
         }
     }
+
     function toggleSnowRiderMute() {
         snowRiderMuted = !snowRiderMuted;
         const btn = document.getElementById('snow-rider-mute-btn');
         btn.textContent = snowRiderMuted ? '🔇 Unmute' : '🔊 Mute';
         applySnowRiderMute();
     }
-    // Re-apply mute whenever the iframe (re)loads new content
+
+    // The Unity AudioContext is created lazily (often after first user interaction),
+    // so keep polling for it while the page is open and re-apply the current mute state.
     (function attachSnowRiderMuteListener() {
         const frame = document.getElementById('snow-rider-frame');
-        if (frame) frame.addEventListener('load', () => setTimeout(applySnowRiderMute, 300));
+        if (!frame) return;
+        frame.addEventListener('load', () => {
+            snowRiderAudioCtx = null;
+            snowRiderAllContexts = [];
+            // Patch as early as possible so we catch the context Unity creates
+            try { snowRiderPatchAudioContext(frame.contentWindow); } catch (e) {}
+            if (snowRiderMutePollInterval) clearInterval(snowRiderMutePollInterval);
+            let attempts = 0;
+            snowRiderMutePollInterval = setInterval(() => {
+                attempts++;
+                try { snowRiderPatchAudioContext(frame.contentWindow); } catch (e) {}
+                if (!snowRiderAudioCtx) {
+                    applySnowRiderMute();
+                }
+                if ((snowRiderAudioCtx || snowRiderAllContexts.length) || attempts > 60) {
+                    clearInterval(snowRiderMutePollInterval);
+                    snowRiderMutePollInterval = null;
+                }
+            }, 500);
+        });
     })();
+
 
     // ===== THEME =====
     function setTheme(theme) {
