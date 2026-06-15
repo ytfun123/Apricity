@@ -2385,11 +2385,10 @@
     (function attachSnowRiderMuteListener() {
         const frame = document.getElementById('snow-rider-frame');
         if (!frame) return;
-        frame.addEventListener('load', () => {
+
+        function startPatchingAndPolling() {
             snowRiderAudioCtx = null;
             snowRiderAllContexts = [];
-            // Patch as early as possible so we catch the context Unity creates
-            try { snowRiderPatchAudioContext(frame.contentWindow); } catch (e) {}
             if (snowRiderMutePollInterval) clearInterval(snowRiderMutePollInterval);
             let attempts = 0;
             snowRiderMutePollInterval = setInterval(() => {
@@ -2398,12 +2397,17 @@
                 if (!snowRiderAudioCtx) {
                     applySnowRiderMute();
                 }
-                if ((snowRiderAudioCtx || snowRiderAllContexts.length) || attempts > 60) {
+                if (attempts > 200) {
                     clearInterval(snowRiderMutePollInterval);
                     snowRiderMutePollInterval = null;
                 }
-            }, 500);
-        });
+            }, 100);
+        }
+
+        frame.addEventListener('load', startPatchingAndPolling);
+        // Also start immediately in case load already fired or fires very fast,
+        // so we patch AudioContext before Unity's first user-gesture audio init.
+        startPatchingAndPolling();
     })();
 
 
