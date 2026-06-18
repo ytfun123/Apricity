@@ -210,14 +210,6 @@
             box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
         }
 
-        body.has-bg.transparent-island #home-page .main-content {
-            background: transparent !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-
         body.has-bg #home-page .logo,
         body.has-bg #home-page .search-icon {
             color: var(--md-sys-color-primary);
@@ -1573,18 +1565,6 @@
                 </div>
             </div>
 
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <div class="setting-name">Transparent Home Island</div>
-                        <div class="setting-desc">Makes the frosted glass panel behind the logo, search bar, and buttons fully invisible so the background shows through completely.</div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="transparentIslandToggle" onchange="onTransparentIslandToggle()" />
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-
             <div class="settings-section">
                 <div class="settings-section-title">Panic Button</div>
 
@@ -2658,13 +2638,6 @@
         if (autoNightEnabled) autoNightApplyNow();
     }
 
-    // ===== TRANSPARENT ISLAND =====
-    function onTransparentIslandToggle() {
-        const enabled = document.getElementById('transparentIslandToggle').checked;
-        document.body.classList.toggle('transparent-island', enabled);
-        localStorage.setItem('apricity-transparent-island', enabled ? '1' : '0');
-    }
-
     // ===== FILTERS TOGGLE =====
     function toggleFilters() {
         const panel = document.getElementById('filtersPanel');
@@ -3407,13 +3380,6 @@
             pickers.style.pointerEvents = '';
             autoNightApplyNow();
             autoNightInterval = setInterval(autoNightApplyNow, 60000);
-        }
-
-        // Restore transparent island
-        const savedTransparentIsland = localStorage.getItem('apricity-transparent-island');
-        if (savedTransparentIsland === '1') {
-            document.body.classList.add('transparent-island');
-            document.getElementById('transparentIslandToggle').checked = true;
         }
 
         // Update hide status and auto-activate if enabled
