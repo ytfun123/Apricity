@@ -707,6 +707,11 @@
         .bg-15 { background: url('./bg15.png') center/cover no-repeat; }
         .bg-16 { background: url('./bg16.png') center/cover no-repeat; }
         .bg-17 { background: url('./bg17.png') center/cover no-repeat; }
+        .bg-13-n { background: url('./bg13_n.png') center/cover no-repeat; }
+        .bg-14-n { background: url('./bg14_n.png') center/cover no-repeat; }
+        .bg-15-n { background: url('./bg15_n.png') center/cover no-repeat; }
+        .bg-16-n { background: url('./bg16_n.png') center/cover no-repeat; }
+        .bg-17-n { background: url('./bg17_n.png') center/cover no-repeat; }
 
         .bg-custom-row {
             margin-top: 12px;
@@ -1430,11 +1435,11 @@
                 <div class="bg-option" id="bg-opt-10" onclick="setBg('bg-10')"><div class="bg-option-inner bg-10"><span class="bg-option-label">Emerald</span></div></div>
                 <div class="bg-option" id="bg-opt-11" onclick="setBg('bg-11')"><div class="bg-option-inner bg-11"><span class="bg-option-label">Dusk</span></div></div>
                 <div class="bg-option" id="bg-opt-12" onclick="setBg('bg-12')"><div class="bg-option-inner bg-12"><span class="bg-option-label">Matrix</span></div></div>
-                <div class="bg-option" id="bg-opt-13" onclick="setBg('bg-13')"><div class="bg-option-inner bg-13"><span class="bg-option-label">Winter Sunset</span></div></div>
+                <div class="bg-option" id="bg-opt-13" onclick="setBg('bg-13')"><div class="bg-option-inner bg-13"><span class="bg-option-label">Pine Forest</span></div></div>
                 <div class="bg-option" id="bg-opt-14" onclick="setBg('bg-14')"><div class="bg-option-inner bg-14"><span class="bg-option-label">Spring Blossom</span></div></div>
                 <div class="bg-option" id="bg-opt-15" onclick="setBg('bg-15')"><div class="bg-option-inner bg-15"><span class="bg-option-label">Mountain Meadow</span></div></div>
-                <div class="bg-option" id="bg-opt-16" onclick="setBg('bg-16')"><div class="bg-option-inner bg-16"><span class="bg-option-label">Pine Forest</span></div></div>
-                <div class="bg-option" id="bg-opt-17" onclick="setBg('bg-17')"><div class="bg-option-inner bg-17"><span class="bg-option-label">Misty Forest</span></div></div>
+                <div class="bg-option" id="bg-opt-16" onclick="setBg('bg-16')"><div class="bg-option-inner bg-16"><span class="bg-option-label">Misty Forest</span></div></div>
+                <div class="bg-option" id="bg-opt-17" onclick="setBg('bg-17')"><div class="bg-option-inner bg-17"><span class="bg-option-label">Winter Sunset</span></div></div>
             </div>
             <div class="bg-custom-row">
                 <div class="field-label-sm">Custom image URL</div>
@@ -1515,6 +1520,30 @@
                     <button class="yt-btn yt-btn-sm" onclick="setFavicon('https://www.youtube.com/favicon.ico')">YouTube</button>
                     <button class="yt-btn yt-btn-sm" onclick="setFavicon('https://classroom.google.com/favicon.ico')">Classroom</button>
                     <button class="yt-btn yt-btn-sm" onclick="setFavicon('https://docs.google.com/favicon.ico')">Docs</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title" style="display:flex;align-items:center;gap:8px;">
+                    Beta Features
+                    <span style="font-size:10px;font-weight:700;letter-spacing:0.06em;background:color-mix(in srgb,var(--md-sys-color-primary) 18%,transparent);color:var(--md-sys-color-primary);padding:2px 8px;border-radius:100px;border:1px solid color-mix(in srgb,var(--md-sys-color-primary) 35%,transparent);">BETA</span>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">Nature Wallpaper Day/Night</div>
+                        <div class="setting-desc">When a nature background is active, automatically swaps to its night version (e.g. <code style="font-size:11px;background:var(--yt-surface2);padding:1px 5px;border-radius:4px;">bg13_n.png</code>) at sunset and back at sunrise. Day: 6 AM – 7 PM.</div>
+                        <div style="margin-top:6px;">
+                            <span id="autoNightStatusBadge" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:color-mix(in srgb,var(--md-sys-color-outline) 15%,transparent);color:var(--md-sys-color-outline);">
+                                <span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;"></span>
+                                <span id="autoNightStatusText">Off</span>
+                            </span>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoNightToggle" onchange="onAutoNightToggle()" />
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
             </div>
 
@@ -2473,6 +2502,8 @@
         }
         localStorage.setItem('apricity-bg', key);
         localStorage.removeItem('apricity-bg-custom');
+        // If auto day/night is on and this is a nature bg, immediately apply correct variant
+        if (autoNightEnabled) autoNightApplyNow();
     }
 
     function applyCustomBg() {
@@ -2486,6 +2517,84 @@
         currentBg = 'custom';
         localStorage.setItem('apricity-bg-custom', url);
         localStorage.removeItem('apricity-bg');
+    }
+
+    // ===== AUTO DAY/NIGHT BACKGROUND =====
+    let autoNightEnabled = false;
+    let autoNightInterval = null;
+
+    // Nature bg numbers that have a night variant (bgN_n.png)
+    const NATURE_BGS = new Set(['bg-13','bg-14','bg-15','bg-16','bg-17']);
+
+    function autoNightIsDay() {
+        const h = new Date().getHours();
+        return h >= 6 && h < 19;
+    }
+
+    // Returns the bg key to actually show: if a nature bg is selected,
+    // swap to/from its _n variant based on time. Otherwise do nothing.
+    function autoNightResolve(key) {
+        // key is like 'bg-13' or 'bg-13-n' (internal night key)
+        const base = key.replace('-n',''); // strip any existing night suffix
+        if (!NATURE_BGS.has(base)) return null; // not a nature bg, nothing to do
+        return autoNightIsDay() ? base : base + '-n';
+    }
+
+    function autoNightApplyNow() {
+        if (!autoNightEnabled) return;
+        // currentBg holds the user's chosen bg key
+        const resolved = autoNightResolve(currentBg);
+        if (!resolved) return; // user picked a non-nature bg, leave it alone
+
+        const layer = document.getElementById('bg-layer');
+        const isNight = !autoNightIsDay();
+        // Build the image URL: bg13.png → bg13_n.png
+        const num = resolved.replace('bg-','').replace('-n','');
+        const suffix = isNight ? '_n' : '';
+        layer.style.background = `url('./bg${num}${suffix}.png') center/cover no-repeat`;
+        layer.className = 'bg-active';
+        document.body.classList.add('has-bg');
+
+        // Update status badge
+        const badge = document.getElementById('autoNightStatusBadge');
+        const text = document.getElementById('autoNightStatusText');
+        if (badge && text) {
+            if (isNight) {
+                badge.style.background = 'color-mix(in srgb,#7c6af7 15%,transparent)';
+                badge.style.color = '#a89cf7';
+                text.textContent = '🌙 Night version active';
+            } else {
+                badge.style.background = 'color-mix(in srgb,#f59e0b 15%,transparent)';
+                badge.style.color = '#f59e0b';
+                text.textContent = '☀️ Day version active';
+            }
+        }
+    }
+
+    function onAutoNightToggle() {
+        autoNightEnabled = document.getElementById('autoNightToggle').checked;
+        localStorage.setItem('apricity-autonnight-enabled', autoNightEnabled ? '1' : '0');
+
+        const badge = document.getElementById('autoNightStatusBadge');
+        const text = document.getElementById('autoNightStatusText');
+
+        if (autoNightEnabled) {
+            autoNightApplyNow();
+            if (!autoNightInterval) autoNightInterval = setInterval(autoNightApplyNow, 60000);
+        } else {
+            if (autoNightInterval) { clearInterval(autoNightInterval); autoNightInterval = null; }
+            // Restore the plain day version of the current nature bg if one is set
+            if (NATURE_BGS.has(currentBg.replace('-n',''))) {
+                const num = currentBg.replace('bg-','').replace('-n','');
+                const layer = document.getElementById('bg-layer');
+                layer.style.background = `url('./bg${num}.png') center/cover no-repeat`;
+            }
+            if (badge && text) {
+                badge.style.background = '';
+                badge.style.color = '';
+                text.textContent = 'Off';
+            }
+        }
     }
 
     // ===== FILTERS TOGGLE =====
@@ -3214,6 +3323,15 @@
             document.getElementById('panicUrlInput').value = savedPanicUrl;
         } else {
             document.getElementById('panicUrlInput').placeholder = DEFAULT_PANIC_URL;
+        }
+
+        // Restore auto day/night background
+        const savedAutoNight = localStorage.getItem('apricity-autonnight-enabled');
+        autoNightEnabled = savedAutoNight === '1';
+        document.getElementById('autoNightToggle').checked = autoNightEnabled;
+        if (autoNightEnabled) {
+            autoNightApplyNow();
+            autoNightInterval = setInterval(autoNightApplyNow, 60000);
         }
 
         // Update hide status and auto-activate if enabled
