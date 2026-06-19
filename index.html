@@ -4242,13 +4242,31 @@
         }
     });
 
+    // ── PWA INSTALL PROMPT ──
+    let _pwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault(); // suppress automatic popup
+        _pwaPrompt = e;     // save for later use via console command
+    });
+
     function handleConsoleCommand(cmd) {
         // ── ADD YOUR COMMANDS BELOW ──
-        // Example structure:
-        // if (cmd === 'your-secret-command') { /* do something */ return; }
+        // Example: if (cmd === 'your-secret-command') { ... return; }
 
+        if (cmd === '/sudo-install-apricity-admin-app') {
+            if (_pwaPrompt) {
+                _pwaPrompt.prompt();
+                _pwaPrompt.userChoice.then(r => {
+                    consolePrint(r.outcome === 'accepted' ? '✓ App installed!' : 'Install dismissed.', 'info');
+                    _pwaPrompt = null;
+                });
+            } else {
+                consolePrint('Install prompt not available. You may already have the app installed, or use Chrome/Edge.', 'error');
+            }
+            return;
+        }
         if (cmd === 'help') {
-            consolePrint('Available commands: help, clear, version', 'info');
+            consolePrint('Available commands: help, clear, version, install', 'info');
             return;
         }
         if (cmd === 'clear') {
@@ -4257,12 +4275,6 @@
         }
         if (cmd === 'version') {
             consolePrint('Apricity v1.0', 'info');
-            return;
-        }
-
-        if (cmd === '/sudo-install-apricity-admin-app') {
-            window.dispatchEvent(new Event('beforeinstallprompt-trigger'));
-            consolePrint('Launching install prompt...', 'info');
             return;
         }
 
