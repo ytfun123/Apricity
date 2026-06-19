@@ -2499,10 +2499,12 @@
         const names = {
             'hollow-knight': 'Hollow Knight',
             'snow-rider':    'Snow Rider',
-            'pvz':           'PvZ',
+            'pvz':           'Plants vs Zombies',
             'motox3m':       'Moto X3M',
             'driverussia':   'Driver Russia',
             'growagarden':   'Grow a Garden',
+            'infinitycraft': 'Infinity Craft',
+            'minecraft':     'Minecraft 1.12',
         };
         openGameFullscreen(src, names[id] || id);
     }
@@ -2512,14 +2514,14 @@
     // and set placeholder to false. It will then open in a tab like the
     // existing games when clicked.
     const GAMES_LIST = [
-        { id: 'hollow-knight', name: 'Hollow Knight', icon: 'sports_esports', src: './hollow_knight.html', placeholder: false },
-        { id: 'snow-rider',    name: 'Snow Rider',     icon: 'downhill_skiing', src: './snow_rider.html',  placeholder: false },
-        { id: 'pvz',   name: 'pvz',    icon: 'add_circle',     src: './games/pvz.html', placeholder: false },
-        { id: 'motox3m',   name: 'motox3m',    icon: 'add_circle',     src: './games/motox3m.html', placeholder: false },
-        { id: 'driverussia',   name: 'driverussia',    icon: 'add_circle',     src: './games/driverussia.html', placeholder: false },
-        { id: 'growagarden',   name: 'grow a garden',    icon: 'add_circle',     src: './games/gag.html', placeholder: false },
-        { id: 'game-slot-7',   name: 'Coming Soon',    icon: 'add_circle',     src: './games/game-7.html', placeholder: true },
-        { id: 'game-slot-8',   name: 'Coming Soon',    icon: 'add_circle',     src: './games/game-8.html', placeholder: true },
+        { id: 'hollow-knight', name: 'Hollow Knight', icon: 'sword',           src: './hollow_knight.html', placeholder: false },
+        { id: 'snow-rider',    name: 'Snow Rider',    icon: 'downhill_skiing', src: './snow_rider.html',    placeholder: false },
+        { id: 'pvz',           name: 'Plants vs Zombies', icon: 'local_florist', src: './games/pvz.html',   placeholder: false },
+        { id: 'motox3m',       name: 'Moto X3M',      icon: 'two_wheeler',     src: './games/motox3m.html', placeholder: false },
+        { id: 'driverussia',   name: 'Driver Russia', icon: 'directions_car',  src: './games/driverussia.html', placeholder: false },
+        { id: 'growagarden',   name: 'Grow a Garden', icon: 'yard',            src: './games/gag.html',     placeholder: false },
+        { id: 'infinitycraft',  name: 'Infinity Craft', icon: 'auto_awesome',    src: './games/infinitycraft.html', placeholder: false },
+        { id: 'minecraft',      name: 'Minecraft 1.12', icon: 'grass',           src: './games/minecraft1.12.html', placeholder: false },
     ];
 
     function toggleGamesFullscreen() {
