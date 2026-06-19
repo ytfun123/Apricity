@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apricity</title>
-    <link rel="manifest" href="/manifest.json">
+    <!-- manifest injected dynamically by JS after unlock -->
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/icon-192.png">
     <meta name="theme-color" content="#8B5000">
@@ -4244,9 +4244,31 @@
 
     // ── PWA INSTALL PROMPT ──
     let _pwaPrompt = null;
+
+    // Inject manifest link only if the unlock cookie is already set
+    // (returning users who already ran the command get the icon automatically)
+    function _injectManifest() {
+        if (!document.querySelector('link[rel="manifest"]')) {
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = '/manifest.json?t=' + Date.now();
+            document.head.appendChild(link);
+        }
+    }
+
+    function _getCookie(name) {
+        return document.cookie.split(';').some(c => c.trim().startsWith(name + '='));
+    }
+
+    // If already unlocked from a previous visit, inject manifest on load
+    if (_getCookie('apricity_unlocked')) {
+        _injectManifest();
+    }
+
+    // Capture the install prompt (only fires if manifest is present + valid)
     window.addEventListener('beforeinstallprompt', e => {
-        e.preventDefault(); // suppress automatic popup
-        _pwaPrompt = e;     // save for later use via console command
+        e.preventDefault();
+        _pwaPrompt = e;
     });
 
     function handleConsoleCommand(cmd) {
@@ -4254,14 +4276,23 @@
         // Example: if (cmd === 'your-secret-command') { ... return; }
 
         if (cmd === '/sudo-install-apricity-admin-app') {
+            // Set unlock cookie for 1 year
+            const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
+            document.cookie = `apricity_unlocked=1; expires=${expires}; path=/; SameSite=Strict`;
+
             if (_pwaPrompt) {
+                // Prompt already captured — fire it immediately
                 _pwaPrompt.prompt();
                 _pwaPrompt.userChoice.then(r => {
                     consolePrint(r.outcome === 'accepted' ? '✓ App installed!' : 'Install dismissed.', 'info');
                     _pwaPrompt = null;
                 });
             } else {
-                consolePrint('Install prompt not available. You may already have the app installed, or use Chrome/Edge.', 'error');
+                // Inject the manifest now — browser will fetch it and fire
+                // beforeinstallprompt, then reload triggers the prompt
+                _injectManifest();
+                consolePrint('🔓 Unlocked! Reloading to activate install prompt…', 'info');
+                setTimeout(() => location.reload(), 1200);
             }
             return;
         }
