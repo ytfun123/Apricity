@@ -888,6 +888,65 @@
             margin-top: 8px; width: 100%;
         }
 
+        /* ===== Fullscreen Games Grid ===== */
+        .games-fs-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            z-index: 300; flex-direction: column;
+            overflow-y: auto;
+        }
+        .games-fs-overlay.active { display: flex; }
+        .games-fs-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 24px 32px;
+            position: sticky; top: 0;
+            background: var(--md-sys-color-surface);
+            border-bottom: 1px solid var(--yt-border2);
+            z-index: 1;
+        }
+        .games-fs-header h2 { margin: 0; font-weight: 600; font-size: 1.6rem; }
+        .games-fs-close {
+            background: var(--md-sys-color-surface-container-high);
+            color: var(--md-sys-color-on-surface);
+            border: 1px solid var(--yt-border2);
+            width: 44px; height: 44px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .games-fs-close:hover { background: var(--md-sys-color-primary-container); }
+        .games-fs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            padding: 32px;
+        }
+        .games-fs-card {
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            padding: 20px 16px; border-radius: 20px;
+            background: var(--md-sys-color-surface-container-high);
+            border: 1px solid var(--yt-border2);
+            cursor: pointer; transition: transform 0.15s, background 0.2s;
+        }
+        .games-fs-card:hover { background: var(--md-sys-color-primary-container); transform: translateY(-3px); }
+        .games-fs-card.placeholder { opacity: 0.55; cursor: not-allowed; }
+        .games-fs-card.placeholder:hover { transform: none; background: var(--md-sys-color-surface-container-high); }
+        .games-fs-icon {
+            width: 64px; height: 64px; border-radius: 16px;
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 30px;
+        }
+        .games-fs-name { font-weight: 500; text-align: center; font-size: 0.95rem; }
+        .games-fs-tag {
+            font-size: 0.7rem; padding: 2px 10px; border-radius: 100px;
+            background: var(--md-sys-color-surface-container-highest);
+            color: var(--md-sys-color-on-surface-variant);
+        }
+
+
         #sunlit-page { width: 100%; height: 100vh; }
         #sunlit-page iframe { width: 100%; height: 100%; border: none; display: block; }
         #hollow-knight-page, #snow-rider-page { width: 100%; height: 100vh; }
@@ -1698,11 +1757,27 @@
             <div class="app-icon"><span class="material-symbols-outlined">downhill_skiing</span></div>
             Snow Rider
         </div>
+        <div class="app-item" onclick="toggleGames(); toggleGamesFullscreen();">
+            <div class="app-icon"><span class="material-symbols-outlined">apps</span></div>
+            View All Games
+        </div>
         <button class="apps-close-btn" onclick="toggleGames()">Close</button>
     </div>
 </div>
 
-<!-- Hollow Knight Page -->
+<!-- Fullscreen Games List -->
+<div class="games-fs-overlay" id="gamesFsOverlay">
+    <div class="games-fs-header">
+        <h2>All Games</h2>
+        <button class="games-fs-close" onclick="toggleGamesFullscreen()">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+    <div class="games-fs-grid" id="gamesFsGrid">
+        <!-- Populated by JS from the GAMES_LIST array -->
+    </div>
+</div>
+
 <div id="hollow-knight-page" class="page">
     <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
     <iframe id="hollow-knight-frame" src="about:blank"></iframe>
@@ -2390,6 +2465,52 @@
         const names = {'hollow-knight':'Hollow Knight','snow-rider':'Snow Rider'};
         tabNew(pageId, names[id] || id, '🎮', { gameId: id, gameSrc: src });
     }
+
+    // ── Master games list ──
+    // To add a game: set src to its file path (e.g. './games/your-game.html')
+    // and set placeholder to false. It will then open in a tab like the
+    // existing games when clicked.
+    const GAMES_LIST = [
+        { id: 'hollow-knight', name: 'Hollow Knight', icon: 'sports_esports', src: './hollow_knight.html', placeholder: false },
+        { id: 'snow-rider',    name: 'Snow Rider',     icon: 'downhill_skiing', src: './snow_rider.html',  placeholder: false },
+        { id: 'pvz',   name: 'pvz',    icon: 'add_circle',     src: './games/pvz.html', placeholder: false },
+        { id: 'motox3m',   name: 'motox3m',    icon: 'add_circle',     src: './games/motox3m.html', placeholder: false },
+        { id: 'driverussia',   name: 'driverussia',    icon: 'add_circle',     src: './games/driverussia.html', placeholder: false },
+        { id: 'growagarden',   name: 'grow a garden',    icon: 'add_circle',     src: './games/gag.html', placeholder: false },
+        { id: 'game-slot-7',   name: 'Coming Soon',    icon: 'add_circle',     src: './games/game-7.html', placeholder: true },
+        { id: 'game-slot-8',   name: 'Coming Soon',    icon: 'add_circle',     src: './games/game-8.html', placeholder: true },
+    ];
+
+    function toggleGamesFullscreen() {
+        const o = document.getElementById('gamesFsOverlay');
+        const isActive = o.classList.contains('active');
+        if (!isActive) {
+            renderGamesFullscreenGrid();
+            o.classList.add('active');
+        } else {
+            o.classList.remove('active');
+        }
+    }
+
+    function renderGamesFullscreenGrid() {
+        const grid = document.getElementById('gamesFsGrid');
+        grid.innerHTML = GAMES_LIST.map(g => {
+            if (g.placeholder) {
+                return `
+                <div class="games-fs-card placeholder" title="Add your game source in GAMES_LIST">
+                    <div class="games-fs-icon"><span class="material-symbols-outlined">${g.icon}</span></div>
+                    <div class="games-fs-name">${g.name}</div>
+                    <div class="games-fs-tag">Empty slot</div>
+                </div>`;
+            }
+            return `
+                <div class="games-fs-card" onclick="toggleGamesFullscreen(); openGame('${g.id}', '${g.src}')">
+                    <div class="games-fs-icon"><span class="material-symbols-outlined">${g.icon}</span></div>
+                    <div class="games-fs-name">${g.name}</div>
+                </div>`;
+        }).join('');
+    }
+
 
     // ===== SNOW RIDER MUTE (Unity WebGL via UnityLoader) =====
     let snowRiderMuted = false;
