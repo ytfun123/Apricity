@@ -959,6 +959,45 @@
             backdrop-filter: blur(8px); transition: background 0.2s;
         }
 
+        /* ===== FULLSCREEN GAME PLAYER ===== */
+        #game-fullscreen-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: #000;
+            flex-direction: column;
+        }
+        #game-fullscreen-overlay.active { display: flex; }
+        #game-fullscreen-overlay iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+            display: block;
+        }
+        #game-back-btn {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 10001;
+            background: rgba(0,0,0,0.70);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.18);
+            padding: 8px 18px 8px 12px;
+            border-radius: 100px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: var(--font-ui);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s, transform 0.1s;
+        }
+        #game-back-btn:hover { background: rgba(0,0,0,0.88); }
+        #game-back-btn:active { transform: scale(0.96); }
+
         #youtube-page.active { display: flex; }
         #youtube-page { min-height: 100vh; flex-direction: column; }
 
@@ -2456,37 +2495,17 @@
         o.style.display = o.style.display === 'flex' ? 'none' : 'flex';
     }
     function openGame(id, src) {
-    toggleGames();
-    const pageId = id + '-page';
-    const existing = tabs.find(t => t.pageId === pageId);
-    if (existing) { tabSwitch(existing.id); return; }
-
-    // Dynamically create the page if it doesn't exist yet
-    if (!document.getElementById(pageId)) {
-        const page = document.createElement('div');
-        page.id = pageId;
-        page.className = 'page';
-        page.style.cssText = 'width:100%;height:100vh;position:fixed;inset:0;';
-        page.innerHTML = `
-            <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
-            <iframe id="${id}-frame" src="about:blank" style="width:100%;height:100%;border:none;display:block;"></iframe>
-        `;
-        document.body.appendChild(page);
+        toggleGames();
+        const names = {
+            'hollow-knight': 'Hollow Knight',
+            'snow-rider':    'Snow Rider',
+            'pvz':           'PvZ',
+            'motox3m':       'Moto X3M',
+            'driverussia':   'Driver Russia',
+            'growagarden':   'Grow a Garden',
+        };
+        openGameFullscreen(src, names[id] || id);
     }
-
-    const frame = document.getElementById(id + '-frame');
-    if (frame && !frame.dataset.loaded) { frame.src = src; frame.dataset.loaded = '1'; }
-
-    const names = {
-        'hollow-knight': 'Hollow Knight',
-        'snow-rider': 'Snow Rider',
-        'pvz': 'PvZ',
-        'motox3m': 'Moto X3M',
-        'driverussia': 'Driver Russia',
-        'growagarden': 'Grow a Garden',
-    };
-    tabNew(pageId, names[id] || id, '🎮', { gameId: id, gameSrc: src });
-}
 
     // ── Master games list ──
     // To add a game: set src to its file path (e.g. './games/your-game.html')
@@ -4456,6 +4475,36 @@
     }
 
 
+</script>
+<!-- ===== FULLSCREEN GAME OVERLAY ===== -->
+<div id="game-fullscreen-overlay">
+    <button id="game-back-btn" onclick="closeGameFullscreen()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span id="game-back-title">Back</span>
+    </button>
+    <iframe id="game-fullscreen-frame" src="about:blank" allowfullscreen allow="autoplay; fullscreen"></iframe>
+</div>
+
+<script>
+  // ===== FULLSCREEN GAME OVERLAY =====
+  function openGameFullscreen(src, name) {
+      const overlay = document.getElementById('game-fullscreen-overlay');
+      const frame   = document.getElementById('game-fullscreen-frame');
+      const title   = document.getElementById('game-back-title');
+      if (title) title.textContent = name || 'Back';
+      frame.src = src;
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+  }
+
+  function closeGameFullscreen() {
+      const overlay = document.getElementById('game-fullscreen-overlay');
+      const frame   = document.getElementById('game-fullscreen-frame');
+      overlay.classList.remove('active');
+      // Short delay so the overlay hides before we clear the src (avoids flash)
+      setTimeout(() => { frame.src = 'about:blank'; }, 200);
+      document.body.style.overflow = '';
+  }
 </script>
 <script>
   if ('serviceWorker' in navigator) {
