@@ -1,1 +1,26 @@
+<div id="cdn-content">Loading webpage...</div>
 
+<script>
+  // Dynamically fetch the HTML directly from your jsDelivr link
+  fetch('https://cdn.jsdelivr.net/gh/tonydsas/eaglercraftoffline/@main/Eaglercraft_1.12_Offline_en_US.html')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response error');
+      }
+      return response.text();
+    })
+    .then(html => {
+      // Inject the code straight into your Google Site section
+      document.getElementById('cdn-content').innerHTML = html;
+      
+      // Optional: Execute any script tags that exist inside your fetched HTML
+      const scripts = document.getElementById('cdn-content').getElementsByTagName('script');
+      for (let i = 0; i < scripts.length; i++) {
+        eval(scripts[i].innerText);
+      }
+    })
+    .catch(error => {
+      document.getElementById('cdn-content').innerHTML = '<p style="color:red;">Failed to load CDN content.</p>';
+      console.error('Error fetching HTML:', error);
+    });
+</script>
