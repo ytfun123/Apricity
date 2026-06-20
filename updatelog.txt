@@ -1,0 +1,1 @@
+06/20/2026: Added update log, option to turn off background every where but home page.
