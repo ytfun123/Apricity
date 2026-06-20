@@ -191,6 +191,17 @@
         #bg-layer.bg-none { opacity: 0; }
         #bg-layer.bg-active { opacity: 1; }
 
+        #bg-dim-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: #000000;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        #bg-dim-layer.active { opacity: 0.28; }
+
         body.has-bg::before {
             content: '';
             position: fixed;
@@ -1434,6 +1445,7 @@
 </div>
 
 <div id="bg-layer" class="bg-none"></div>
+<div id="bg-dim-layer"></div>
 
 <!-- Panic overlay (clickable to dismiss) -->
 <div id="panic-overlay" onclick="panicDeactivate()">
@@ -1557,6 +1569,19 @@
                 <input type="text" class="bg-custom-input" id="bgCustomUrl" placeholder="https://example.com/image.jpg"
                     onkeydown="if(event.key==='Enter')applyCustomBg()" />
                 <button class="home-btn home-btn-primary" style="width:100%;margin-top:8px;justify-content:center;font-size:13px;padding:10px;" onclick="applyCustomBg()">Apply Image</button>
+            </div>
+
+            <div class="bg-custom-row">
+                <div class="setting-row" style="border-bottom:none;padding-bottom:0;">
+                    <div class="setting-info">
+                        <div class="setting-name">Dim Background</div>
+                        <div class="setting-desc">Adds a low-opacity dark layer behind the page to help text stand out. Default: off.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="bgDimToggle" onchange="onBgDimToggle()" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -2757,6 +2782,13 @@
         localStorage.removeItem('apricity-bg');
     }
 
+    // ===== DIM BACKGROUND (text readability overlay) =====
+    function onBgDimToggle() {
+        const enabled = document.getElementById('bgDimToggle').checked;
+        document.getElementById('bg-dim-layer').classList.toggle('active', enabled);
+        localStorage.setItem('apricity-bg-dim', enabled ? '1' : '0');
+    }
+
     // ===== AUTO DAY/NIGHT BACKGROUND =====
     let autoNightEnabled = false;
     let autoNightInterval = null;
@@ -3538,6 +3570,12 @@
             const savedBg = localStorage.getItem('apricity-bg');
             if (savedBg && savedBg !== 'none') setBg(savedBg);
         }
+
+        // Restore dim background setting (default: off)
+        const savedBgDim = localStorage.getItem('apricity-bg-dim');
+        const bgDimEnabled = savedBgDim === '1';
+        document.getElementById('bgDimToggle').checked = bgDimEnabled;
+        document.getElementById('bg-dim-layer').classList.toggle('active', bgDimEnabled);
 
         // Restore settings (hide mode defaults ON if never saved)
         const savedHide = localStorage.getItem('apricity-hide-mode');
