@@ -1961,6 +1961,22 @@
     </div>
 </div>
 
+<!-- Update Log Modal -->
+<div class="modal-overlay" id="updateLogOverlay" onclick="closeUpdateLog()">
+    <div class="modal" style="width:460px;" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span class="material-symbols-outlined" style="font-size:20px;color:var(--md-sys-color-primary);">new_releases</span>
+            <h2 style="margin:0; font-weight:700; font-size:18px;">Update Log</h2>
+        </div>
+
+        <div id="updateLogBody" style="margin-top:16px; overflow-y:auto; flex:1; font-family:var(--font-ui); font-size:13.5px; line-height:1.6; color:var(--md-sys-color-on-surface); white-space:pre-wrap; word-break:break-word; border-radius:14px; background:var(--md-sys-color-surface-container-low); padding:14px 16px; border:1px solid var(--yt-border2);">
+            Loading…
+        </div>
+
+        <button class="home-btn" style="width:100%;margin-top:16px;justify-content:center;" onclick="closeUpdateLog()">Close</button>
+    </div>
+</div>
+
 <!-- Console Page -->
 <div id="console-page" class="page" style="display:none;flex-direction:column;background:var(--md-sys-color-surface);position:fixed;inset:0;z-index:99990;">
     <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--yt-border);background:var(--md-sys-color-surface-container-low);flex-shrink:0;">
@@ -2388,6 +2404,10 @@
                 <span class="material-symbols-outlined" style="font-size:16px;">terminal</span>
                 Console
             </button>
+            <button class="home-btn" onclick="openUpdateLog()">
+                <span class="material-symbols-outlined" style="font-size:16px;">new_releases</span>
+                Update Log
+            </button>
         </div>
     </div>
     <footer id="rotating-footer"></footer>
@@ -2523,6 +2543,37 @@
     function closeModal() {
         document.getElementById('modalOverlay').style.display = 'none';
     }
+
+    // ===== UPDATE LOG (loads text from updatelog.txt in the same folder) =====
+    let _updateLogLoaded = false;
+
+    function openUpdateLog() {
+        document.getElementById('updateLogOverlay').style.display = 'flex';
+        if (!_updateLogLoaded) loadUpdateLog();
+    }
+
+    function closeUpdateLog() {
+        document.getElementById('updateLogOverlay').style.display = 'none';
+    }
+
+    function loadUpdateLog() {
+        const body = document.getElementById('updateLogBody');
+        body.textContent = 'Loading…';
+        fetch('updatelog.txt', { cache: 'no-store' })
+            .then(res => {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.text();
+            })
+            .then(text => {
+                body.textContent = text.trim() ? text : 'No updates yet.';
+                _updateLogLoaded = true;
+            })
+            .catch(() => {
+                body.textContent = 'Could not load updatelog.txt. Make sure the file exists in the same folder as this page and that you are viewing it through a web server (not opened directly as a local file).';
+                _updateLogLoaded = false;
+            });
+    }
+
     function switchTab(tab) {
         ['themes','backgrounds','settings'].forEach(t => {
             document.getElementById('tab-' + t).classList.toggle('active', t === tab);
