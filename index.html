@@ -191,16 +191,18 @@
         #bg-layer.bg-none { opacity: 0; }
         #bg-layer.bg-active { opacity: 1; }
 
-        #bg-dim-layer {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            background: #000000;
-            opacity: 0;
-            transition: opacity 0.4s ease;
+        /* Low-opacity dark backing placed only behind the text/content card
+           (not the whole screen). Independent of the wallpaper "has-bg" styling.
+           Off by default. */
+        body.bg-text-dim #home-page .main-content {
+            background: rgba(0, 0, 0, 0.28);
+            border-radius: 28px;
+            padding: 40px 40px 32px;
         }
-        #bg-dim-layer.active { opacity: 0.28; }
+        body.bg-text-dim #youtube-page input[type=text],
+        body.bg-text-dim #youtube-page input[type=password] {
+            background: rgba(0, 0, 0, 0.28);
+        }
 
         body.has-bg::before {
             content: '';
@@ -218,15 +220,18 @@
             z-index: 1;
         }
 
+        /* --island-opacity: 0 = fully transparent, 1 = fully solid (default look) */
+        :root { --island-opacity: 1; }
+
         body.has-bg #home-page .main-content {
-            background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 92%, transparent);
+            background: color-mix(in srgb, var(--md-sys-color-surface-container-high) calc(var(--island-opacity) * 92%), transparent);
             color: var(--md-sys-color-on-surface);
-            backdrop-filter: blur(18px) saturate(1.12);
-            -webkit-backdrop-filter: blur(18px) saturate(1.12);
+            backdrop-filter: blur(calc(var(--island-opacity) * 18px)) saturate(1.12);
+            -webkit-backdrop-filter: blur(calc(var(--island-opacity) * 18px)) saturate(1.12);
             border-radius: 28px;
             padding: 40px 40px 32px;
-            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 28%, transparent);
-            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) calc(var(--island-opacity) * 28%), transparent);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, calc(var(--island-opacity) * 0.24));
         }
 
         body.has-bg #home-page .logo,
@@ -236,8 +241,8 @@
         }
 
         body.has-bg #home-page .search-bar {
-            background: var(--md-sys-color-surface-container-low);
-            border-color: color-mix(in srgb, var(--md-sys-color-outline) 54%, transparent);
+            background: color-mix(in srgb, var(--md-sys-color-surface-container-low) calc(var(--island-opacity) * 100%), transparent);
+            border-color: color-mix(in srgb, var(--md-sys-color-outline) calc(var(--island-opacity) * 54% + 10%), transparent);
             color: var(--md-sys-color-on-surface);
         }
 
@@ -252,25 +257,25 @@
         }
 
         body.has-bg #home-page .home-btn:not(.home-btn-youtube) {
-            background: var(--md-sys-color-primary-container);
+            background: color-mix(in srgb, var(--md-sys-color-primary-container) calc(var(--island-opacity) * 100%), transparent);
             color: var(--md-sys-color-on-primary-container);
-            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 22%, transparent);
+            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) calc(var(--island-opacity) * 22%), transparent);
         }
 
         body.has-bg #home-page .home-btn:not(.home-btn-youtube):hover {
-            background: color-mix(in srgb, var(--md-sys-color-primary-container) 84%, var(--md-sys-color-primary) 16%);
+            background: color-mix(in srgb, var(--md-sys-color-primary-container) calc(var(--island-opacity) * 84%), var(--md-sys-color-primary) calc(var(--island-opacity) * 16%));
             opacity: 1;
         }
 
         body.has-bg .icon-btn {
-            background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 90%, transparent);
+            background: color-mix(in srgb, var(--md-sys-color-surface-container-high) calc(var(--island-opacity) * 90%), transparent);
             color: var(--md-sys-color-primary);
-            border-color: color-mix(in srgb, var(--md-sys-color-outline) 25%, transparent);
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+            border-color: color-mix(in srgb, var(--md-sys-color-outline) calc(var(--island-opacity) * 25%), transparent);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, calc(var(--island-opacity) * 0.18));
         }
 
         body.has-bg .icon-btn:hover {
-            background: var(--md-sys-color-primary-container);
+            background: color-mix(in srgb, var(--md-sys-color-primary-container) calc(var(--island-opacity) * 100%), transparent);
         }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -750,10 +755,122 @@
             margin-top: 6px;
         }
         .bg-custom-input:focus { border-color: var(--md-sys-color-primary); }
+
+        .opacity-slider-row { margin-top: 6px; }
+        .opacity-slider-row input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 4px;
+            background: var(--md-sys-color-surface-container-highest);
+            outline: none;
+            cursor: pointer;
+            margin: 10px 0 4px;
+        }
+        .opacity-slider-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: var(--md-sys-color-primary);
+            border: 2px solid var(--md-sys-color-surface);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .opacity-slider-row input[type="range"]::-moz-range-thumb {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: var(--md-sys-color-primary);
+            border: 2px solid var(--md-sys-color-surface);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .opacity-slider-labels {
+            display: flex; justify-content: space-between;
+            font-size: 11px; color: var(--md-sys-color-on-surface-variant);
+        }
+
+        .opacity-slider-main { display: flex; align-items: center; gap: 10px; }
+        .opacity-slider-track { flex: 1; position: relative; }
+        .opacity-ticks {
+            display: flex; justify-content: space-between;
+            position: relative; margin-top: 2px;
+        }
+        .opacity-tick {
+            background: none; border: none; cursor: pointer;
+            font-size: 11px; color: var(--md-sys-color-on-surface-variant);
+            padding: 2px 4px; border-radius: 6px;
+            font-family: var(--font-ui);
+            transition: color 0.15s, background 0.15s;
+        }
+        .opacity-tick:hover { color: var(--md-sys-color-on-surface); background: color-mix(in srgb, var(--md-sys-color-outline) 14%, transparent); }
+        .opacity-tick.active { color: var(--md-sys-color-primary); font-weight: 700; }
+
+        .opacity-pct-input {
+            width: 56px; flex-shrink: 0;
+            padding: 8px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--yt-border2);
+            background: var(--md-sys-color-surface-container-low);
+            color: var(--md-sys-color-on-surface);
+            font-family: var(--font-ui); font-size: 13px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .opacity-pct-input:focus { border-color: var(--md-sys-color-primary); }
+        /* hide native spinner arrows */
+        .opacity-pct-input::-webkit-outer-spin-button,
+        .opacity-pct-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .opacity-pct-input[type=number] { -moz-appearance: textfield; }
+
         .field-label-sm {
             font-size: 11px; color: var(--md-sys-color-on-surface-variant);
             font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
         }
+
+        .color-picker-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+        .color-swatch-input {
+            -webkit-appearance: none; appearance: none;
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            border: 1px solid var(--yt-border2);
+            padding: 0;
+            cursor: pointer;
+            background: none;
+            flex-shrink: 0;
+        }
+        .color-swatch-input::-webkit-color-swatch-wrapper { padding: 3px; }
+        .color-swatch-input::-webkit-color-swatch { border: none; border-radius: 7px; }
+        .color-swatch-input::-moz-color-swatch { border: none; border-radius: 7px; }
+
+        .hex-text-input {
+            flex: 1;
+            padding: 9px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--yt-border2);
+            background: var(--md-sys-color-surface-container-low);
+            color: var(--md-sys-color-on-surface);
+            font-family: 'Courier New', monospace; font-size: 13px;
+            outline: none;
+            text-transform: uppercase;
+            transition: border-color 0.2s;
+        }
+        .hex-text-input:focus { border-color: var(--md-sys-color-primary); }
+
+        .color-presets-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .color-preset-swatch {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            border: 2px solid var(--md-sys-color-surface);
+            box-shadow: 0 0 0 1px var(--yt-border2);
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.12s, box-shadow 0.12s;
+        }
+        .color-preset-swatch:hover { transform: scale(1.12); }
+        .color-preset-swatch.active { box-shadow: 0 0 0 2px var(--md-sys-color-primary); transform: scale(1.1); }
 
         .settings-section { margin: 12px 0; }
         .settings-section-title {
@@ -858,7 +975,16 @@
             position: absolute; bottom: 20px;
             font-size: 0.85rem; opacity: 0.7;
             text-align: center; min-height: 24px;
-            transition: opacity 0.6s ease-in-out;
+            transition: opacity 0.6s ease-in-out, color 0.3s ease;
+            left: 0; right: 0;
+            color: var(--footer-text-color, #000000);
+        }
+
+        /* Forces footer text to a light color with a shadow so it stays
+           readable on any custom background, regardless of theme. Off by default. */
+        body.footer-invert footer {
+            color: #FFFFFF;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
         }
 
         .apps-overlay {
@@ -1445,7 +1571,6 @@
 </div>
 
 <div id="bg-layer" class="bg-none"></div>
-<div id="bg-dim-layer"></div>
 
 <!-- Panic overlay (clickable to dismiss) -->
 <div id="panic-overlay" onclick="panicDeactivate()">
@@ -1575,12 +1700,40 @@
                 <div class="setting-row" style="border-bottom:none;padding-bottom:0;">
                     <div class="setting-info">
                         <div class="setting-name">Dim Background</div>
-                        <div class="setting-desc">Adds a low-opacity dark layer behind the page to help text stand out. Default: off.</div>
+                        <div class="setting-desc">Adds a low-opacity dark backing behind the text/logo area only (not the full screen) to help it stand out. Default: off.</div>
                     </div>
                     <label class="toggle-switch">
                         <input type="checkbox" id="bgDimToggle" onchange="onBgDimToggle()" />
                         <span class="toggle-slider"></span>
                     </label>
+                </div>
+            </div>
+
+            <div class="bg-custom-row">
+                <div class="setting-info">
+                    <div class="setting-name">Island Opacity</div>
+                    <div class="setting-desc">Controls how solid the card behind the logo, search bar and buttons looks when a background is active. Drag freely, click a stop, or type a %.</div>
+                </div>
+                <div class="opacity-slider-row">
+                    <div class="opacity-slider-main">
+                        <div class="opacity-slider-track">
+                            <input type="range" id="islandOpacitySlider" min="0" max="100" value="100"
+                                oninput="onIslandOpacityInput(this.value)" />
+                            <div class="opacity-ticks">
+                                <button type="button" class="opacity-tick" data-val="0" onclick="onIslandOpacityInput(0)">0</button>
+                                <button type="button" class="opacity-tick" data-val="25" onclick="onIslandOpacityInput(25)">25</button>
+                                <button type="button" class="opacity-tick" data-val="50" onclick="onIslandOpacityInput(50)">50</button>
+                                <button type="button" class="opacity-tick" data-val="75" onclick="onIslandOpacityInput(75)">75</button>
+                                <button type="button" class="opacity-tick active" data-val="100" onclick="onIslandOpacityInput(100)">100</button>
+                            </div>
+                        </div>
+                        <div style="position:relative; flex-shrink:0;">
+                            <input type="number" class="opacity-pct-input" id="islandOpacityNumber" min="0" max="100" value="100"
+                                style="padding-right:18px;"
+                                onchange="onIslandOpacityInput(this.value)" oninput="onIslandOpacityInput(this.value)" />
+                            <span style="position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--md-sys-color-on-surface-variant); pointer-events:none;">%</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1656,6 +1809,42 @@
                     <button class="yt-btn yt-btn-sm" onclick="setFavicon('https://www.youtube.com/favicon.ico')">YouTube</button>
                     <button class="yt-btn yt-btn-sm" onclick="setFavicon('https://classroom.google.com/favicon.ico')">Classroom</button>
                     <button class="yt-btn yt-btn-sm" onclick="setFavicon('https://docs.google.com/favicon.ico')">Docs</button>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">Invert Footer Text</div>
+                        <div class="setting-desc">Forces the small rotating text at the bottom of the screen to a light color with a shadow, so it stays readable on any custom background. Default: off.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="footerInvertToggle" onchange="onFooterInvertToggle()" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row" style="border-bottom:none;padding-bottom:0;">
+                    <div class="setting-info" style="width:100%;">
+                        <div class="setting-name">Footer Text Color</div>
+                        <div class="setting-desc">Pick any color for the bottom text. Choosing a color here turns off Invert above. Default: black.</div>
+
+                        <div class="color-picker-row">
+                            <input type="color" class="color-swatch-input" id="footerColorSwatch" value="#000000" onchange="onFooterColorPick(this.value)" oninput="onFooterColorPick(this.value)" />
+                            <input type="text" class="hex-text-input" id="footerColorHex" value="#000000" maxlength="7" placeholder="#000000" onchange="onFooterColorHexInput(this.value)" />
+                        </div>
+
+                        <div class="color-presets-row" id="footerColorPresets">
+                            <button type="button" class="color-preset-swatch" style="background:#000000;" data-color="#000000" onclick="onFooterColorPick('#000000')" title="Black"></button>
+                            <button type="button" class="color-preset-swatch" style="background:#FFFFFF;" data-color="#FFFFFF" onclick="onFooterColorPick('#FFFFFF')" title="White"></button>
+                            <button type="button" class="color-preset-swatch" style="background:#FF0000;" data-color="#FF0000" onclick="onFooterColorPick('#FF0000')" title="Red"></button>
+                            <button type="button" class="color-preset-swatch" style="background:#FF8C00;" data-color="#FF8C00" onclick="onFooterColorPick('#FF8C00')" title="Orange"></button>
+                            <button type="button" class="color-preset-swatch" style="background:#FFD700;" data-color="#FFD700" onclick="onFooterColorPick('#FFD700')" title="Yellow"></button>
+                            <button type="button" class="color-preset-swatch" style="background:#32CD32;" data-color="#32CD32" onclick="onFooterColorPick('#32CD32')" title="Green"></button>
+                            <button type="button" class="color-preset-swatch" style="background:#1E90FF;" data-color="#1E90FF" onclick="onFooterColorPick('#1E90FF')" title="Blue"></button>
+                            <button type="button" class="color-preset-swatch" style="background:#4B0082;" data-color="#4B0082" onclick="onFooterColorPick('#4B0082')" title="Indigo"></button>
+                            <button type="button" class="color-preset-swatch" style="background:#9400D3;" data-color="#9400D3" onclick="onFooterColorPick('#9400D3')" title="Violet"></button>
+                            <button type="button" class="color-preset-swatch" style="background:#FF1493;" data-color="#FF1493" onclick="onFooterColorPick('#FF1493')" title="Pink"></button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -2782,11 +2971,82 @@
         localStorage.removeItem('apricity-bg');
     }
 
-    // ===== DIM BACKGROUND (text readability overlay) =====
+    // ===== DIM BACKGROUND (low-opacity backing behind text only) =====
     function onBgDimToggle() {
         const enabled = document.getElementById('bgDimToggle').checked;
-        document.getElementById('bg-dim-layer').classList.toggle('active', enabled);
+        document.body.classList.toggle('bg-text-dim', enabled);
         localStorage.setItem('apricity-bg-dim', enabled ? '1' : '0');
+    }
+
+    // ===== ISLAND OPACITY (transparency of the card behind logo/search/buttons) =====
+    function onIslandOpacityInput(value) {
+        let pct = Math.round(Number(value));
+        if (isNaN(pct)) pct = 100;
+        pct = Math.max(0, Math.min(100, pct));
+
+        document.documentElement.style.setProperty('--island-opacity', pct / 100);
+
+        const slider = document.getElementById('islandOpacitySlider');
+        const number = document.getElementById('islandOpacityNumber');
+        if (slider.value != pct) slider.value = pct;
+        if (number.value != pct) number.value = pct;
+
+        document.querySelectorAll('.opacity-tick').forEach(t => {
+            t.classList.toggle('active', Number(t.dataset.val) === pct);
+        });
+
+        localStorage.setItem('apricity-island-opacity', String(pct));
+    }
+
+    // ===== INVERT FOOTER TEXT (keeps bottom text readable on any background) =====
+    function onFooterInvertToggle() {
+        const enabled = document.getElementById('footerInvertToggle').checked;
+        document.body.classList.toggle('footer-invert', enabled);
+        localStorage.setItem('apricity-footer-invert', enabled ? '1' : '0');
+        // Invert and custom color are mutually exclusive: turning invert on
+        // resets the custom color back to the default (black).
+        if (enabled) {
+            _setFooterColorValue('#000000', /*save*/ true);
+        }
+    }
+
+    // ===== FOOTER TEXT COLOR (hex picker + rainbow presets) =====
+    function _isValidHex(hex) {
+        return /^#[0-9A-Fa-f]{6}$/.test(hex);
+    }
+
+    function _setFooterColorValue(hex, save) {
+        document.documentElement.style.setProperty('--footer-text-color', hex);
+        document.getElementById('footerColorSwatch').value = hex;
+        document.getElementById('footerColorHex').value = hex.toUpperCase();
+        document.querySelectorAll('.color-preset-swatch').forEach(sw => {
+            sw.classList.toggle('active', sw.dataset.color.toLowerCase() === hex.toLowerCase());
+        });
+        if (save) localStorage.setItem('apricity-footer-color', hex);
+    }
+
+    function onFooterColorPick(hex) {
+        if (!_isValidHex(hex)) return;
+        // Picking a color always wins over Invert.
+        const invertToggle = document.getElementById('footerInvertToggle');
+        if (invertToggle.checked) {
+            invertToggle.checked = false;
+            document.body.classList.remove('footer-invert');
+            localStorage.setItem('apricity-footer-invert', '0');
+        }
+        _setFooterColorValue(hex, true);
+    }
+
+    function onFooterColorHexInput(value) {
+        let hex = value.trim();
+        if (hex && hex[0] !== '#') hex = '#' + hex;
+        if (!_isValidHex(hex)) {
+            // Invalid input — revert the text box to the last valid color
+            const current = getComputedStyle(document.documentElement).getPropertyValue('--footer-text-color').trim() || '#000000';
+            document.getElementById('footerColorHex').value = current.toUpperCase();
+            return;
+        }
+        onFooterColorPick(hex);
     }
 
     // ===== AUTO DAY/NIGHT BACKGROUND =====
@@ -3575,7 +3835,24 @@
         const savedBgDim = localStorage.getItem('apricity-bg-dim');
         const bgDimEnabled = savedBgDim === '1';
         document.getElementById('bgDimToggle').checked = bgDimEnabled;
-        document.getElementById('bg-dim-layer').classList.toggle('active', bgDimEnabled);
+        document.body.classList.toggle('bg-text-dim', bgDimEnabled);
+
+        // Restore island opacity (default: 100% / solid, unchanged look)
+        const savedIslandOpacity = localStorage.getItem('apricity-island-opacity');
+        const islandPct = savedIslandOpacity !== null ? Number(savedIslandOpacity) : 100;
+        onIslandOpacityInput(islandPct);
+
+        // Restore invert footer text (default: off)
+        const savedFooterInvert = localStorage.getItem('apricity-footer-invert');
+        const footerInvertEnabled = savedFooterInvert === '1';
+        document.getElementById('footerInvertToggle').checked = footerInvertEnabled;
+        document.body.classList.toggle('footer-invert', footerInvertEnabled);
+
+        // Restore footer text color (default: black). If invert is on, the
+        // custom color is ignored visually (invert rule wins via CSS), but we
+        // still restore the stored value so the picker reflects last choice.
+        const savedFooterColor = localStorage.getItem('apricity-footer-color');
+        _setFooterColorValue(_isValidHex(savedFooterColor) ? savedFooterColor : '#000000', false);
 
         // Restore settings (hide mode defaults ON if never saved)
         const savedHide = localStorage.getItem('apricity-hide-mode');
