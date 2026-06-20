@@ -191,6 +191,11 @@
         #bg-layer.bg-none { opacity: 0; }
         #bg-layer.bg-active { opacity: 1; }
 
+        /* When "Background on Home only" is enabled, this extra class (added/removed
+           in JS on every page switch) forces the layer hidden while any non-home
+           page is active, regardless of bg-none/bg-active. Off by default. */
+        #bg-layer.bg-page-hidden { opacity: 0 !important; }
+
         /* Low-opacity dark backing placed only behind the text/content card
            (not the whole screen). Independent of the wallpaper "has-bg" styling.
            Off by default. */
@@ -1736,6 +1741,19 @@
                     </div>
                 </div>
             </div>
+
+            <div class="bg-custom-row">
+                <div class="setting-row" style="border-bottom:none;padding-bottom:0;">
+                    <div class="setting-info">
+                        <div class="setting-name">Background on Home Only</div>
+                        <div class="setting-desc">Only shows your chosen background on the Home page. It's hidden on YouTube, games, and other pages. Default: off.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="bgHomeOnlyToggle" onchange="onBgHomeOnlyToggle()" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
         </div>
 
         <!-- SETTINGS TAB -->
@@ -2607,6 +2625,7 @@
         const page = document.getElementById(tab.pageId);
         if (page) page.classList.add('active');
         updateTopbarVisibility();
+        updateBgLayerVisibility();
         // Manage tab title for Spotify page
         if (tab.pageId === 'spotify-page') {
             if (window._apricityOrigTitle === undefined || window._apricityOrigTitle === null) {
@@ -2662,6 +2681,7 @@
                 activeTabId = null;
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 document.getElementById('home-page').classList.add('active');
+                updateBgLayerVisibility();
                 tabRender();
             }
         } else {
@@ -2735,7 +2755,7 @@
         { id: 'driverussia',   name: 'Driver Russia', icon: 'directions_car',  src: './games/driverussia.html', placeholder: false },
         { id: 'growagarden',   name: 'Grow a Garden', icon: 'yard',            src: './games/gag.html',     placeholder: false },
         { id: 'infinitycraft',  name: 'Infinity Craft', icon: 'auto_awesome',    src: './games/infinitycraft.html', placeholder: false },
-        { id: 'minecraft',      name: 'Minecraft 1.12', icon: 'grass',           src: './games/minecraft1-12.html', placeholder: false },
+        { id: 'minecraft',      name: 'Minecraft 1.12', icon: 'grass',           src: './games/minecraft1.12.html', placeholder: false },
     ];
 
     function toggleGamesFullscreen() {
@@ -2996,6 +3016,26 @@
         });
 
         localStorage.setItem('apricity-island-opacity', String(pct));
+    }
+
+    // ===== BACKGROUND ON HOME ONLY (hide bg-layer when not on home page) =====
+    let bgHomeOnlyEnabled = false;
+
+    function updateBgLayerVisibility() {
+        const layer = document.getElementById('bg-layer');
+        if (!bgHomeOnlyEnabled) {
+            layer.classList.remove('bg-page-hidden');
+            return;
+        }
+        const homePage = document.getElementById('home-page');
+        const isHomeActive = homePage && homePage.classList.contains('active');
+        layer.classList.toggle('bg-page-hidden', !isHomeActive);
+    }
+
+    function onBgHomeOnlyToggle() {
+        bgHomeOnlyEnabled = document.getElementById('bgHomeOnlyToggle').checked;
+        localStorage.setItem('apricity-bg-home-only', bgHomeOnlyEnabled ? '1' : '0');
+        updateBgLayerVisibility();
     }
 
     // ===== INVERT FOOTER TEXT (keeps bottom text readable on any background) =====
@@ -3854,6 +3894,12 @@
         const savedFooterColor = localStorage.getItem('apricity-footer-color');
         _setFooterColorValue(_isValidHex(savedFooterColor) ? savedFooterColor : '#000000', false);
 
+        // Restore "Background on Home Only" (default: off)
+        const savedBgHomeOnly = localStorage.getItem('apricity-bg-home-only');
+        bgHomeOnlyEnabled = savedBgHomeOnly === '1';
+        document.getElementById('bgHomeOnlyToggle').checked = bgHomeOnlyEnabled;
+        updateBgLayerVisibility();
+
         // Restore settings (hide mode defaults ON if never saved)
         const savedHide = localStorage.getItem('apricity-hide-mode');
         hideModeEnabled = savedHide === null ? true : savedHide === '1';
@@ -4670,12 +4716,14 @@
     function showConsolePage() {
         document.getElementById('console-page').style.display = 'flex';
         document.getElementById('home-page').classList.remove('active');
+        updateBgLayerVisibility();
         setTimeout(() => document.getElementById('console-input').focus(), 100);
     }
 
     function hideConsolePage() {
         document.getElementById('console-page').style.display = 'none';
         document.getElementById('home-page').classList.add('active');
+        updateBgLayerVisibility();
     }
 
     function consolePrint(text, type = 'output') {
