@@ -1562,6 +1562,21 @@
         }
 
     </style>
+<style id="_act_hide_style">
+    /* Injected immediately — hides overlay before body paints if skip is active */
+    #activation-overlay { display: none !important; }
+</style>
+<script>
+    // If skip is NOT enabled, remove the hide style so overlay shows normally
+    (function() {
+        var skip = localStorage.getItem('apricity-activation-skip') === '1';
+        var key  = localStorage.getItem('apricity-activation-key');
+        if (!skip || !key) {
+            var s = document.getElementById('_act_hide_style');
+            if (s) s.parentNode.removeChild(s);
+        }
+    })();
+</script>
 </head>
 <body data-theme="orange-light">
 
@@ -1992,15 +2007,6 @@
 </div>
 
 <!-- ===== ACTIVATION KEY OVERLAY ===== -->
-<script>
-    // Hide overlay immediately (before render) to prevent flash if skip is enabled
-    (function() {
-        if (localStorage.getItem('apricity-activation-skip') === '1' &&
-            localStorage.getItem('apricity-activation-key')) {
-            document.write('<style>#activation-overlay{display:none!important}</style>');
-        }
-    })();
-</script>
 <div id="activation-overlay" style="
     position:fixed;inset:0;z-index:999999;
     background:var(--md-sys-color-surface);
