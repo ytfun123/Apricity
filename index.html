@@ -4152,15 +4152,45 @@
     };
 
     // ===== ACTIVATION KEY SYSTEM =====
-    // Replace this URL with your published Google Sheet CSV URL:
-    // File → Share → Publish to web → CSV → Copy link
-    const ACTIVATION_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkq8JvXz3KTsFjbM72je0n3tyM5cTPwGxFrbiMM7FkhPx-kppUGeX-QXIeW02ApXvf4Tb1ZWZdIRvB/pub?gid=0&single=true&output=csv';
+    // settings.txt  (root of repo) — master on/off switch:
+    //   activation=true   → gate is active for everyone
+    //   activation=false  → gate is disabled for everyone (overrides user setting)
+    //
+    // activation.txt (root of repo) — one line: the Google Sheets CSV URL
 
     let _validKeys = [];
 
-    async function fetchActivationKeys() {
+    async function fetchSettings() {
+        // Returns { activationEnabled: bool } from settings.txt
         try {
-            const res = await fetch(ACTIVATION_SHEET_URL + '&t=' + Date.now(), { cache: 'no-store' });
+            const res = await fetch('settings.txt?t=' + Date.now(), { cache: 'no-store' });
+            if (!res.ok) return { activationEnabled: true }; // default on if missing
+            const text = await res.text();
+            const match = text.match(/activation\s*=\s*(true|false)/i);
+            if (match) return { activationEnabled: match[1].toLowerCase() === 'true' };
+        } catch (e) {
+            console.warn('Activation: could not read settings.txt —', e.message);
+        }
+        return { activationEnabled: true }; // default on
+    }
+
+    async function fetchSheetUrl() {
+        // Returns the Google Sheets CSV URL from activation.txt
+        try {
+            const res = await fetch('activation.txt?t=' + Date.now(), { cache: 'no-store' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return (await res.text()).trim();
+        } catch (e) {
+            console.warn('Activation: could not read activation.txt —', e.message);
+            return null;
+        }
+    }
+
+    async function fetchActivationKeys() {
+        const sheetUrl = await fetchSheetUrl();
+        if (!sheetUrl) { _validKeys = []; return; }
+        try {
+            const res = await fetch(sheetUrl + '&t=' + Date.now(), { cache: 'no-store' });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const text = await res.text();
             _validKeys = text.split('\n')
@@ -4236,6 +4266,15 @@
     }
 
     async function initActivationGate() {
+        // 1. Check master switch in settings.txt first
+        const { activationEnabled } = await fetchSettings();
+        if (!activationEnabled) {
+            // Master off — hide gate for everyone, ignore user setting
+            document.getElementById('activation-overlay').style.display = 'none';
+            return;
+        }
+
+        // 2. Master is on — respect user's local skip preference
         if (activationSkipEnabled()) {
             const storedKey = localStorage.getItem('apricity-activation-key');
             if (storedKey) {
@@ -4243,6 +4282,8 @@
                 return;
             }
         }
+
+        // 3. Show the gate
         document.getElementById('activation-key-input').focus();
     }
 
