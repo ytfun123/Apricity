@@ -1992,6 +1992,15 @@
 </div>
 
 <!-- ===== ACTIVATION KEY OVERLAY ===== -->
+<script>
+    // Hide overlay immediately (before render) to prevent flash if skip is enabled
+    (function() {
+        if (localStorage.getItem('apricity-activation-skip') === '1' &&
+            localStorage.getItem('apricity-activation-key')) {
+            document.write('<style>#activation-overlay{display:none!important}</style>');
+        }
+    })();
+</script>
 <div id="activation-overlay" style="
     position:fixed;inset:0;z-index:999999;
     background:var(--md-sys-color-surface);
@@ -4278,12 +4287,24 @@
         if (activationSkipEnabled()) {
             const storedKey = localStorage.getItem('apricity-activation-key');
             if (storedKey) {
+                // Silently revalidate stored key against the sheet
+                // (overlay already hidden instantly by the inline script above)
+                await fetchActivationKeys();
+                if (_validKeys.length > 0 && !_validKeys.includes(storedKey)) {
+                    // Key was revoked — clear it and show the gate
+                    localStorage.removeItem('apricity-activation-key');
+                    document.getElementById('activation-overlay').style.display = 'flex';
+                    document.getElementById('activation-key-input').focus();
+                    return;
+                }
+                // Key still valid (or sheet unreachable — give benefit of the doubt)
                 document.getElementById('activation-overlay').style.display = 'none';
                 return;
             }
         }
 
         // 3. Show the gate
+        document.getElementById('activation-overlay').style.display = 'flex';
         document.getElementById('activation-key-input').focus();
     }
 
