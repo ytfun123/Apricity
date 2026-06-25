@@ -5060,7 +5060,7 @@
         // ── ADD YOUR COMMANDS BELOW ──
         // Example: if (cmd === 'your-secret-command') { ... return; }
 
-        if (cmd === '/sudo-install-apricity-admin-app') {
+        if (cmd === 'sudo-install-apricity-admin-app') {
             // Set unlock cookie for 1 year
             const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
             document.cookie = `apricity_unlocked=1; expires=${expires}; path=/; SameSite=Strict`;
@@ -5081,7 +5081,7 @@
             }
             return;
         }
-        if (cmd === '/jarvis-we-need-prouf') {
+        if (cmd === 'jarvis-we-need-prouf') {
             consolePrint('🔍 Fetching prouf.txt…', 'info');
             fetch('prouf.txt')
                 .then(r => {
@@ -5096,7 +5096,7 @@
                 .catch(err => consolePrint('✗ Could not load prouf.txt: ' + err.message, 'error'));
             return;
         }
-        if (cmd === '/info') {
+        if (cmd === 'info') {
             const did = localStorage.getItem('apricity-device-id') || 'Not assigned yet';
             const visits = localStorage.getItem('apricity-visit-count') || '?';
             consolePrint('── Device Info ──', 'info');
