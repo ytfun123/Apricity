@@ -2407,7 +2407,7 @@
         <div class="btn-group">
             <button class="home-btn" onclick="toggleApps()">Apps</button>
             <button class="home-btn" onclick="toggleGames()">Games</button>
-            <button class="home-btn home-btn-youtube" onclick="showYouTube()">
+            <button class="home-btn home-btn-youtube" onclick="openCompu()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/>
                 </svg>
@@ -2602,6 +2602,11 @@
         document.getElementById('youtube-page').classList.add('active');
         tabNew('youtube-page', 'YouTube', '▶️');
     }
+
+     function openCompu() {
+        window.open("https://script.google.com/a/macros/shenschools.org/s/AKfycbzsg0Asm6Bm5OjdXbWz9bfa-tfOBD7s-B3cyCwBMWHPS9WYm57pvHvvm_rLlSBoQutT/exec");
+    }
+
 
     // ===== PAGE MENU =====
     function updateTopbarVisibility() {
@@ -3291,10 +3296,9 @@
                     try {
                         doc.open();
                         const title = (document.title || 'Apricity').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                        const src = String(window.location.href).replace(/"/g, '&quot;');
                         doc.write('<!doctype html><html><head><meta charset="utf-8"><title>' + title + '</title><meta name="viewport" content="width=device-width,initial-scale=1">');
                         doc.write('<style>html,body{height:100%;margin:0}iframe{position:fixed;inset:0;width:100%;height:100%;border:0}</style>');
-                        doc.write('</head><body><iframe src="' + src + '" allowfullscreen></iframe></body></html>');
+                        doc.write('</head><body><iframe src="' + window.location.href + '" allowfullscreen></iframe></body></html>');
                         doc.close();
                     } catch (writeErr) {
                         // If writing fails, fall back to navigating the popup.
@@ -5096,7 +5100,7 @@
                 .catch(err => consolePrint('✗ Could not load prouf.txt: ' + err.message, 'error'));
             return;
         }
-        if (cmd === 'info') {
+        if (cmd === 'fix info') {
             const did = localStorage.getItem('apricity-device-id') || 'Not assigned yet';
             const visits = localStorage.getItem('apricity-visit-count') || '?';
             consolePrint('── Device Info ──', 'info');
