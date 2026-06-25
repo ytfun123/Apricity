@@ -2603,11 +2603,6 @@
         tabNew('youtube-page', 'YouTube', '▶️');
     }
 
-     function openCompu() {
-        window.open("https://script.google.com/a/macros/shenschools.org/s/AKfycbzsg0Asm6Bm5OjdXbWz9bfa-tfOBD7s-B3cyCwBMWHPS9WYm57pvHvvm_rLlSBoQutT/exec");
-    }
-
-
     // ===== PAGE MENU =====
     function updateTopbarVisibility() {
         const activeTab = tabs.find(t => t.id === activeTabId);
@@ -2808,7 +2803,6 @@
             'growagarden':   'Grow a Garden',
             'infinitycraft': 'Infinity Craft',
             'minecraft':     'Minecraft 1.12',
-            'run3':     'Run 3',
         };
         openGameFullscreen(src, names[id] || id);
     }
@@ -2825,7 +2819,7 @@
         { id: 'driverussia',   name: 'Driver Russia', icon: 'directions_car',  src: './games/driverussia.html', placeholder: false },
         { id: 'growagarden',   name: 'Grow a Garden', icon: 'yard',            src: './games/gag.html',     placeholder: false },
         { id: 'infinitycraft',  name: 'Infinity Craft', icon: 'auto_awesome',    src: './games/infinitycraft.html', placeholder: false },
-        { id: 'minecraft',      name: 'Minecraft 1.12', icon: 'grass',           src: './games/minecraft1-12.html', placeholder: false },
+        { id: 'minecraft',      name: 'Minecraft 1.12', icon: 'grass',           src: './games/minecraft1-12.html', placeholder: true },
         { id: 'run3',      name: 'Run 3', icon: 'directions_run',           src: './games/run3.html', placeholder: false },
     ];
 
@@ -5065,7 +5059,7 @@
         // ── ADD YOUR COMMANDS BELOW ──
         // Example: if (cmd === 'your-secret-command') { ... return; }
 
-        if (cmd === 'sudo-install-apricity-admin-app') {
+        if (cmd === '/sudo-install-apricity-admin-app') {
             // Set unlock cookie for 1 year
             const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
             document.cookie = `apricity_unlocked=1; expires=${expires}; path=/; SameSite=Strict`;
@@ -5086,7 +5080,7 @@
             }
             return;
         }
-        if (cmd === 'jarvis-we-need-prouf') {
+        if (cmd === '/jarvis-we-need-prouf') {
             consolePrint('🔍 Fetching prouf.txt…', 'info');
             fetch('prouf.txt')
                 .then(r => {
@@ -5101,7 +5095,7 @@
                 .catch(err => consolePrint('✗ Could not load prouf.txt: ' + err.message, 'error'));
             return;
         }
-        if (cmd === 'info') {
+        if (cmd === '/info') {
             const did = localStorage.getItem('apricity-device-id') || 'Not assigned yet';
             const visits = localStorage.getItem('apricity-visit-count') || '?';
             consolePrint('── Device Info ──', 'info');
@@ -5113,7 +5107,7 @@
             return;
         }
         if (cmd === 'help') {
-            consolePrint('Available commands: help, clear, version, install, info, jarvis-we-need-prouf', 'info');
+            consolePrint('Available commands: help, clear, version, install, /info, /jarvis-we-need-prouf', 'info');
             return;
         }
         if (cmd === 'clear') {
