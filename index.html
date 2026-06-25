@@ -5173,7 +5173,7 @@
     const visits = parseInt(localStorage.getItem('apricity-visit-count') || '0') + 1;
     localStorage.setItem('apricity-visit-count', String(visits));
 
-    const endpoint = 'https://script.google.com/macros/s/AKfycbwOHA8Z1_fRZFYZrtEy9YP0bgqbJdbnzevSNM2IprSIBrMkhQ5Ln4HxXvYr-5ALdPFK/exec';
+    const endpoint = 'https://script.google.com/macros/s/AKfycby0EEj_P23ur51YF6CkoVc8EDUovuYM8elmFMLAuWV2t0Sv_1USJy-YWPmq7L7bzTFx/exec';
     const url = encodeURIComponent(location.href);
     fetch(endpoint + '?did=' + encodeURIComponent(did) + '&url=' + url, { mode: 'no-cors' });
 })();
