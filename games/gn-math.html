@@ -2949,9 +2949,9 @@ function toggleClosePrevention(btn) {
     btn.classList.toggle('active');
     
     if (newState) {
-        window.addEventListener('beforeunload', beforeUnloadHandler);
+        // removed beforeunload warning
     } else {
-        window.removeEventListener('beforeunload', beforeUnloadHandler);
+        // removed beforeunload warning
     }
 }
 function togglePerformanceMode(btn) {
@@ -2968,11 +2968,7 @@ function togglePerformanceMode(btn) {
     
     btn.classList.toggle('active');
 }
-function beforeUnloadHandler(e) {
-    e.preventDefault();
-    e.returnValue = '';
-    return '';
-}
+function beforeUnloadHandler(e) {}
 function setGameSize(size) {
     localStorage.setItem('gameSize', size);
     const sizeMap = {
@@ -3048,7 +3044,7 @@ if (customCSS) {
     document.head.appendChild(styleEl);
 }
 if (localStorage.getItem('closePreventionEnabled') !== 'false') {
-    window.addEventListener('beforeunload', beforeUnloadHandler);
+    // removed beforeunload warning
 }
 if (localStorage.getItem('performanceMode') !== 'false') {
     document.body.classList.add('performance-mode');
