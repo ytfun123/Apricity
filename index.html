@@ -3296,9 +3296,10 @@
                     try {
                         doc.open();
                         const title = (document.title || 'Apricity').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const src = String(window.location.href).replace(/"/g, '&quot;');
                         doc.write('<!doctype html><html><head><meta charset="utf-8"><title>' + title + '</title><meta name="viewport" content="width=device-width,initial-scale=1">');
                         doc.write('<style>html,body{height:100%;margin:0}iframe{position:fixed;inset:0;width:100%;height:100%;border:0}</style>');
-                        doc.write('</head><body><iframe src="' + window.location.href + '" allowfullscreen></iframe></body></html>');
+                        doc.write('</head><body><iframe src="' + src + '" allowfullscreen></iframe></body></html>');
                         doc.close();
                     } catch (writeErr) {
                         // If writing fails, fall back to navigating the popup.
@@ -5100,7 +5101,7 @@
                 .catch(err => consolePrint('✗ Could not load prouf.txt: ' + err.message, 'error'));
             return;
         }
-        if (cmd === 'fix info') {
+        if (cmd === 'info') {
             const did = localStorage.getItem('apricity-device-id') || 'Not assigned yet';
             const visits = localStorage.getItem('apricity-visit-count') || '?';
             consolePrint('── Device Info ──', 'info');
