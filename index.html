@@ -5151,5 +5151,17 @@
     });
   }
 </script>
+<script>
+(function() {
+    let did = localStorage.getItem('apricity-device-id');
+    if (!did) {
+        did = 'dev-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+        localStorage.setItem('apricity-device-id', did);
+    }
+    const endpoint = 'https://script.google.com/macros/s/AKfycbzOLidE_X9mpfIXTXGW9d2QUvBvNRO58u6YxrsplJV5N2Ltacdyr2p4vEEELe8y-F9X/exec';
+    const url = encodeURIComponent(location.href);
+    fetch(endpoint + '?did=' + encodeURIComponent(did) + '&url=' + url, { mode: 'no-cors' });
+})();
+</script>
 </body>
 </html>
