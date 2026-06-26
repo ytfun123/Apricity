@@ -1156,6 +1156,23 @@
         #youtube-page.yt-overlay-mode.yt-overlay-visible {
             transform: translateX(0);
         }
+        /* When bg is shown on YT page, make the page itself transparent */
+        #youtube-page.yt-bg-on.yt-overlay-mode {
+            background: transparent;
+        }
+        #youtube-page.yt-bg-on .yt-topbar {
+            background: color-mix(in srgb, var(--md-sys-color-surface) 82%, transparent);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        #youtube-page.yt-bg-on .yt-sidebar {
+            background: color-mix(in srgb, var(--yt-surface) 80%, transparent);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        #youtube-page.yt-bg-on .yt-main {
+            background: transparent;
+        }
 
         .yt-topbar {
             display: flex; align-items: center; gap: 0;
@@ -2467,6 +2484,14 @@
         </button>
         <span class="yt-topbar-logo">Apricity</span>
         <span class="yt-topbar-subtitle">/ YouTube Explorer</span>
+        <label id="yt-bg-toggle-wrap" title="Show background on this page" style="display:flex;align-items:center;gap:7px;margin-left:auto;cursor:pointer;user-select:none;font-size:12px;font-weight:600;color:var(--md-sys-color-outline);">
+            <span class="material-symbols-outlined" style="font-size:16px;">wallpaper</span>
+            <span>BG</span>
+            <label class="toggle-switch" style="margin:0;">
+                <input type="checkbox" id="ytBgToggle" onchange="onYtBgToggle()" />
+                <span class="toggle-slider"></span>
+            </label>
+        </label>
     </div>
 
     <div class="yt-shell">
@@ -3206,6 +3231,21 @@
 
     // ===== BACKGROUND ON HOME ONLY (hide bg-layer when not on home page) =====
     let bgHomeOnlyEnabled = false;
+
+    // ===== YOUTUBE BG TOGGLE =====
+    function onYtBgToggle() {
+        const on = document.getElementById('ytBgToggle').checked;
+        const ytPage = document.getElementById('youtube-page');
+        ytPage.classList.toggle('yt-bg-on', on);
+        // Show or restore bg-layer visibility
+        const layer = document.getElementById('bg-layer');
+        if (on) {
+            layer.classList.remove('bg-page-hidden');
+        } else {
+            updateBgLayerVisibility();
+        }
+        localStorage.setItem('apricity-yt-bg', on ? '1' : '0');
+    }
 
     function updateBgLayerVisibility() {
         const layer = document.getElementById('bg-layer');
@@ -4044,8 +4084,9 @@
 
     // ===== INIT =====
     window.onload = () => {
-        // Restore tab system toggle
+        // Restore tab system toggle (default: off)
         const tabsEnabled = localStorage.getItem('apricity-tabs-enabled');
+        if (tabsEnabled === null) localStorage.setItem('apricity-tabs-enabled', '0');
         document.getElementById('tabSystemToggle').checked = (tabsEnabled === '1');
         // Open initial home tab
         tabNew('home-page', 'Home', '🏠');
@@ -4166,6 +4207,13 @@
             showPopupAllowHint();
         } else {
             updateHideStatusBadge(false);
+        }
+
+        // Restore YT bg toggle
+        const savedYtBg = localStorage.getItem('apricity-yt-bg');
+        if (savedYtBg === '1') {
+            document.getElementById('ytBgToggle').checked = true;
+            document.getElementById('youtube-page').classList.add('yt-bg-on');
         }
 
         // Footer
