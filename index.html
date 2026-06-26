@@ -1598,6 +1598,9 @@
 <!-- Transient hint shown before attempting to open the popup -->
 <div id="popup-allow-hint" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100000;background:rgba(0,0,0,0.85);color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;font-weight:700;max-width:90vw;text-align:center;">You may need to allow pop-ups by clicking the pop-up blocked icon in your browser</div>
 
+<!-- Hint shown when YT is activated-->
+<div id="popup-allow-yt" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100000;background:rgba(0,0,0,0.85);color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;font-weight:700;max-width:90vw;text-align:center;">Scroll down to see YT</div>
+
 <!-- Top-right icon cluster (home only) -->
 <div class="topbar-icons" id="topbar-home-icons">
     <div class="icon-btn" onclick="toggleApps()" title="Apps">
@@ -2432,7 +2435,7 @@
         <button class="yt-topbar-menu" onclick="toggleSidebar()" title="Toggle menu">
             <span class="material-symbols-outlined" style="font-size:22px;">menu</span>
         </button>
-        <button class="yt-topbar-back" onclick="showHome()">
+        <button class="yt-topbar-back" onclick="goBackFromYoutube()">
             <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span>
             Back
         </button>
@@ -2595,12 +2598,53 @@
     }
 
     // ===== NAVIGATION =====
+    let youtubeBackHistory = [];
+
+    function getActivePageId() {
+        return document.querySelector('.page.active')?.id || null;
+    }
+
+    function scrollToPageTop() {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+
+    function rememberYoutubeBackPage(pageId) {
+        if (!pageId || pageId === 'youtube-page') return;
+        const last = youtubeBackHistory[youtubeBackHistory.length - 1];
+        if (last !== pageId) youtubeBackHistory.push(pageId);
+    }
+
+    function goBackFromYoutube() {
+        const previousPageId = youtubeBackHistory.pop();
+        if (!previousPageId) {
+            showHome();
+            return;
+        }
+
+        const existingTab = tabs.find(t => t.pageId === previousPageId);
+        if (existingTab) {
+            tabSwitch(existingTab.id);
+            return;
+        }
+
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const page = document.getElementById(previousPageId);
+        if (page) page.classList.add('active');
+        updateTopbarVisibility();
+        updateBgLayerVisibility();
+        scrollToPageTop();
+    }
+
     function showYouTube() {
+        const currentPageId = getActivePageId();
+        rememberYoutubeBackPage(currentPageId);
+
         const existing = tabs.find(t => t.pageId === 'youtube-page');
         if (existing) { tabSwitch(existing.id); return; }
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById('youtube-page').classList.add('active');
         tabNew('youtube-page', 'YouTube', '▶️');
+        scrollToPageTop();
     }
 
     // ===== PAGE MENU =====
@@ -2683,6 +2727,8 @@
     function tabSwitch(id) {
         const tab = tabs.find(t => t.id === id);
         if (!tab) return;
+        const previousPageId = getActivePageId();
+        if (tab.pageId === 'youtube-page') rememberYoutubeBackPage(previousPageId);
         activeTabId = id;
         // Show correct page
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -2690,6 +2736,7 @@
         if (page) page.classList.add('active');
         updateTopbarVisibility();
         updateBgLayerVisibility();
+        scrollToPageTop();
         // Manage tab title for Spotify page
         if (tab.pageId === 'spotify-page') {
             if (window._apricityOrigTitle === undefined || window._apricityOrigTitle === null) {
@@ -3352,6 +3399,14 @@
             hint.style.display = 'none';
             tryActivateHideMode();
         }, timeout);
+    }
+
+        function showPopupAllowYT(timeout = 1800) {
+        const hint = document.getElementById('popup-allow-yt');
+        if (!hint) return tryActivateHideMode();
+        hint.style.display = 'flex';
+        // Ensure it's centered and visible
+        hint.style.opacity = '1';
     }
 
     function onHideModeChange() {
