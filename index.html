@@ -2052,9 +2052,21 @@
 <div class="apps-overlay" id="gamesOverlay" onclick="toggleGames()">
     <div class="apps-panel" onclick="event.stopPropagation()">
         <h2>Games</h2>
+        <div class="app-item" onclick="openGame('gn-math', './games/gn-math.html')">
+            <div class="app-icon"><span class="material-symbols-outlined">add</span></div>
+            GN Math
+        </div>
         <div class="app-item" onclick="openGame('hollow-knight', './hollow_knight.html')">
-            <div class="app-icon"><span class="material-symbols-outlined">sports_esports</span></div>
+            <div class="app-icon"><span class="material-symbols-outlined">swords</span></div>
             Hollow Knight
+        </div>
+        <div class="app-item" onclick="openGame('bb', './games/bb.html')">
+            <div class="app-icon"><span class="material-symbols-outlined">widget_medium</span></div>
+            Block Blast
+        </div>
+        <div class="app-item" onclick="openGame('gd', './games/gd.html')">
+            <div class="app-icon"><span class="material-symbols-outlined">square_dot</span></div>
+            Geometry Dash
         </div>
         <div class="app-item" onclick="openGame('snow-rider', './snow_rider.html')">
             <div class="app-icon"><span class="material-symbols-outlined">downhill_skiing</span></div>
@@ -2856,10 +2868,10 @@
             'drive':         "Drive Mad",
             'gd':            "Geometry Dash",
             'whg':           "World's Hardest Game",
-            'pp':            "Papa's Pizzeria"
-            'bb':            "Block Blast"
-            'drift-boss':    "Drift Boss"
-            'hole':          "Hole.io"
+            'pp':            "Papa's Pizzeria",
+            'bb':            "Block Blast",
+            'drift-boss':    "Drift Boss",
+            'hole':          "Hole.io",
         };
         openGameFullscreen(src, names[id] || id);
     }
