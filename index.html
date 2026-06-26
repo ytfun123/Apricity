@@ -2703,14 +2703,32 @@
     }
 
     function goBackFromYoutube() {
-        setActivePage('home-page', 'flex');
-        activeTabId = null;
-        updateTopbarVisibility();
-        updateBgLayerVisibility();
-        scrollToPageTop();
+        // Find the home tab and switch to it properly (clears inline styles on all pages)
+        const homeTab = tabs.find(t => t.pageId === 'home-page');
+        if (homeTab) {
+            tabSwitch(homeTab.id);
+        } else {
+            // Fallback: clear all page inline styles before showing home
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+                p.style.display = '';
+                p.style.visibility = '';
+            });
+            setActivePage('home-page', 'flex');
+            activeTabId = null;
+            updateTopbarVisibility();
+            updateBgLayerVisibility();
+            scrollToPageTop();
+        }
     }
 
     function showYouTube() {
+        // Clear any stale inline styles left by setActivePage before switching
+        document.querySelectorAll('.page').forEach(p => {
+            p.classList.remove('active');
+            p.style.display = '';
+            p.style.visibility = '';
+        });
         setActivePage('youtube-page', 'flex');
         activeTabId = null;
         updateTopbarVisibility();
