@@ -2056,6 +2056,14 @@
             <div class="app-icon"><span class="material-symbols-outlined">sports_esports</span></div>
             Hollow Knight
         </div>
+        <div class="app-item" onclick="openGame('gd', './games/gd.html')">
+            <div class="app-icon"><span class="material-symbols-outlined">square</span></div>
+            Geometry Dash
+        </div>
+        <div class="app-item" onclick="openGame('bb', './games/bb.html')">
+            <div class="app-icon"><span class="material-symbols-outlined">square</span></div>
+            Block Blast
+        </div>
         <div class="app-item" onclick="openGame('snow-rider', './snow_rider.html')">
             <div class="app-icon"><span class="material-symbols-outlined">downhill_skiing</span></div>
             Snow Rider
@@ -2855,6 +2863,10 @@
             'tanuki':        "Tanuki Sunset",
             'drive':         "Drive Mad",
             'gd':            "Geometry Dash",
+            'whg':           "World's Hardest Game",
+            'pp':            "Papa's Pizzeria"
+            'bb':            "Block Blast"
+            'drift-boss':    "Drift Boss"
         };
         openGameFullscreen(src, names[id] || id);
     }
@@ -2878,7 +2890,10 @@
         { id: 'tanuki',      name: 'Tanuki Sunset', icon: 'wb_twilight',           src: './games/tanuki/index.html', placeholder: false },
         { id: 'drive',      name: 'Drive Mad', icon: 'traffic_jam',           src: './games/drive.html', placeholder: false },
         { id: 'gd',      name: 'Geometry Dash', icon: 'square_dot',           src: './games/gd.html', placeholder: false },
-        { id: 'whg',      name: 'World hardest game', icon: 'square',           src: './games/worldhardestgame.html', placeholder: false },
+        { id: 'whg',      name: 'Worlds Hardest Game', icon: 'square',           src: './games/worldhardestgame.html', placeholder: false },
+        { id: 'pp',      name: 'Papas Pizzeria', icon: 'local_pizza',           src: './games/pp.html', placeholder: false },
+        { id: 'bb',      name: 'Block Blast', icon: 'widget_medium',           src: './games/bb.html', placeholder: false },
+        { id: 'drift-boss',      name: 'Drift Boss', icon: 'unpaved_road',           src: './games/drift-boss.html', placeholder: false },
     ];
 
     function toggleGamesFullscreen() {
