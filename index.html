@@ -4230,7 +4230,7 @@
                 setTimeout(showTipPopup, 600);
             }
         } else {
-            error.textContent = 'Invalid product key. Please try again.';
+            error.textContent = 'Invalid activation key. Please try again.';
             error.style.opacity = '1';
             input.value = '';
             input.focus();
@@ -4277,10 +4277,10 @@
                     <span class="material-symbols-outlined" style="font-size:36px;color:var(--md-sys-color-primary);font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 48;">key</span>
                 </div>
                 <div style="font-size:22px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;">Activation Required</div>
-                <div style="font-size:13.5px;color:var(--md-sys-color-on-surface-variant);margin-bottom:28px;line-height:1.55;">Enter your product key to access Apricity.</div>
-                <input id="activation-key-input" type="password" autocomplete="off" spellcheck="false" placeholder="Enter product key…"
+                <div style="font-size:13.5px;color:var(--md-sys-color-on-surface-variant);margin-bottom:28px;line-height:1.55;">Enter your activation key to access Apricity.</div>
+                <input id="activation-key-input" type="password" autocomplete="off" spellcheck="false" placeholder="Enter activation key…"
                     style="width:100%;padding:13px 16px;border-radius:14px;border:1.5px solid var(--yt-border2);background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface);font-family:var(--font-ui);font-size:14.5px;outline:none;box-sizing:border-box;transition:border-color 0.2s;text-align:center;letter-spacing:0.04em;" />
-                <div id="activation-error" style="color:#f28b82;font-size:12.5px;margin-top:8px;opacity:0;transition:opacity 0.2s;min-height:18px;">Invalid product key. Please try again.</div>
+                <div id="activation-error" style="color:#f28b82;font-size:12.5px;margin-top:8px;opacity:0;transition:opacity 0.2s;min-height:18px;">Invalid activation key. Please try again.</div>
                 <button id="activation-submit-btn" style="width:100%;margin-top:14px;padding:13px;border-radius:14px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:var(--font-ui);font-size:15px;font-weight:600;cursor:pointer;transition:opacity 0.15s;">Activate →</button>
                 <div id="activation-loading" style="margin-top:12px;font-size:12.5px;color:var(--md-sys-color-on-surface-variant);display:none;">Checking key…</div>
             </div>`;
@@ -4299,7 +4299,7 @@
         const p = document.createElement('div');
         p.id = 'activation-tip-popup';
         p.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);z-index:999998;background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:16px;padding:16px 20px;max-width:360px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.16);font-family:var(--font-ui);font-size:13.5px;color:var(--md-sys-color-on-surface);line-height:1.5;opacity:0;transition:opacity 0.35s,transform 0.35s;pointer-events:none;text-align:center;';
-        p.innerHTML = `😤 <strong>Annoyed with entering product key multiple times?</strong><br>Go to <strong>Settings → Activation</strong> and turn it off!<div style="margin-top:10px;"><button onclick="closeTipPopup()" style="padding:6px 16px;border-radius:10px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:var(--font-ui);font-size:12.5px;font-weight:600;cursor:pointer;pointer-events:all;">Got it!</button></div>`;
+        p.innerHTML = `😤 <strong>Annoyed with entering activation key multiple times?</strong><br>Go to <strong>Settings → Activation</strong> and turn it off!<div style="margin-top:10px;"><button onclick="closeTipPopup()" style="padding:6px 16px;border-radius:10px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:var(--font-ui);font-size:12.5px;font-weight:600;cursor:pointer;pointer-events:all;">Got it!</button></div>`;
         document.body.appendChild(p);
     }
 
