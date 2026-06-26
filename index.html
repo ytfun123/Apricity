@@ -2670,6 +2670,8 @@
         const ytPage = document.getElementById('youtube-page');
         if (ytPage.classList.contains('yt-overlay-mode')) {
             ytPage.classList.remove('yt-overlay-visible');
+            // Restore home page visibility in case BG toggle was on
+            document.getElementById('home-page').style.visibility = '';
             // After transition, hide the overlay entirely
             setTimeout(() => {
                 ytPage.classList.remove('yt-overlay-mode');
@@ -3236,7 +3238,10 @@
     function onYtBgToggle() {
         const on = document.getElementById('ytBgToggle').checked;
         const ytPage = document.getElementById('youtube-page');
+        const homePage = document.getElementById('home-page');
         ytPage.classList.toggle('yt-bg-on', on);
+        // Hide home page content so only the bg shows through
+        homePage.style.visibility = on ? 'hidden' : '';
         // Show or restore bg-layer visibility
         const layer = document.getElementById('bg-layer');
         if (on) {
@@ -4214,6 +4219,7 @@
         if (savedYtBg === '1') {
             document.getElementById('ytBgToggle').checked = true;
             document.getElementById('youtube-page').classList.add('yt-bg-on');
+            document.getElementById('home-page').style.visibility = 'hidden';
         }
 
         // Footer
