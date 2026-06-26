@@ -3553,7 +3553,9 @@
 
     // ===== ANTI-CLOSE =====
     window.addEventListener('beforeunload', function(e) {
-        if (antiCloseEnabled) {
+        const gameOverlay = document.getElementById('game-fullscreen-overlay');
+        const gameActive = gameOverlay && gameOverlay.classList.contains('active');
+        if (antiCloseEnabled && !gameActive) {
             e.preventDefault();
             e.returnValue = '';
         }
