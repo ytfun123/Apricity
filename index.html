@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apricity</title>
-    <!-- manifest injected dynamically by JS after  unlock -->
+    <!-- manifest injected dynamically by JS after unlock -->
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/icon-192.png">
     <meta name="theme-color" content="#8B5000">
@@ -18,6 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         :root {
             --md-sys-color-primary: #8B5000;
             --md-sys-color-on-primary: #FFFFFF;
@@ -287,21 +288,7 @@
         ::-webkit-scrollbar-thumb { background: var(--yt-border2); border-radius: 3px; }
 
         .page { display: none; }
-        .page.active {
-            display: block;
-            position: fixed;
-            inset: 0;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            max-height: 100vh;
-            overflow: auto;
-            z-index: 1;
-        }
-        #home-page.active, #youtube-page.active {
-            display: flex;
-        }
+        .page.active { display: block; }
         #gemini-page.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         #meet-stable-page.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         #spotify-page.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -1153,15 +1140,21 @@
         #game-back-btn:hover { background: rgba(0,0,0,0.88); }
         #game-back-btn:active { transform: scale(0.96); }
 
-        #youtube-page.active { display: flex; align-items: stretch; }
-        #youtube-page {
-            min-height: 100vh;
-            flex-direction: column;
-            position: relative;
-            top: 0;
-            left: 0;
-            width: 100%;
-            overflow: hidden;
+        #youtube-page.active { display: flex; }
+        #youtube-page { min-height: 100vh; flex-direction: column; }
+
+        /* YouTube overlay mode: slides in over the home page */
+        #youtube-page.yt-overlay-mode {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            background: var(--md-sys-color-surface);
+            transform: translateX(100%);
+            transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+        }
+        #youtube-page.yt-overlay-mode.yt-overlay-visible {
+            transform: translateX(0);
         }
 
         .yt-topbar {
@@ -1211,13 +1204,7 @@
             margin-right: auto;
         }
 
-        .yt-shell {
-            display: flex;
-            flex: 1;
-            min-height: 0;
-            align-items: stretch;
-            overflow: hidden;
-        }
+        .yt-shell { display: flex; flex: 1; min-height: 0; }
 
         .yt-sidebar {
             background: var(--yt-surface);
@@ -1278,14 +1265,7 @@
             white-space: nowrap; pointer-events: none; z-index: 100;
         }
 
-        .yt-main {
-            padding: 36px 44px;
-            overflow-y: auto;
-            height: calc(100vh - 64px);
-            flex: 1;
-            min-width: 0;
-            scroll-behavior: auto;
-        }
+        .yt-main { padding: 36px 44px; overflow-y: auto; height: calc(100vh - 64px); flex: 1; min-width: 0; }
         .yt-page { display: none; animation: fadein 0.2s ease; }
         .yt-page.active { display: block; }
         @keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
@@ -2650,50 +2630,8 @@
         return document.querySelector('.page.active')?.id || null;
     }
 
-    function setActivePage(pageId, displayMode = 'flex') {
-        document.querySelectorAll('.page').forEach(page => {
-            page.classList.remove('active');
-            page.style.display = 'none';
-            page.style.visibility = 'hidden';
-        });
-
-        const page = document.getElementById(pageId);
-        if (page) {
-            page.classList.add('active');
-            page.style.display = displayMode;
-            page.style.visibility = 'visible';
-        }
-    }
-
     function scrollToPageTop() {
-        const top = 0;
-        window.scrollTo({ top, left: 0, behavior: 'auto' });
-        document.documentElement.scrollTop = top;
-        document.body.scrollTop = top;
-        const activePage = document.querySelector('.page.active');
-        if (activePage) {
-            activePage.scrollTop = 0;
-            activePage.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-            activePage.scrollIntoView({ behavior: 'auto', block: 'start' });
-        }
-        requestAnimationFrame(() => {
-            window.scrollTo({ top, left: 0, behavior: 'auto' });
-            document.documentElement.scrollTop = top;
-            document.body.scrollTop = top;
-            if (activePage) {
-                activePage.scrollTop = 0;
-                activePage.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-            }
-        });
-        setTimeout(() => {
-            window.scrollTo({ top, left: 0, behavior: 'auto' });
-            document.documentElement.scrollTop = top;
-            document.body.scrollTop = top;
-            if (activePage) {
-                activePage.scrollTop = 0;
-                activePage.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-            }
-        }, 40);
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }
 
     function rememberYoutubeBackPage(pageId) {
@@ -2703,43 +2641,70 @@
     }
 
     function goBackFromYoutube() {
-        // Find the home tab and switch to it properly (clears inline styles on all pages)
-        const homeTab = tabs.find(t => t.pageId === 'home-page');
-        if (homeTab) {
-            tabSwitch(homeTab.id);
-        } else {
-            // Fallback: clear all page inline styles before showing home
-            document.querySelectorAll('.page').forEach(p => {
-                p.classList.remove('active');
-                p.style.display = '';
-                p.style.visibility = '';
-            });
-            setActivePage('home-page', 'flex');
-            activeTabId = null;
+        // If YouTube is in overlay mode, slide it out without touching other pages
+        const ytPage = document.getElementById('youtube-page');
+        if (ytPage.classList.contains('yt-overlay-mode')) {
+            ytPage.classList.remove('yt-overlay-visible');
+            // After transition, hide the overlay entirely
+            setTimeout(() => {
+                ytPage.classList.remove('yt-overlay-mode');
+                ytPage.style.display = '';
+            }, 340);
             updateTopbarVisibility();
-            updateBgLayerVisibility();
-            scrollToPageTop();
+            return;
         }
-    }
 
-    function showYouTube() {
-        // Clear any stale inline styles left by setActivePage before switching
-        document.querySelectorAll('.page').forEach(p => {
-            p.classList.remove('active');
-            p.style.display = '';
-            p.style.visibility = '';
-        });
-        setActivePage('youtube-page', 'flex');
-        activeTabId = null;
+        const previousPageId = youtubeBackHistory.pop();
+        if (!previousPageId) {
+            showHome();
+            return;
+        }
+
+        const existingTab = tabs.find(t => t.pageId === previousPageId);
+        if (existingTab) {
+            tabSwitch(existingTab.id);
+            return;
+        }
+
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const page = document.getElementById(previousPageId);
+        if (page) page.classList.add('active');
         updateTopbarVisibility();
         updateBgLayerVisibility();
         scrollToPageTop();
     }
 
+    function showYouTube() {
+        const currentPageId = getActivePageId();
+        rememberYoutubeBackPage(currentPageId);
+
+        // If tabs are active, use the existing tab-based navigation
+        const tabsEnabled = localStorage.getItem('apricity-tabs-enabled') === '1';
+        if (tabsEnabled) {
+            const existing = tabs.find(t => t.pageId === 'youtube-page');
+            if (existing) { tabSwitch(existing.id); return; }
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('youtube-page').classList.add('active');
+            tabNew('youtube-page', 'YouTube', '▶️');
+            scrollToPageTop();
+            return;
+        }
+
+        // Overlay mode: keep home page visible underneath, slide YouTube in on top
+        const ytPage = document.getElementById('youtube-page');
+        ytPage.classList.add('yt-overlay-mode');
+        ytPage.style.display = 'flex';
+        // Force reflow so CSS transition fires
+        ytPage.getBoundingClientRect();
+        ytPage.classList.add('yt-overlay-visible');
+        updateTopbarVisibility();
+    }
+
     // ===== PAGE MENU =====
     function updateTopbarVisibility() {
         const activeTab = tabs.find(t => t.id === activeTabId);
-        const isHome = !activeTab || activeTab.pageId === 'home-page';
+        const ytOverlayActive = document.getElementById('youtube-page').classList.contains('yt-overlay-visible');
+        const isHome = !ytOverlayActive && (!activeTab || activeTab.pageId === 'home-page');
         const isMeet = activeTab && activeTab.pageId === 'meet-stable-page';
         document.getElementById('topbar-home-icons').style.display = isHome ? 'flex' : 'none';
         document.getElementById('topbar-menu-btn').style.display = (isHome || isMeet) ? 'none' : 'flex';
@@ -2898,14 +2863,11 @@
     let _currentOpenTabId = null;
 
     function showHome() {
+        // Check if a home tab already exists
         const existing = tabs.find(t => t.pageId === 'home-page');
-        if (existing) {
-            tabSwitch(existing.id);
-            return;
-        }
-        setActivePage('home-page', 'flex');
+        if (existing) { tabSwitch(existing.id); return; }
+        tabNew('home-page', 'Home', '🏠');
         updateTopbarVisibility();
-        scrollToPageTop();
     }
     function goSearch() {
         const q = document.getElementById('homeSearch').value.trim();
