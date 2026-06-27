@@ -261,13 +261,13 @@
             box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
         }
 
-        body.has-bg #home-page .home-btn:not(.home-btn-youtube) {
+        body.has-bg #home-page .home-btn:not(.home-btn-youtube):not(.home-btn-movies) {
             background: color-mix(in srgb, var(--md-sys-color-primary-container) calc(var(--island-opacity) * 100%), transparent);
             color: var(--md-sys-color-on-primary-container);
             border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) calc(var(--island-opacity) * 22%), transparent);
         }
 
-        body.has-bg #home-page .home-btn:not(.home-btn-youtube):hover {
+        body.has-bg #home-page .home-btn:not(.home-btn-youtube):not(.home-btn-movies):hover {
             background: color-mix(in srgb, var(--md-sys-color-primary-container) calc(var(--island-opacity) * 84%), var(--md-sys-color-primary) calc(var(--island-opacity) * 16%));
             opacity: 1;
         }
@@ -1276,6 +1276,21 @@
             overflow-y: auto;
         }
         #youtube-page.yt-overlay-mode.yt-overlay-visible {
+            transform: translateX(0);
+        }
+
+        /* Movies overlay mode: slides in over home page just like YouTube */
+        #movies-page.mv-overlay-mode {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            background: var(--md-sys-color-surface);
+            transform: translateX(100%);
+            transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            display: flex !important;
+        }
+        #movies-page.mv-overlay-mode.mv-overlay-visible {
             transform: translateX(0);
         }
         /* When bg is shown on YT page, apply bg directly and frost the UI panels */
@@ -2894,16 +2909,21 @@
 
     // ===== MOVIES =====
     function showMovies() {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        const pg = document.getElementById('movies-page');
-        pg.classList.add('active');
-        scrollToPageTop();
+        const mvPage = document.getElementById('movies-page');
+        mvPage.classList.add('mv-overlay-mode');
+        mvPage.style.display = 'flex';
+        // Force reflow so CSS transition fires
+        mvPage.getBoundingClientRect();
+        mvPage.classList.add('mv-overlay-visible');
         if (window.mvEnsureLoaded) window.mvEnsureLoaded();
     }
     function hideMovies() {
-        document.getElementById('movies-page').classList.remove('active');
-        document.getElementById('home-page').classList.add('active');
-        scrollToPageTop();
+        const mvPage = document.getElementById('movies-page');
+        mvPage.classList.remove('mv-overlay-visible');
+        setTimeout(() => {
+            mvPage.classList.remove('mv-overlay-mode');
+            mvPage.style.display = '';
+        }, 330);
     }
     function closeMvPlayer() {
         document.getElementById('mv-player-overlay').classList.remove('active');
