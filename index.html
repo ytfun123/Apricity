@@ -3553,9 +3553,7 @@
 
     // ===== ANTI-CLOSE =====
     window.addEventListener('beforeunload', function(e) {
-        const gameOverlay = document.getElementById('game-fullscreen-overlay');
-        const gameActive = gameOverlay && gameOverlay.classList.contains('active');
-        if (antiCloseEnabled && !gameActive) {
+        if (antiCloseEnabled) {
             e.preventDefault();
             e.returnValue = '';
         }
@@ -4146,8 +4144,8 @@
 
         // Restore settings (hide mode defaults ON if never saved)
         const savedHide = localStorage.getItem('apricity-hide-mode');
-        hideModeEnabled = savedHide === '1';
-        if (savedHide === null) localStorage.setItem('apricity-hide-mode', '0');
+        hideModeEnabled = savedHide === null ? true : savedHide === '1';
+        if (savedHide === null) localStorage.setItem('apricity-hide-mode', '1');
         document.getElementById('hideModeToggle').checked = hideModeEnabled;
 
         const savedAntiClose = localStorage.getItem('apricity-anti-close');
@@ -5319,7 +5317,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         <span id="game-back-title">Back</span>
     </button>
-    <iframe id="game-fullscreen-frame" src="about:blank" allowfullscreen allow="autoplay; fullscreen" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation allow-pointer-lock"></iframe>
+    <iframe id="game-fullscreen-frame" src="about:blank" allowfullscreen allow="autoplay; fullscreen"></iframe>
 </div>
 
 <script>
@@ -5337,16 +5335,9 @@
   function closeGameFullscreen() {
       const overlay = document.getElementById('game-fullscreen-overlay');
       const frame   = document.getElementById('game-fullscreen-frame');
-      // Remove and recreate the iframe entirely — the only reliable way
-      // to destroy beforeunload handlers registered by the game site
-      const newFrame = document.createElement('iframe');
-      newFrame.id = 'game-fullscreen-frame';
-      newFrame.src = 'about:blank';
-      newFrame.allowFullscreen = true;
-      newFrame.allow = 'autoplay; fullscreen';
-      if (frame.getAttribute('sandbox')) newFrame.setAttribute('sandbox', frame.getAttribute('sandbox'));
-      frame.parentNode.replaceChild(newFrame, frame);
       overlay.classList.remove('active');
+      // Short delay so the overlay hides before we clear the src (avoids flash)
+      setTimeout(() => { frame.src = 'about:blank'; }, 200);
       document.body.style.overflow = '';
   }
 </script>
