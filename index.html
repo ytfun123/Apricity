@@ -1089,6 +1089,128 @@
         }
 
 
+        /* ===== MOVIES PAGE ===== */
+        #movies-page { display: none; flex-direction: column; min-height: 100vh; background: var(--md-sys-color-surface); }
+        #movies-page.active { display: flex; }
+        .mv-topbar {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px 24px 12px;
+            background: var(--md-sys-color-surface-container-low);
+            border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent 80%);
+            flex-shrink: 0;
+        }
+        .mv-back-btn {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--md-sys-color-surface-container);
+            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 25%, transparent 75%);
+            color: var(--md-sys-color-on-surface);
+            border-radius: 100px; padding: 8px 18px 8px 12px;
+            font-family: var(--font-ui); font-size: 14px; font-weight: 500;
+            cursor: pointer; transition: background 0.18s, transform 0.1s;
+        }
+        .mv-back-btn:hover { background: var(--md-sys-color-surface-container-high); }
+        .mv-back-btn:active { transform: scale(0.96); }
+        .mv-title { font-size: 1.25rem; font-weight: 700; color: var(--md-sys-color-on-surface); flex: 1; }
+        .mv-type-tabs { display: flex; gap: 8px; }
+        .mv-type-tab {
+            padding: 7px 18px; border-radius: 100px; border: none;
+            font-family: var(--font-ui); font-size: 0.8rem; font-weight: 500;
+            cursor: pointer; transition: all 0.18s;
+            background: var(--md-sys-color-surface-container);
+            color: var(--md-sys-color-on-surface-variant);
+        }
+        .mv-type-tab.active {
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+        }
+        .mv-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+        .mv-search-wrap { position: relative; margin-bottom: 18px; }
+        .mv-search-icon {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: var(--md-sys-color-on-surface-variant); pointer-events: none;
+        }
+        .mv-search {
+            width: 100%; padding: 12px 16px 12px 44px;
+            font-family: var(--font-ui); font-size: 0.9rem;
+            background: var(--md-sys-color-surface-container);
+            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 30%, transparent 70%);
+            border-radius: 100px; color: var(--md-sys-color-on-surface);
+            outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .mv-search:focus {
+            border-color: var(--md-sys-color-primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent 85%);
+        }
+        .mv-search::placeholder { color: var(--md-sys-color-on-surface-variant); opacity: 0.6; }
+        .mv-status { font-size: 0.75rem; color: var(--md-sys-color-on-surface-variant); min-height: 20px; margin-bottom: 12px; }
+        .mv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 14px;
+        }
+        .mv-card {
+            border-radius: 14px; overflow: hidden; cursor: pointer;
+            background: var(--md-sys-color-surface-container);
+            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 15%, transparent 85%);
+            transition: transform 0.18s, box-shadow 0.18s;
+        }
+        .mv-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+        .mv-card:active { transform: scale(0.97); }
+        .mv-thumb {
+            width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block;
+            background: var(--md-sys-color-surface-container-high);
+        }
+        .mv-thumb-placeholder {
+            width: 100%; aspect-ratio: 2/3; display: flex; align-items: center;
+            justify-content: center; font-size: 2rem;
+            background: var(--md-sys-color-surface-container-high);
+        }
+        .mv-info { padding: 9px 10px 10px; }
+        .mv-card-title {
+            font-size: 0.78rem; font-weight: 600; line-height: 1.3;
+            color: var(--md-sys-color-on-surface);
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .mv-card-meta { font-size: 0.68rem; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; }
+        .mv-rating {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: 0.68rem; color: var(--md-sys-color-primary);
+            font-weight: 600; margin-top: 4px;
+        }
+        .mv-pagination { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+        .mv-page-btn {
+            padding: 8px 20px; border-radius: 100px; border: none;
+            font-family: var(--font-ui); font-size: 0.8rem; font-weight: 500;
+            cursor: pointer; background: var(--md-sys-color-surface-container-high);
+            color: var(--md-sys-color-on-surface); transition: background 0.15s;
+        }
+        .mv-page-btn:hover { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        .mv-page-lbl { font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); }
+        /* Movie player overlay */
+        #mv-player-overlay {
+            position: fixed; inset: 0; z-index: 9500;
+            background: rgba(0,0,0,0.88); display: none;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        #mv-player-overlay.active { display: flex; }
+        .mv-player-container {
+            width: 90vw; height: 85vh; max-width: 1280px;
+            background: #000; border-radius: 14px; overflow: hidden;
+            position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+        }
+        .mv-player-close {
+            position: absolute; top: 10px; right: 10px; z-index: 1;
+            background: rgba(0,0,0,0.65); color: #fff; border: none;
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+            font-size: 20px; display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s; backdrop-filter: blur(6px);
+        }
+        .mv-player-close:hover { background: rgba(200,0,0,0.8); }
+        .mv-player-iframe { width: 100%; height: 100%; border: none; display: block; }
+        /* Home button style for Movies */
+        .home-btn-movies { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        .home-btn-movies:hover { opacity: 0.88; }
+
         #sunlit-page { width: 100%; height: 100vh; }
         #sunlit-page iframe { width: 100%; height: 100%; border: none; display: block; }
         #hollow-knight-page, #snow-rider-page { width: 100%; height: 100vh; }
@@ -2456,6 +2578,12 @@
         <div class="btn-group">
             <button class="home-btn" onclick="toggleApps()">Apps</button>
             <button class="home-btn" onclick="toggleGames()">Games</button>
+            <button class="home-btn home-btn-movies" onclick="showMovies()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/>
+                </svg>
+                Movies
+            </button>
             <button class="home-btn home-btn-youtube" onclick="showYouTube()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/>
@@ -2473,6 +2601,42 @@
         </div>
     </div>
     <footer id="rotating-footer"></footer>
+</div>
+
+<!-- MOVIE PLAYER OVERLAY -->
+<div id="mv-player-overlay">
+    <div class="mv-player-container">
+        <button class="mv-player-close" onclick="closeMvPlayer()" title="Close">&#x2715;</button>
+        <iframe class="mv-player-iframe" id="mv-player-iframe" src="about:blank" allowfullscreen allow="autoplay; fullscreen"></iframe>
+    </div>
+</div>
+
+<!-- MOVIES PAGE -->
+<div id="movies-page" class="page">
+    <div class="mv-topbar">
+        <button class="mv-back-btn" onclick="hideMovies()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+        </button>
+        <div class="mv-title">🎬 Movies &amp; TV</div>
+        <div class="mv-type-tabs">
+            <button class="mv-type-tab active" id="mvTabMovie" onclick="mvSwitchType('movie')">Movies</button>
+            <button class="mv-type-tab" id="mvTabTV" onclick="mvSwitchType('tv')">TV &amp; Shows</button>
+        </div>
+    </div>
+    <div class="mv-body">
+        <div class="mv-search-wrap">
+            <svg class="mv-search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="mv-search" id="mvSearchInput" placeholder="Search movies &amp; shows..." autocomplete="off">
+        </div>
+        <div class="mv-status" id="mvStatus">Open Movies to load.</div>
+        <div class="mv-grid" id="mvGrid"></div>
+        <div class="mv-pagination">
+            <button class="mv-page-btn" onclick="mvPage(-1)">&#8592; Prev</button>
+            <span class="mv-page-lbl" id="mvPageLbl">Page 1</span>
+            <button class="mv-page-btn" onclick="mvPage(1)">Next &#8594;</button>
+        </div>
+    </div>
 </div>
 
 <!-- YOUTUBE EXPLORER PAGE -->
@@ -2727,6 +2891,27 @@
         ytPage.classList.add('yt-overlay-visible');
         updateTopbarVisibility();
     }
+
+    // ===== MOVIES =====
+    function showMovies() {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const pg = document.getElementById('movies-page');
+        pg.classList.add('active');
+        scrollToPageTop();
+        if (window.mvEnsureLoaded) window.mvEnsureLoaded();
+    }
+    function hideMovies() {
+        document.getElementById('movies-page').classList.remove('active');
+        document.getElementById('home-page').classList.add('active');
+        scrollToPageTop();
+    }
+    function closeMvPlayer() {
+        document.getElementById('mv-player-overlay').classList.remove('active');
+        setTimeout(() => { document.getElementById('mv-player-iframe').src = 'about:blank'; }, 200);
+    }
+    document.getElementById('mv-player-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closeMvPlayer();
+    });
 
     // ===== PAGE MENU =====
     function updateTopbarVisibility() {
@@ -5311,6 +5496,124 @@
 
 
 </script>
+<!-- ===== MOVIES (TMDB) ===== -->
+<script>
+(function(){
+    var API_KEY = 'TMDB_API_KEY_REMOVED';
+    var BASE = 'https://api.themoviedb.org/3';
+    var IMG = 'https://image.tmdb.org/t/p/w185';
+    var mvType = 'movie', mvCurPage = 1, mvQuery = '', mvDebounce = null;
+    var mvLoaded = false, mvCache = {}, mvAbort = null;
+    var elStatus, elGrid, elSearch;
+
+    function tmdbGet(path, cb) {
+        if (mvCache[path]) { cb(mvCache[path]); return; }
+        if (mvAbort) mvAbort.abort();
+        mvAbort = window.AbortController ? new AbortController() : null;
+        var sep = path.indexOf('?') === -1 ? '?' : '&';
+        var url = BASE + path + sep + 'api_key=' + API_KEY;
+        setStatus('Loading…');
+        fetch(url, { method: 'GET', headers: { Accept: 'application/json' }, mode: 'cors', cache: 'force-cache', signal: mvAbort ? mvAbort.signal : undefined })
+            .then(function(r) { if (!r.ok) throw new Error('Unable to load'); return r.json(); })
+            .then(function(data) { mvCache[path] = data; cb(data); })
+            .catch(function(err) { if (err.name === 'AbortError') return; setStatus('Error: ' + err.message); });
+    }
+
+    function setStatus(t) { if (elStatus) elStatus.textContent = t; }
+
+    function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function renderGrid(items) {
+        elGrid.innerHTML = '';
+        if (!items || !items.length) { setStatus('Nothing found.'); return; }
+        items.forEach(function(item) {
+            var title = item.title || item.name || 'Untitled';
+            var date = item.release_date || item.first_air_date || '';
+            var year = date ? new Date(date).getFullYear() : '';
+            var rating = item.vote_average ? item.vote_average.toFixed(1) : '';
+            var poster = item.poster_path ? IMG + item.poster_path : '';
+            var card = document.createElement('div');
+            card.className = 'mv-card';
+            if (poster) {
+                card.innerHTML = '<img class="mv-thumb" src="' + esc(poster) + '" alt="' + esc(title) + '" loading="lazy" onerror="this.outerHTML=\'<div class=\\\"mv-thumb-placeholder\\\">🎬</div>\'">'
+                    + '<div class="mv-info"><div class="mv-card-title">' + esc(title) + '</div>'
+                    + '<div class="mv-card-meta">' + (year ? year + ' · ' : '') + (mvType === 'movie' ? 'Movie' : 'TV') + '</div>'
+                    + (rating ? '<div class="mv-rating">★ ' + rating + '</div>' : '')
+                    + '</div>';
+            } else {
+                card.innerHTML = '<div class="mv-thumb-placeholder">🎬</div>'
+                    + '<div class="mv-info"><div class="mv-card-title">' + esc(title) + '</div>'
+                    + '<div class="mv-card-meta">' + (year ? year + ' · ' : '') + (mvType === 'movie' ? 'Movie' : 'TV') + '</div>'
+                    + (rating ? '<div class="mv-rating">★ ' + rating + '</div>' : '')
+                    + '</div>';
+            }
+            card.addEventListener('click', (function(id, type) {
+                return function() { playMvMovie(id, type); };
+            })(item.id, mvType));
+            elGrid.appendChild(card);
+        });
+        setStatus(items.length + ' results · page ' + mvCurPage);
+    }
+
+    function doLoad() {
+        setStatus('Loading…');
+        elGrid.innerHTML = '';
+        var path = mvQuery.trim()
+            ? '/search/' + mvType + '?query=' + encodeURIComponent(mvQuery) + '&page=' + mvCurPage + '&include_adult=false'
+            : '/' + mvType + '/popular?page=' + mvCurPage;
+        tmdbGet(path, function(data) { renderGrid(data.results || []); });
+    }
+
+    window.playMvMovie = function(id, type) {
+        var url = 'https://cinesrc.st/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id;
+        document.getElementById('mv-player-iframe').src = url;
+        document.getElementById('mv-player-overlay').classList.add('active');
+    };
+
+    window.mvEnsureLoaded = function() {
+        if (mvLoaded) return;
+        mvLoaded = true;
+        doLoad();
+    };
+
+    window.mvSwitchType = function(type) {
+        mvType = type;
+        mvCurPage = 1;
+        mvQuery = '';
+        elSearch.value = '';
+        document.getElementById('mvTabMovie').classList.toggle('active', type === 'movie');
+        document.getElementById('mvTabTV').classList.toggle('active', type === 'tv');
+        document.getElementById('mvPageLbl').textContent = 'Page 1';
+        mvLoaded = true;
+        doLoad();
+    };
+
+    window.mvPage = function(dir) {
+        if (dir === -1 && mvCurPage <= 1) return;
+        mvCurPage += dir;
+        document.getElementById('mvPageLbl').textContent = 'Page ' + mvCurPage;
+        mvLoaded = true;
+        doLoad();
+    };
+
+    function init() {
+        elStatus = document.getElementById('mvStatus');
+        elGrid = document.getElementById('mvGrid');
+        elSearch = document.getElementById('mvSearchInput');
+        elSearch.addEventListener('input', function() {
+            mvQuery = this.value;
+            mvCurPage = 1;
+            mvLoaded = true;
+            clearTimeout(mvDebounce);
+            mvDebounce = setTimeout(doLoad, 280);
+        });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+})();
+</script>
+
 <!-- ===== FULLSCREEN GAME OVERLAY ===== -->
 <div id="game-fullscreen-overlay">
     <button id="game-back-btn" onclick="closeGameFullscreen()">
