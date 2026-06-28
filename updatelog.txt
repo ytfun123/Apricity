@@ -1,3 +1,5 @@
 06/20/2026: Added update log, option to turn off background every where but home page.
 
 06/26/2026: added more games , fixed minecraft, fixed youtube no more need to scroll,and here is little surprise for yall: we working on discord so stay here.
+
+06/27/2026: fixed movies added multipler sources from which to eatch movie
