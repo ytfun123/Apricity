@@ -1197,16 +1197,29 @@
             width: 90vw; height: 85vh; max-width: 1280px;
             background: #000; border-radius: 14px; overflow: hidden;
             position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            display: flex; flex-direction: column;
         }
+        .mv-player-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 10px; background: #111; flex-shrink: 0; gap: 8px;
+        }
+        .mv-player-src-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+        .mv-src-btn {
+            padding: 5px 14px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
+            font-size: 0.75rem; font-family: var(--font-ui); cursor: pointer;
+            transition: all 0.15s;
+        }
+        .mv-src-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+        .mv-src-btn.active { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border-color: transparent; }
         .mv-player-close {
-            position: absolute; top: 10px; right: 10px; z-index: 1;
-            background: rgba(0,0,0,0.65); color: #fff; border: none;
-            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-            font-size: 20px; display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s; backdrop-filter: blur(6px);
+            background: rgba(255,255,255,0.1); color: #fff; border: none;
+            width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+            font-size: 16px; display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s; flex-shrink: 0;
         }
         .mv-player-close:hover { background: rgba(200,0,0,0.8); }
-        .mv-player-iframe { width: 100%; height: 100%; border: none; display: block; }
+        .mv-player-iframe { width: 100%; flex: 1; border: none; display: block; }
         /* Home button style for Movies */
         .home-btn-movies { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
         .home-btn-movies:hover { opacity: 0.88; }
@@ -2621,8 +2634,11 @@
 <!-- MOVIE PLAYER OVERLAY -->
 <div id="mv-player-overlay">
     <div class="mv-player-container">
-        <button class="mv-player-close" onclick="closeMvPlayer()" title="Close">&#x2715;</button>
-        <iframe class="mv-player-iframe" id="mv-player-iframe" src="about:blank" allowfullscreen allow="autoplay; fullscreen"></iframe>
+        <div class="mv-player-topbar">
+            <div class="mv-player-src-btns" id="mvSrcBtns"></div>
+            <button class="mv-player-close" onclick="closeMvPlayer()" title="Close">&#x2715;</button>
+        </div>
+        <iframe class="mv-player-iframe" id="mv-player-iframe" src="about:blank" allowfullscreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media"></iframe>
     </div>
 </div>
 
@@ -5584,9 +5600,39 @@
         tmdbGet(path, function(data) { renderGrid(data.results || []); });
     }
 
+    var mvCurrentId = null, mvCurrentType = null, mvCurrentSrc = 0;
+    var mvSources = [
+        { label: 'Source 1', url: function(id, type) { return 'https://vidsrc.cc/v2/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
+        { label: 'Source 2', url: function(id, type) { return 'https://vidlink.pro/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
+        { label: 'Source 3', url: function(id, type) { return 'https://embed.su/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
+        { label: 'Source 4', url: function(id, type) { return 'https://vidsrc.me/embed/' + (type === 'movie' ? 'movie' : 'tv') + '?tmdb=' + id; } },
+    ];
+
+    function mvLoadSource(idx) {
+        mvCurrentSrc = idx;
+        var src = mvSources[idx].url(mvCurrentId, mvCurrentType);
+        document.getElementById('mv-player-iframe').src = src;
+        document.querySelectorAll('.mv-src-btn').forEach(function(b, i) {
+            b.classList.toggle('active', i === idx);
+        });
+    }
+
+    window.mvSwitchSource = function(idx) { mvLoadSource(idx); };
+
     window.playMvMovie = function(id, type) {
-        var url = 'https://cinesrc.st/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id;
-        document.getElementById('mv-player-iframe').src = url;
+        mvCurrentId = id;
+        mvCurrentType = type;
+        // Build source buttons
+        var btns = document.getElementById('mvSrcBtns');
+        btns.innerHTML = '';
+        mvSources.forEach(function(s, i) {
+            var b = document.createElement('button');
+            b.className = 'mv-src-btn' + (i === 0 ? ' active' : '');
+            b.textContent = s.label;
+            b.onclick = function() { mvLoadSource(i); };
+            btns.appendChild(b);
+        });
+        mvLoadSource(0);
         document.getElementById('mv-player-overlay').classList.add('active');
     };
 
