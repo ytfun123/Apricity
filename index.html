@@ -4581,11 +4581,49 @@
         }
     }
 
+    async function checkBlacklist() {
+        const did = localStorage.getItem('apricity-device-id');
+        if (!did) return false;
+        try {
+            const endpoint = 'https://script.google.com/macros/s/AKfycbz30VmB6wm6BqlRtS5e7sb6PkI4OwfWmNWRddPltVKmLKaUh1SzC8mwpMxNhxfzWMg/exec';
+            const res = await fetch(endpoint + '?did=' + encodeURIComponent(did) + '&checkonly=1');
+            const data = await res.json();
+            return data.blacklisted === true;
+        } catch(e) { return false; }
+    }
+
+    function _showBlacklistScreen() {
+        // Remove activation overlay if present
+        const existing = document.getElementById('activation-overlay');
+        if (existing) existing.remove();
+        const existing2 = document.getElementById('blacklist-overlay');
+        if (existing2) return;
+
+        const o = document.createElement('div');
+        o.id = 'blacklist-overlay';
+        o.style.cssText = 'position:fixed;inset:0;z-index:9999999;background:var(--md-sys-color-surface);display:flex;align-items:center;justify-content:center;font-family:var(--font-ui);';
+        o.innerHTML = `
+            <div style="text-align:center;max-width:400px;width:90%;padding:40px 32px;">
+                <div style="width:72px;height:72px;margin:0 auto 20px;background:color-mix(in srgb,#f28b82 20%,transparent);border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(242,139,130,0.25);">
+                    <span class="material-symbols-outlined" style="font-size:36px;color:#f28b82;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 48;">block</span>
+                </div>
+                <div style="font-size:24px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:10px;">You've Been Blacklisted</div>
+                <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;">Your device has been blocked from accessing Apricity. If you think this is a mistake, contact the administrator.</div>
+            </div>`;
+        document.body.appendChild(o);
+    }
+
     async function initActivationGate() {
+        // 0. Check blacklist first
+        const blacklisted = await checkBlacklist();
+        if (blacklisted) {
+            _showBlacklistScreen();
+            return;
+        }
+
         // 1. Check master switch in settings.txt first
         const { activationEnabled } = await fetchSettings();
         if (!activationEnabled) {
-            // Master off — nothing to show, overlay doesn't exist in DOM
             return;
         }
 
@@ -4593,15 +4631,12 @@
         if (activationSkipEnabled()) {
             const storedKey = localStorage.getItem('apricity-activation-key');
             if (storedKey) {
-                // Silently revalidate stored key against the sheet in background
                 await fetchActivationKeys();
                 if (_validKeys.length > 0 && !_validKeys.includes(storedKey)) {
-                    // Key was revoked — clear it and show the gate
                     localStorage.removeItem('apricity-activation-key');
                     _showActivationOverlay();
                     return;
                 }
-                // Key still valid (or sheet unreachable — give benefit of the doubt)
                 return;
             }
         }
@@ -5728,13 +5763,23 @@
         did = 'dev-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
         localStorage.setItem('apricity-device-id', did);
     }
-    // Track local visit count
     const visits = parseInt(localStorage.getItem('apricity-visit-count') || '0') + 1;
     localStorage.setItem('apricity-visit-count', String(visits));
 
-    const endpoint = 'https://script.google.com/macros/s/AKfycby0EEj_P23ur51YF6CkoVc8EDUovuYM8elmFMLAuWV2t0Sv_1USJy-YWPmq7L7bzTFx/exec';
-    const url = encodeURIComponent(location.href);
-    fetch(endpoint + '?did=' + encodeURIComponent(did) + '&url=' + url, { mode: 'no-cors' });
+    window._apricityDid = did;
+    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbz30VmB6wm6BqlRtS5e7sb6PkI4OwfWmNWRddPltVKmLKaUh1SzC8mwpMxNhxfzWMg/exec';
+
+    setTimeout(function() {
+        const url = encodeURIComponent(location.href);
+        fetch(window._apricityEndpoint + '?did=' + encodeURIComponent(did) + '&url=' + url)
+            .then(r => r.json())
+            .then(data => {
+                if (data.blacklisted) {
+                    _showBlacklistScreen();
+                }
+            })
+            .catch(() => {});
+    }, 800);
 })();
 </script>
 </body>
