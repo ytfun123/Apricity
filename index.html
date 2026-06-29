@@ -4585,12 +4585,18 @@
         const did = localStorage.getItem('apricity-device-id');
         if (!did) return false;
         try {
-            const endpoint = 'https://script.google.com/macros/s/AKfycbykipqWj8w-mykCOlQ7CzC2-4RngdCNuxcy7LVywqGZzlF5u7Y8IGJYIhTNrp31DsjC/exec';
+            const endpoint = 'https://script.google.com/macros/s/AKfycbxgQYqv-7YUVv7lWIqeko8Mazf-ugmdEISKYs5OLjn_eAKhWB1emFA0dj2dNGmZt1Vr/exec';
+            let ip = 'unknown';
+            try {
+                const ipRes = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+                const ipData = await ipRes.json();
+                ip = ipData.ip || 'unknown';
+            } catch(e) {}
             const res = await fetch(endpoint, {
                 method: 'POST',
                 cache: 'no-store',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'did=' + encodeURIComponent(did) + '&checkonly=1&t=' + Date.now()
+                body: 'did=' + encodeURIComponent(did) + '&ip=' + encodeURIComponent(ip) + '&checkonly=1&t=' + Date.now()
             });
             const data = await res.json();
             return data.blacklisted === true;
@@ -5772,23 +5778,39 @@
     localStorage.setItem('apricity-visit-count', String(visits));
 
     window._apricityDid = did;
-    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbykipqWj8w-mykCOlQ7CzC2-4RngdCNuxcy7LVywqGZzlF5u7Y8IGJYIhTNrp31DsjC/exec';
+    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbxgQYqv-7YUVv7lWIqeko8Mazf-ugmdEISKYs5OLjn_eAKhWB1emFA0dj2dNGmZt1Vr/exec';
 
     setTimeout(function() {
-        const url = encodeURIComponent(location.href);
-        fetch(window._apricityEndpoint, {
-            method: 'POST',
-            cache: 'no-store',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'did=' + encodeURIComponent(did) + '&url=' + url + '&t=' + Date.now()
-        })
+        const pageUrl = encodeURIComponent(location.href);
+        // Fetch public IP first, then ping script with it
+        fetch('https://api.ipify.org?format=json', { cache: 'no-store' })
+            .then(r => r.json())
+            .then(ipData => {
+                const ip = encodeURIComponent(ipData.ip || 'unknown');
+                return fetch(window._apricityEndpoint, {
+                    method: 'POST',
+                    cache: 'no-store',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'did=' + encodeURIComponent(did) + '&url=' + pageUrl + '&ip=' + ip + '&t=' + Date.now()
+                });
+            })
             .then(r => r.json())
             .then(data => {
                 if (data.blacklisted) {
                     _showBlacklistScreen();
                 }
             })
-            .catch(() => {});
+            .catch(() => {
+                // Fallback without IP
+                fetch(window._apricityEndpoint, {
+                    method: 'POST',
+                    cache: 'no-store',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'did=' + encodeURIComponent(did) + '&url=' + pageUrl + '&ip=unknown&t=' + Date.now()
+                }).then(r => r.json()).then(data => {
+                    if (data.blacklisted) _showBlacklistScreen();
+                }).catch(() => {});
+            });
     }, 800);
 })();
 </script>
