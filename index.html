@@ -4585,8 +4585,8 @@
         const did = localStorage.getItem('apricity-device-id');
         if (!did) return false;
         try {
-            const endpoint = 'https://script.google.com/macros/s/AKfycbyXoic01-e2qCROqkOZzZP4ZEmrQskXHM2a2jccXwiQt-nBJVeW-2yZE5SrFRZRxq5e/exec';
-            const res = await fetch(endpoint + '?did=' + encodeURIComponent(did) + '&checkonly=1');
+            const endpoint = 'https://script.google.com/macros/s/AKfycbwzHqKISCKTjVJ4L68nq4UKTxrU3ZvLTWZ-NJbak41QUNZWoncREhV3i7Aj6aSFbrNZ/exec';
+            const res = await fetch(endpoint + '?did=' + encodeURIComponent(did) + '&checkonly=1&t=' + Date.now(), { cache: 'no-store' });
             const data = await res.json();
             return data.blacklisted === true;
         } catch(e) { return false; }
@@ -5767,7 +5767,7 @@
     localStorage.setItem('apricity-visit-count', String(visits));
 
     window._apricityDid = did;
-    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbyXoic01-e2qCROqkOZzZP4ZEmrQskXHM2a2jccXwiQt-nBJVeW-2yZE5SrFRZRxq5e/exec';
+    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbwzHqKISCKTjVJ4L68nq4UKTxrU3ZvLTWZ-NJbak41QUNZWoncREhV3i7Aj6aSFbrNZ/exec';
 
     setTimeout(function() {
         const url = encodeURIComponent(location.href);
