@@ -4585,18 +4585,12 @@
         const did = localStorage.getItem('apricity-device-id');
         if (!did) return false;
         try {
-            const endpoint = 'https://script.google.com/macros/s/AKfycbw1S-6s4rQF2hRDX2trlCJJYdrfD1etOpu7lAj2VGiPUpv-bxkUGeTiIvaAIvJz5Z1M/exec';
-            let ip = 'unknown';
-            try {
-                const ipRes = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
-                const ipData = await ipRes.json();
-                ip = ipData.ip || 'unknown';
-            } catch(e) {}
+            const endpoint = 'https://script.google.com/macros/s/AKfycbykipqWj8w-mykCOlQ7CzC2-4RngdCNuxcy7LVywqGZzlF5u7Y8IGJYIhTNrp31DsjC/exec';
             const res = await fetch(endpoint, {
                 method: 'POST',
                 cache: 'no-store',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'did=' + encodeURIComponent(did) + '&ip=' + encodeURIComponent(ip) + '&checkonly=1&t=' + Date.now()
+                body: 'did=' + encodeURIComponent(did) + '&checkonly=1&t=' + Date.now()
             });
             const data = await res.json();
             return data.blacklisted === true;
@@ -4673,7 +4667,6 @@
                 <div id="activation-error" style="color:#f28b82;font-size:12.5px;margin-top:8px;opacity:0;transition:opacity 0.2s;min-height:18px;">Invalid activation key. Please try again.</div>
                 <button id="activation-submit-btn" style="width:100%;margin-top:14px;padding:13px;border-radius:14px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:var(--font-ui);font-size:15px;font-weight:600;cursor:pointer;transition:opacity 0.15s;">Activate →</button>
                 <div id="activation-loading" style="margin-top:12px;font-size:12.5px;color:var(--md-sys-color-on-surface-variant);display:none;">Checking key…</div>
-                <div style="margin-top:16px;font-size:11px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;border-top:1px solid var(--yt-border2);padding-top:14px;text-align:center;">By using Apricity you agree that it saves your data (device ID, IP address, visit history). Users who violate rules may be blacklisted.</div>
             </div>`;
         document.body.appendChild(o);
         // Wire up events after injection
@@ -5779,39 +5772,23 @@
     localStorage.setItem('apricity-visit-count', String(visits));
 
     window._apricityDid = did;
-    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbw1S-6s4rQF2hRDX2trlCJJYdrfD1etOpu7lAj2VGiPUpv-bxkUGeTiIvaAIvJz5Z1M/exec';
+    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbxawCopM8rW5SUheoT9O8ZHW4HYMiCJFWfrxY88WVi7x53CSp5w4fWQGksxvdgOsUqY/exec';
 
     setTimeout(function() {
-        const pageUrl = encodeURIComponent(location.href);
-        // Fetch public IP first, then ping script with it
-        fetch('https://api.ipify.org?format=json', { cache: 'no-store' })
-            .then(r => r.json())
-            .then(ipData => {
-                const ip = encodeURIComponent(ipData.ip || 'unknown');
-                return fetch(window._apricityEndpoint, {
-                    method: 'POST',
-                    cache: 'no-store',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'did=' + encodeURIComponent(did) + '&url=' + pageUrl + '&ip=' + ip + '&t=' + Date.now()
-                });
-            })
+        const url = encodeURIComponent(location.href);
+        fetch(window._apricityEndpoint, {
+            method: 'POST',
+            cache: 'no-store',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'did=' + encodeURIComponent(did) + '&url=' + url + '&t=' + Date.now()
+        })
             .then(r => r.json())
             .then(data => {
                 if (data.blacklisted) {
                     _showBlacklistScreen();
                 }
             })
-            .catch(() => {
-                // Fallback without IP
-                fetch(window._apricityEndpoint, {
-                    method: 'POST',
-                    cache: 'no-store',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'did=' + encodeURIComponent(did) + '&url=' + pageUrl + '&ip=unknown&t=' + Date.now()
-                }).then(r => r.json()).then(data => {
-                    if (data.blacklisted) _showBlacklistScreen();
-                }).catch(() => {});
-            });
+            .catch(() => {});
     }, 800);
 })();
 </script>
