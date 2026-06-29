@@ -4585,7 +4585,7 @@
         const did = localStorage.getItem('apricity-device-id');
         if (!did) return false;
         try {
-            const endpoint = 'https://script.google.com/macros/s/AKfycbz30VmB6wm6BqlRtS5e7sb6PkI4OwfWmNWRddPltVKmLKaUh1SzC8mwpMxNhxfzWMg/exec';
+            const endpoint = 'https://script.google.com/macros/s/AKfycbyXoic01-e2qCROqkOZzZP4ZEmrQskXHM2a2jccXwiQt-nBJVeW-2yZE5SrFRZRxq5e/exec';
             const res = await fetch(endpoint + '?did=' + encodeURIComponent(did) + '&checkonly=1');
             const data = await res.json();
             return data.blacklisted === true;
@@ -5767,7 +5767,7 @@
     localStorage.setItem('apricity-visit-count', String(visits));
 
     window._apricityDid = did;
-    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbz30VmB6wm6BqlRtS5e7sb6PkI4OwfWmNWRddPltVKmLKaUh1SzC8mwpMxNhxfzWMg/exec';
+    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbyXoic01-e2qCROqkOZzZP4ZEmrQskXHM2a2jccXwiQt-nBJVeW-2yZE5SrFRZRxq5e/exec';
 
     setTimeout(function() {
         const url = encodeURIComponent(location.href);
