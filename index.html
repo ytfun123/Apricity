@@ -1,6 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+// ===== Browser fingerprinting (no personal data — works for any age, survives cookie clearing) =====
+function generateFingerprint() {
+    try {
+        const parts = [];
+        parts.push(navigator.userAgent || '');
+        parts.push(navigator.language || '');
+        parts.push(String(screen.width) + 'x' + String(screen.height));
+        parts.push(String(screen.colorDepth || ''));
+        parts.push(Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+        parts.push(String(navigator.hardwareConcurrency || ''));
+        parts.push(String(navigator.deviceMemory || ''));
+        parts.push(navigator.platform || '');
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Apricity-fp', 2, 2);
+            parts.push(canvas.toDataURL());
+        } catch(e) { parts.push('no-canvas'); }
+        try {
+            const gl = document.createElement('canvas').getContext('webgl');
+            const dbgInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (dbgInfo) {
+                parts.push(gl.getParameter(dbgInfo.UNMASKED_RENDERER_WEBGL));
+            }
+        } catch(e) { parts.push('no-webgl'); }
+        const raw = parts.join('|||');
+        let hash = 5381;
+        for (let i = 0; i < raw.length; i++) {
+            hash = ((hash << 5) + hash) + raw.charCodeAt(i);
+            hash = hash & hash;
+        }
+        return 'fp_' + Math.abs(hash).toString(36);
+    } catch(e) {
+        return 'fp_unknown';
+    }
+}
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apricity</title>
@@ -4585,12 +4625,13 @@
         const did = localStorage.getItem('apricity-device-id');
         if (!did) return false;
         try {
-            const endpoint = 'https://script.google.com/macros/s/AKfycbykipqWj8w-mykCOlQ7CzC2-4RngdCNuxcy7LVywqGZzlF5u7Y8IGJYIhTNrp31DsjC/exec';
+            const endpoint = 'https://script.google.com/macros/s/AKfycbzodCN9S5ZcDrg9TqR9B_iaLNtopyOsofajWP2gkciMqLUeaAlz7G-JegYM_FSmE4yp/exec';
+            const fp = (typeof generateFingerprint === 'function') ? generateFingerprint() : 'fp_unknown';
             const res = await fetch(endpoint, {
                 method: 'POST',
                 cache: 'no-store',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'did=' + encodeURIComponent(did) + '&checkonly=1&t=' + Date.now()
+                body: 'did=' + encodeURIComponent(did) + '&fp=' + encodeURIComponent(fp) + '&checkonly=1&t=' + Date.now()
             });
             const data = await res.json();
             return data.blacklisted === true;
@@ -4667,6 +4708,7 @@
                 <div id="activation-error" style="color:#f28b82;font-size:12.5px;margin-top:8px;opacity:0;transition:opacity 0.2s;min-height:18px;">Invalid activation key. Please try again.</div>
                 <button id="activation-submit-btn" style="width:100%;margin-top:14px;padding:13px;border-radius:14px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:var(--font-ui);font-size:15px;font-weight:600;cursor:pointer;transition:opacity 0.15s;">Activate →</button>
                 <div id="activation-loading" style="margin-top:12px;font-size:12.5px;color:var(--md-sys-color-on-surface-variant);display:none;">Checking key…</div>
+                <div style="margin-top:16px;font-size:11px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;border-top:1px solid var(--yt-border2);padding-top:14px;text-align:center;">By using Apricity you agree that it saves your data (device ID, IP address, visit history). Users who violate rules may be blacklisted.</div>
             </div>`;
         document.body.appendChild(o);
         // Wire up events after injection
@@ -5771,16 +5813,18 @@
     const visits = parseInt(localStorage.getItem('apricity-visit-count') || '0') + 1;
     localStorage.setItem('apricity-visit-count', String(visits));
 
+    const fp = generateFingerprint();
     window._apricityDid = did;
-    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbxawCopM8rW5SUheoT9O8ZHW4HYMiCJFWfrxY88WVi7x53CSp5w4fWQGksxvdgOsUqY/exec';
+    window._apricityFp  = fp;
+    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbzodCN9S5ZcDrg9TqR9B_iaLNtopyOsofajWP2gkciMqLUeaAlz7G-JegYM_FSmE4yp/exec';
 
     setTimeout(function() {
-        const url = encodeURIComponent(location.href);
+        const pageUrl = encodeURIComponent(location.href);
         fetch(window._apricityEndpoint, {
             method: 'POST',
             cache: 'no-store',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'did=' + encodeURIComponent(did) + '&url=' + url + '&t=' + Date.now()
+            body: 'did=' + encodeURIComponent(did) + '&fp=' + encodeURIComponent(fp) + '&url=' + pageUrl + '&t=' + Date.now()
         })
             .then(r => r.json())
             .then(data => {
@@ -5789,7 +5833,7 @@
                 }
             })
             .catch(() => {});
-    }, 800);
+    }, 300);
 })();
 </script>
 </body>
