@@ -4509,9 +4509,8 @@ function generateFingerprint() {
     //   activation=true   → gate is active for everyone
     //   activation=false  → gate is disabled for everyone (overrides user setting)
     //
-    // activation.txt (root of repo) — one line: the Google Sheets CSV URL
-
-    let _validKeys = [];
+    // Key validation + per-device usage tracking lives in the Apps Script
+    // backend (window._apricityEndpoint) against a "Keys" sheet — see Code.gs.
 
     async function fetchSettings() {
         // Returns { activationEnabled: bool } from settings.txt
@@ -4527,31 +4526,29 @@ function generateFingerprint() {
         return { activationEnabled: true }; // default on
     }
 
-    async function fetchSheetUrl() {
-        // Returns the Google Sheets CSV URL from activation.txt
+    async function validateActivationKey(key) {
+        // Asks the Apps Script backend whether `key` is valid for this device,
+        // and (if it's a new device for that key) records the redemption.
+        // Returns { valid, reason, message? } — see Code.gs for the reason codes:
+        //   reason: 'redeemed'            -> new device, counted against Max Uses
+        //   reason: 'already_activated'   -> this device already used this key
+        //   reason: 'not_found'           -> key doesn't exist
+        //   reason: 'expired'             -> key hit its device limit
+        //   reason: 'unreachable'         -> network/server issue
+        const did = window._apricityDid || localStorage.getItem('apricity-device-id') || '';
+        const fp = window._apricityFp || (typeof generateFingerprint === 'function' ? generateFingerprint() : '');
         try {
-            const res = await fetch('activation.txt?t=' + Date.now(), { cache: 'no-store' });
+            const res = await fetch(window._apricityEndpoint, {
+                method: 'POST',
+                cache: 'no-store',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'key=' + encodeURIComponent(key) + '&did=' + encodeURIComponent(did) + '&fp=' + encodeURIComponent(fp) + '&t=' + Date.now()
+            });
             if (!res.ok) throw new Error('HTTP ' + res.status);
-            return (await res.text()).trim();
+            return await res.json();
         } catch (e) {
-            console.warn('Activation: could not read activation.txt —', e.message);
-            return null;
-        }
-    }
-
-    async function fetchActivationKeys() {
-        const sheetUrl = await fetchSheetUrl();
-        if (!sheetUrl) { _validKeys = []; return; }
-        try {
-            const res = await fetch(sheetUrl + '&t=' + Date.now(), { cache: 'no-store' });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const text = await res.text();
-            _validKeys = text.split('\n')
-                .map(row => row.split(',')[0].trim().replace(/^"|"$/g, ''))
-                .filter(k => k.length > 0);
-        } catch (e) {
-            console.warn('Activation: could not fetch keys —', e.message);
-            _validKeys = [];
+            console.warn('Activation: could not reach key server —', e.message);
+            return { valid: false, reason: 'unreachable' };
         }
     }
 
@@ -4593,18 +4590,12 @@ function generateFingerprint() {
         error.style.opacity = '0';
         input.disabled = true;
 
-        await fetchActivationKeys();
+        const result = await validateActivationKey(key);
 
         loading.style.display = 'none';
         input.disabled = false;
 
-        if (_validKeys.length === 0) {
-            error.textContent = 'Could not reach activation server. Check your connection.';
-            error.style.opacity = '1';
-            return;
-        }
-
-        if (_validKeys.includes(key)) {
+        if (result.valid) {
             localStorage.setItem('apricity-activation-key', key);
             const overlay = document.getElementById('activation-overlay');
             overlay.style.transition = 'opacity 0.4s';
@@ -4614,10 +4605,17 @@ function generateFingerprint() {
                 setTimeout(showTipPopup, 600);
             }
         } else {
-            error.textContent = 'Invalid activation key. Please try again.';
+            const messages = {
+                not_found: 'Invalid activation key. Please try again.',
+                expired: 'This activation key has reached its device limit.',
+                unreachable: 'Could not reach activation server. Check your connection.'
+            };
+            error.textContent = result.message || messages[result.reason] || 'Invalid activation key. Please try again.';
             error.style.opacity = '1';
-            input.value = '';
-            input.focus();
+            if (result.reason !== 'unreachable') {
+                input.value = '';
+                input.focus();
+            }
         }
     }
 
@@ -4677,8 +4675,10 @@ function generateFingerprint() {
         if (activationSkipEnabled()) {
             const storedKey = localStorage.getItem('apricity-activation-key');
             if (storedKey) {
-                await fetchActivationKeys();
-                if (_validKeys.length > 0 && !_validKeys.includes(storedKey)) {
+                const result = await validateActivationKey(storedKey);
+                // Only kick the user back to the gate on a definitive rejection
+                // (not on a network hiccup, which returns 'unreachable').
+                if (!result.valid && result.reason !== 'unreachable') {
                     localStorage.removeItem('apricity-activation-key');
                     _showActivationOverlay();
                     return;
@@ -5816,7 +5816,7 @@ function generateFingerprint() {
     const fp = generateFingerprint();
     window._apricityDid = did;
     window._apricityFp  = fp;
-    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbzodCN9S5ZcDrg9TqR9B_iaLNtopyOsofajWP2gkciMqLUeaAlz7G-JegYM_FSmE4yp/exec';
+    window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycby_JBmebA9pVft4iAqGtL3dt9eaAwr1kKGbVRnPqnKeyAwZ_IGpjVy0-NI9GdqaB5kC/exec';
 
     setTimeout(function() {
         const pageUrl = encodeURIComponent(location.href);
