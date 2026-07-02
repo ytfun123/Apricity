@@ -2260,7 +2260,7 @@ function generateFingerprint() {
                         <div class="setting-name">Panic URL</div>
                         <div class="setting-desc">The site that loads when the panic button is pressed.</div>
                         <div style="display:flex;gap:8px;margin-top:8px;">
-                            <input type="text" class="bg-custom-input" id="panicUrlInput" placeholder="https://goformative.com/?show-formatives=to-do" style="flex:1;margin-top:0;" />
+                            <input type="text" class="bg-custom-input" id="panicUrlInput" placeholder="https://www.wikipedia.org/" style="flex:1;margin-top:0;" />
                             <button class="yt-btn yt-btn-sm" onclick="savePanicUrl()">Save</button>
                         </div>
                     </div>
@@ -4402,7 +4402,7 @@ function generateFingerprint() {
     let panicActive = false;
     let panicCorner = 'br';
 
-    const DEFAULT_PANIC_URL = 'https://goformative.com/?show-formatives=to-do';
+    const DEFAULT_PANIC_URL = 'https://www.wikipedia.org/';
     let PANIC_URL = DEFAULT_PANIC_URL;
 
     function savePanicUrl() {
