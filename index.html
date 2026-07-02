@@ -1134,15 +1134,16 @@ function generateFingerprint() {
         #movies-page.active { display: flex; }
         .mv-topbar {
             display: flex; align-items: center; gap: 14px;
-            padding: 16px 24px 12px;
-            background: var(--md-sys-color-surface-container-low);
-            border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent 80%);
-            flex-shrink: 0;
+            padding: 13px 28px;
+            background: color-mix(in srgb, var(--md-sys-color-surface-container-low) 92%, transparent);
+            border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 14%, transparent 86%);
+            flex-shrink: 0; position: sticky; top: 0; z-index: 10;
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
         }
         .mv-back-btn {
             display: flex; align-items: center; gap: 6px;
             background: var(--md-sys-color-surface-container);
-            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 25%, transparent 75%);
+            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 22%, transparent 78%);
             color: var(--md-sys-color-on-surface);
             border-radius: 100px; padding: 8px 18px 8px 12px;
             font-family: var(--font-ui); font-size: 14px; font-weight: 500;
@@ -1150,82 +1151,91 @@ function generateFingerprint() {
         }
         .mv-back-btn:hover { background: var(--md-sys-color-surface-container-high); }
         .mv-back-btn:active { transform: scale(0.96); }
-        .mv-title { font-size: 1.25rem; font-weight: 700; color: var(--md-sys-color-on-surface); flex: 1; }
-        .mv-type-tabs { display: flex; gap: 8px; }
+        .mv-title { font-size: 1.05rem; font-weight: 700; color: var(--md-sys-color-on-surface); }
+        .mv-type-tabs { display: flex; gap: 4px; margin-left: auto; }
         .mv-type-tab {
-            padding: 7px 18px; border-radius: 100px; border: none;
-            font-family: var(--font-ui); font-size: 0.8rem; font-weight: 500;
+            padding: 7px 22px; border-radius: 100px; border: none;
+            font-family: var(--font-ui); font-size: 0.82rem; font-weight: 600;
             cursor: pointer; transition: all 0.18s;
-            background: var(--md-sys-color-surface-container);
-            color: var(--md-sys-color-on-surface-variant);
+            background: transparent; color: var(--md-sys-color-on-surface-variant);
         }
+        .mv-type-tab:hover { background: var(--md-sys-color-surface-container); }
         .mv-type-tab.active {
             background: var(--md-sys-color-primary);
             color: var(--md-sys-color-on-primary);
         }
-        .mv-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
-        .mv-search-wrap { position: relative; margin-bottom: 18px; }
+        .mv-body { flex: 1; overflow-y: auto; padding: 24px 28px 52px; }
+        .mv-search-wrap { position: relative; margin-bottom: 20px; }
         .mv-search-icon {
-            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
             color: var(--md-sys-color-on-surface-variant); pointer-events: none;
         }
         .mv-search {
-            width: 100%; padding: 12px 16px 12px 44px;
-            font-family: var(--font-ui); font-size: 0.9rem;
+            width: 100%; padding: 13px 18px 13px 48px;
+            font-family: var(--font-ui); font-size: 0.92rem;
             background: var(--md-sys-color-surface-container);
-            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 30%, transparent 70%);
-            border-radius: 100px; color: var(--md-sys-color-on-surface);
+            border: 1.5px solid color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent 80%);
+            border-radius: 14px; color: var(--md-sys-color-on-surface);
             outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
         }
         .mv-search:focus {
             border-color: var(--md-sys-color-primary);
-            box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent 85%);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent 88%);
         }
-        .mv-search::placeholder { color: var(--md-sys-color-on-surface-variant); opacity: 0.6; }
-        .mv-status { font-size: 0.75rem; color: var(--md-sys-color-on-surface-variant); min-height: 20px; margin-bottom: 12px; }
+        .mv-search::placeholder { color: var(--md-sys-color-on-surface-variant); opacity: 0.55; }
+        .mv-status { font-size: 0.74rem; color: var(--md-sys-color-on-surface-variant); min-height: 20px; margin-bottom: 16px; opacity: 0.7; letter-spacing: 0.01em; }
         .mv-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+            gap: 24px 16px;
         }
         .mv-card {
-            border-radius: 14px; overflow: hidden; cursor: pointer;
-            background: var(--md-sys-color-surface-container);
-            border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 15%, transparent 85%);
-            transition: transform 0.18s, box-shadow 0.18s;
+            cursor: pointer; background: transparent; position: relative;
+            transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
         }
-        .mv-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
-        .mv-card:active { transform: scale(0.97); }
+        .mv-card:hover { transform: scale(1.04); }
+        .mv-card:active { transform: scale(0.97); transition-duration: 0.08s; }
         .mv-thumb {
             width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block;
+            border-radius: 10px;
             background: var(--md-sys-color-surface-container-high);
+            transition: box-shadow 0.2s;
         }
+        .mv-card:hover .mv-thumb { box-shadow: 0 14px 40px rgba(0,0,0,0.25); }
         .mv-thumb-placeholder {
             width: 100%; aspect-ratio: 2/3; display: flex; align-items: center;
-            justify-content: center; font-size: 2rem;
+            justify-content: center; font-size: 2.5rem;
             background: var(--md-sys-color-surface-container-high);
+            border-radius: 10px;
         }
-        .mv-info { padding: 9px 10px 10px; }
+        .mv-rating-badge { display: none; }
+        .mv-info { padding: 9px 2px 0; background: transparent; }
+        .mv-card-meta {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.71rem; color: var(--md-sys-color-on-surface-variant);
+            margin-bottom: 4px;
+        }
         .mv-card-title {
-            font-size: 0.78rem; font-weight: 600; line-height: 1.3;
+            font-size: 0.86rem; font-weight: 700; line-height: 1.3;
             color: var(--md-sys-color-on-surface);
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+            display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
         }
-        .mv-card-meta { font-size: 0.68rem; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; }
+        .mv-card-sub { font-size: 0.71rem; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; }
         .mv-rating {
-            display: inline-flex; align-items: center; gap: 3px;
-            font-size: 0.68rem; color: var(--md-sys-color-primary);
-            font-weight: 600; margin-top: 4px;
+            display: inline-flex; align-items: center; gap: 2px;
+            font-size: 0.71rem; color: #c8a84b; font-weight: 700;
         }
-        .mv-pagination { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+        .mv-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 40px; padding-bottom: 8px; }
         .mv-page-btn {
-            padding: 8px 20px; border-radius: 100px; border: none;
-            font-family: var(--font-ui); font-size: 0.8rem; font-weight: 500;
-            cursor: pointer; background: var(--md-sys-color-surface-container-high);
-            color: var(--md-sys-color-on-surface); transition: background 0.15s;
+            padding: 10px 28px; border-radius: 100px;
+            border: 1.5px solid color-mix(in srgb, var(--md-sys-color-outline) 28%, transparent 72%);
+            font-family: var(--font-ui); font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; background: var(--md-sys-color-surface-container);
+            color: var(--md-sys-color-on-surface); transition: all 0.18s;
         }
-        .mv-page-btn:hover { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
-        .mv-page-lbl { font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); }
+        .mv-page-btn:hover { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border-color: var(--md-sys-color-primary); }
+        .mv-page-lbl { font-size: 0.85rem; color: var(--md-sys-color-on-surface-variant); font-weight: 500; min-width: 64px; text-align: center; }
         /* Movie player overlay */
         #mv-player-overlay {
             position: fixed; inset: 0; z-index: 9500;
@@ -1263,6 +1273,95 @@ function generateFingerprint() {
         /* Home button style for Movies */
         .home-btn-movies { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
         .home-btn-movies:hover { opacity: 0.88; }
+
+        /* Movie detail overlay */
+        #mv-detail-overlay {
+            position: fixed; inset: 0; z-index: 9400;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        #mv-detail-overlay.active { display: flex; }
+        .mv-detail-modal {
+            background: var(--md-sys-color-surface);
+            border-radius: 18px; max-width: 660px; width: 100%;
+            max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.45);
+            position: relative;
+        }
+        .mv-detail-backdrop-wrap { position: relative; border-radius: 18px 18px 0 0; overflow: hidden; }
+        .mv-detail-backdrop {
+            width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;
+            background: var(--md-sys-color-surface-container-high);
+        }
+        .mv-detail-backdrop-grad {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 55%;
+            background: linear-gradient(to top, var(--md-sys-color-surface), transparent);
+            pointer-events: none;
+        }
+        .mv-detail-x {
+            position: absolute; top: 11px; right: 11px; z-index: 2;
+            background: rgba(0,0,0,0.48); backdrop-filter: blur(4px);
+            color: #fff; border: none; border-radius: 50%;
+            width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+            font-size: 15px; cursor: pointer; transition: background 0.15s; flex-shrink: 0;
+        }
+        .mv-detail-x:hover { background: rgba(0,0,0,0.82); }
+        .mv-detail-body { display: flex; gap: 20px; padding: 0 24px 28px; }
+        .mv-detail-poster {
+            width: 100px; flex-shrink: 0; border-radius: 10px; overflow: hidden;
+            margin-top: -36px; position: relative; z-index: 1;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.32);
+            background: var(--md-sys-color-surface-container-high);
+            align-self: flex-start;
+        }
+        .mv-detail-poster img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; }
+        .mv-detail-info { flex: 1; padding-top: 14px; min-width: 0; }
+        .mv-detail-title {
+            font-size: 1.25rem; font-weight: 800; color: var(--md-sys-color-on-surface);
+            line-height: 1.2; margin-bottom: 6px;
+        }
+        .mv-detail-meta {
+            font-size: 0.77rem; color: var(--md-sys-color-on-surface-variant);
+            margin-bottom: 12px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+        }
+        .mv-detail-meta-dot { opacity: 0.35; }
+        .mv-detail-genres { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .mv-detail-genre-tag {
+            font-size: 0.72rem; font-weight: 600;
+            padding: 3px 10px; border-radius: 100px;
+            background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+            color: var(--md-sys-color-primary);
+        }
+        .mv-detail-rating {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 0.85rem; font-weight: 700; color: #c8a84b;
+            margin-bottom: 12px;
+        }
+        .mv-detail-rating-count { font-size: 0.72rem; font-weight: 400; opacity: 0.55; margin-left: 2px; }
+        .mv-detail-overview {
+            font-size: 0.83rem; line-height: 1.65;
+            color: var(--md-sys-color-on-surface-variant);
+            margin-bottom: 20px;
+            display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .mv-detail-btns { display: flex; gap: 10px; align-items: center; }
+        .mv-detail-watch {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+            border: none; border-radius: 100px; padding: 11px 26px;
+            font-family: var(--font-ui); font-size: 0.88rem; font-weight: 700;
+            cursor: pointer; transition: opacity 0.16s, transform 0.1s;
+        }
+        .mv-detail-watch:hover { opacity: 0.88; }
+        .mv-detail-watch:active { transform: scale(0.97); }
+        .mv-detail-dismiss {
+            background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface);
+            border: none; border-radius: 100px; padding: 11px 22px;
+            font-family: var(--font-ui); font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .mv-detail-dismiss:hover { background: var(--md-sys-color-surface-container-highest); }
 
         #sunlit-page { width: 100%; height: 100vh; }
         #sunlit-page iframe { width: 100%; height: 100%; border: none; display: block; }
@@ -2706,6 +2805,36 @@ function generateFingerprint() {
             <button class="mv-page-btn" onclick="mvPage(-1)">&#8592; Prev</button>
             <span class="mv-page-lbl" id="mvPageLbl">Page 1</span>
             <button class="mv-page-btn" onclick="mvPage(1)">Next &#8594;</button>
+        </div>
+    </div>
+</div>
+
+<!-- MOVIE DETAIL OVERLAY -->
+<div id="mv-detail-overlay" onclick="if(event.target===this)closeMvDetail()">
+    <div class="mv-detail-modal">
+        <button class="mv-detail-x" onclick="closeMvDetail()">✕</button>
+        <div class="mv-detail-backdrop-wrap">
+            <img class="mv-detail-backdrop" id="mvDetailBackdrop" src="" alt="">
+            <div class="mv-detail-backdrop-grad"></div>
+        </div>
+        <div class="mv-detail-body">
+            <div class="mv-detail-poster">
+                <img id="mvDetailPoster" src="" alt="">
+            </div>
+            <div class="mv-detail-info">
+                <div class="mv-detail-title" id="mvDetailTitle"></div>
+                <div class="mv-detail-meta" id="mvDetailMeta"></div>
+                <div class="mv-detail-genres" id="mvDetailGenres"></div>
+                <div class="mv-detail-rating" id="mvDetailRating"></div>
+                <div class="mv-detail-overview" id="mvDetailOverview"></div>
+                <div class="mv-detail-btns">
+                    <button class="mv-detail-watch" id="mvDetailWatchBtn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Watch Now
+                    </button>
+                    <button class="mv-detail-dismiss" onclick="closeMvDetail()">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -5623,7 +5752,15 @@ function generateFingerprint() {
 (function(){
     var API_KEY = 'TMDB_API_KEY_REMOVED';
     var BASE = 'https://api.themoviedb.org/3';
-    var IMG = 'https://image.tmdb.org/t/p/w185';
+    var IMG = 'https://image.tmdb.org/t/p/w300';
+    var BACKDROP = 'https://image.tmdb.org/t/p/w780';
+    var GENRES = {
+        28:'Action',12:'Adventure',16:'Animation',35:'Comedy',80:'Crime',
+        99:'Documentary',18:'Drama',10751:'Family',14:'Fantasy',36:'History',
+        27:'Horror',10402:'Music',9648:'Mystery',10749:'Romance',878:'Sci-Fi',
+        53:'Thriller',10752:'War',37:'Western',10759:'Action & Adventure',
+        10762:'Kids',10765:'Sci-Fi & Fantasy',10768:'War & Politics'
+    };
     var mvType = 'movie', mvCurPage = 1, mvQuery = '', mvDebounce = null;
     var mvLoaded = false, mvCache = {}, mvAbort = null;
     var elStatus, elGrid, elSearch;
@@ -5645,6 +5782,12 @@ function generateFingerprint() {
 
     function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+    window.mvImgErr = function(img) {
+        var ph = document.createElement('div');
+        ph.className = 'mv-thumb-placeholder';
+        img.parentNode.replaceChild(ph, img);
+    };
+
     function renderGrid(items) {
         elGrid.innerHTML = '';
         if (!items || !items.length) { setStatus('Nothing found.'); return; }
@@ -5656,26 +5799,79 @@ function generateFingerprint() {
             var poster = item.poster_path ? IMG + item.poster_path : '';
             var card = document.createElement('div');
             card.className = 'mv-card';
-            if (poster) {
-                card.innerHTML = '<img class="mv-thumb" src="' + esc(poster) + '" alt="' + esc(title) + '" loading="lazy" onerror="this.outerHTML=\'<div class=\\\"mv-thumb-placeholder\\\">🎬</div>\'">'
-                    + '<div class="mv-info"><div class="mv-card-title">' + esc(title) + '</div>'
-                    + '<div class="mv-card-meta">' + (year ? year + ' · ' : '') + (mvType === 'movie' ? 'Movie' : 'TV') + '</div>'
-                    + (rating ? '<div class="mv-rating">★ ' + rating + '</div>' : '')
-                    + '</div>';
-            } else {
-                card.innerHTML = '<div class="mv-thumb-placeholder">🎬</div>'
-                    + '<div class="mv-info"><div class="mv-card-title">' + esc(title) + '</div>'
-                    + '<div class="mv-card-meta">' + (year ? year + ' · ' : '') + (mvType === 'movie' ? 'Movie' : 'TV') + '</div>'
-                    + (rating ? '<div class="mv-rating">★ ' + rating + '</div>' : '')
-                    + '</div>';
-            }
-            card.addEventListener('click', (function(id, type) {
-                return function() { playMvMovie(id, type); };
-            })(item.id, mvType));
+            var thumb = poster
+                ? '<img class="mv-thumb" src="' + esc(poster) + '" alt="' + esc(title) + '" loading="lazy" onerror="mvImgErr(this)">'
+                : '<div class="mv-thumb-placeholder"></div>';
+            var metaLine = (year ? '<span>' + year + '</span>' : '')
+                + (rating ? '<span class="mv-rating">★ ' + rating + '</span>' : '');
+            card.innerHTML = thumb
+                + '<div class="mv-info">'
+                + (metaLine ? '<div class="mv-card-meta">' + metaLine + '</div>' : '')
+                + '<div class="mv-card-title">' + esc(title) + '</div>'
+                + '<div class="mv-card-sub">' + (mvType === 'movie' ? 'Movie' : 'TV Show') + '</div>'
+                + '</div>';
+            card.addEventListener('click', (function(item) {
+                return function() { showMvDetail(item); };
+            })(item));
             elGrid.appendChild(card);
         });
         setStatus(items.length + ' results · page ' + mvCurPage);
     }
+
+    window.showMvDetail = function(item) {
+        var title = item.title || item.name || 'Untitled';
+        var date = item.release_date || item.first_air_date || '';
+        var year = date ? new Date(date).getFullYear() : '';
+        var rating = item.vote_average ? item.vote_average.toFixed(1) : '';
+        var votes = item.vote_count ? item.vote_count.toLocaleString() : '';
+        var overview = item.overview || 'No description available.';
+        var poster = item.poster_path ? IMG + item.poster_path : '';
+        var backdrop = item.backdrop_path ? BACKDROP + item.backdrop_path : '';
+        var genres = (item.genre_ids || []).slice(0, 3).map(function(id) { return GENRES[id]; }).filter(Boolean);
+        var type = mvType === 'movie' ? 'Movie' : 'TV Show';
+
+        document.getElementById('mvDetailTitle').textContent = title;
+
+        var metaParts = [];
+        if (year) metaParts.push(year);
+        metaParts.push(type);
+        var metaEl = document.getElementById('mvDetailMeta');
+        metaEl.innerHTML = metaParts.map(function(p) { return esc(p); }).join('<span class="mv-detail-meta-dot"> • </span>');
+
+        var genresEl = document.getElementById('mvDetailGenres');
+        genresEl.innerHTML = genres.map(function(g) { return '<span class="mv-detail-genre-tag">' + esc(g) + '</span>'; }).join('');
+        genresEl.style.display = genres.length ? '' : 'none';
+
+        var ratingEl = document.getElementById('mvDetailRating');
+        if (rating) {
+            ratingEl.innerHTML = '★ ' + rating + (votes ? '<span class="mv-detail-rating-count">(' + votes + ' votes)</span>' : '');
+            ratingEl.style.display = '';
+        } else {
+            ratingEl.style.display = 'none';
+        }
+
+        document.getElementById('mvDetailOverview').textContent = overview;
+
+        var backdropEl = document.getElementById('mvDetailBackdrop');
+        backdropEl.src = backdrop || poster;
+        backdropEl.parentElement.style.display = (backdrop || poster) ? '' : 'none';
+
+        var posterEl = document.getElementById('mvDetailPoster');
+        posterEl.src = poster;
+        posterEl.alt = title;
+        document.querySelector('.mv-detail-poster').style.display = poster ? '' : 'none';
+
+        document.getElementById('mvDetailWatchBtn').onclick = function() {
+            closeMvDetail();
+            playMvMovie(item.id, mvType);
+        };
+
+        document.getElementById('mv-detail-overlay').classList.add('active');
+    };
+
+    window.closeMvDetail = function() {
+        document.getElementById('mv-detail-overlay').classList.remove('active');
+    };
 
     function doLoad() {
         setStatus('Loading…');
