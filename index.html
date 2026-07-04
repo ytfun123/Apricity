@@ -2993,7 +2993,7 @@ function generateFingerprint() {
     function loadUpdateLog() {
         const body = document.getElementById('updateLogBody');
         body.textContent = 'Loading…';
-        fetch('updatelog.txt', { cache: 'no-store' })
+        fetch('system/updatelog.txt', { cache: 'no-store' })
             .then(res => {
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 return res.text();
@@ -3240,7 +3240,7 @@ function generateFingerprint() {
             }
         } else if (tab.pageId === 'sunlit-page') {
             const frame = document.getElementById('sunlit-frame');
-            if (!frame.dataset.loaded) { frame.src = './sunlit_os.html'; frame.dataset.loaded = '1'; }
+            if (!frame.dataset.loaded) { frame.src = 'apps/sunlit_os.html'; frame.dataset.loaded = '1'; }
         } else if (tab.pageId === 'spotify-page') {
             wlBoot();
         } else if (tab.extra && tab.extra.gameSrc) {
@@ -3302,7 +3302,7 @@ function generateFingerprint() {
         const existing = tabs.find(t => t.pageId === 'sunlit-page');
         if (existing) { tabSwitch(existing.id); return; }
         const frame = document.getElementById('sunlit-frame');
-        if (!frame.dataset.loaded) { frame.src = './sunlit_os.html'; frame.dataset.loaded = '1'; }
+        if (!frame.dataset.loaded) { frame.src = 'apps/sunlit_os.html'; frame.dataset.loaded = '1'; }
         tabNew('sunlit-page', 'Sunlit OS', '☀️');
     }
 
@@ -4646,7 +4646,7 @@ function generateFingerprint() {
     async function fetchSettings() {
         // Returns { activationEnabled: bool } from settings.txt
         try {
-            const res = await fetch('settings.txt?t=' + Date.now(), { cache: 'no-store' });
+            const res = await fetch('system/settings.txt?t=' + Date.now(), { cache: 'no-store' });
             if (!res.ok) return { activationEnabled: true }; // default on if missing
             const text = await res.text();
             const match = text.match(/activation\s*=\s*(true|false)/i);
@@ -5705,7 +5705,7 @@ function generateFingerprint() {
         }
         if (cmd === '/jarvis-we-need-prouf') {
             consolePrint('🔍 Fetching prouf.txt…', 'info');
-            fetch('prouf.txt')
+            fetch('system/prouf.txt')
                 .then(r => {
                     if (!r.ok) throw new Error('File not found (HTTP ' + r.status + ')');
                     return r.text();
