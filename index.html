@@ -771,16 +771,16 @@ function generateFingerprint() {
         .bg-10 { background: linear-gradient(135deg, #11998e, #38ef7d); }
         .bg-11 { background: linear-gradient(160deg, #2c3e50, #fd746c); }
         .bg-12 { background: repeating-linear-gradient(45deg, #0a0a0a 0px, #0a0a0a 2px, #111 2px, #111 12px); }
-        .bg-13 { background: url('.bg/bg13.png') center/cover no-repeat; }
-        .bg-14 { background: url('.bg/bg14.png') center/cover no-repeat; }
-        .bg-15 { background: url('.bg/bg15.png') center/cover no-repeat; }
-        .bg-16 { background: url('.bg/bg16.png') center/cover no-repeat; }
-        .bg-17 { background: url('.bg/bg17.png') center/cover no-repeat; }
-        .bg-13-n { background: url('.bg/bg13_n.png') center/cover no-repeat; }
-        .bg-14-n { background: url('.bg/bg14_n.png') center/cover no-repeat; }
-        .bg-15-n { background: url('.bg/bg15_n.png') center/cover no-repeat; }
-        .bg-16-n { background: url('.bg/bg16_n.png') center/cover no-repeat; }
-        .bg-17-n { background: url('.bg/bg17_n.png') center/cover no-repeat; }
+        .bg-13 { background: url('bg/bg13.png') center/cover no-repeat; }
+        .bg-14 { background: url('bg/bg14.png') center/cover no-repeat; }
+        .bg-15 { background: url('bg/bg15.png') center/cover no-repeat; }
+        .bg-16 { background: url('bg/bg16.png') center/cover no-repeat; }
+        .bg-17 { background: url('bg/bg17.png') center/cover no-repeat; }
+        .bg-13-n { background: url('bg/bg13_n.png') center/cover no-repeat; }
+        .bg-14-n { background: url('bg/bg14_n.png') center/cover no-repeat; }
+        .bg-15-n { background: url('bg/bg15_n.png') center/cover no-repeat; }
+        .bg-16-n { background: url('bg/bg16_n.png') center/cover no-repeat; }
+        .bg-17-n { background: url('bg/bg17_n.png') center/cover no-repeat; }
 
         .bg-custom-row {
             margin-top: 12px;
@@ -3554,16 +3554,16 @@ function generateFingerprint() {
         'bg-10': 'linear-gradient(135deg, #11998e, #38ef7d)',
         'bg-11': 'linear-gradient(160deg, #2c3e50, #fd746c)',
         'bg-12': 'repeating-linear-gradient(45deg, #0a0a0a 0px, #0a0a0a 2px, #111 2px, #111 12px)',
-        'bg-13': "url('.bg/bg13.png') center/cover no-repeat",
-        'bg-14': "url('.bg/bg14.png') center/cover no-repeat",
-        'bg-15': "url('.bg/bg15.png') center/cover no-repeat",
-        'bg-16': "url('.bg/bg16.png') center/cover no-repeat",
-        'bg-17': "url('.bg/bg17.png') center/cover no-repeat",
-        'bg-13-n': "url('.bg/bg13_n.png') center/cover no-repeat",
-        'bg-14-n': "url('.bg/bg14_n.png') center/cover no-repeat",
-        'bg-15-n': "url('.bg/bg15_n.png') center/cover no-repeat",
-        'bg-16-n': "url('.bg/bg16_n.png') center/cover no-repeat",
-        'bg-17-n': "url('.bg/bg17_n.png') center/cover no-repeat",
+        'bg-13': "url('bg/bg13.png') center/cover no-repeat",
+        'bg-14': "url('bg/bg14.png') center/cover no-repeat",
+        'bg-15': "url('bg/bg15.png') center/cover no-repeat",
+        'bg-16': "url('bg/bg16.png') center/cover no-repeat",
+        'bg-17': "url('bg/bg17.png') center/cover no-repeat",
+        'bg-13-n': "url('bg/bg13_n.png') center/cover no-repeat",
+        'bg-14-n': "url('bg/bg14_n.png') center/cover no-repeat",
+        'bg-15-n': "url('bg/bg15_n.png') center/cover no-repeat",
+        'bg-16-n': "url('bg/bg16_n.png') center/cover no-repeat",
+        'bg-17-n': "url('bg/bg17_n.png') center/cover no-repeat",
     };
 
     function setBg(key) {
@@ -3753,7 +3753,7 @@ function generateFingerprint() {
         // Build the image URL: bg13.png → bg13_n.png
         const num = resolved.replace('bg-','').replace('-n','');
         const suffix = isNight ? '_n' : '';
-        layer.style.background = `url('./bg${num}${suffix}.png') center/cover no-repeat`;
+        layer.style.background = `url('bg/bg${num}${suffix}.png') center/cover no-repeat`;
         layer.className = 'bg-active';
         document.body.classList.add('has-bg');
 
@@ -3792,7 +3792,7 @@ function generateFingerprint() {
             if (NATURE_BGS.has(currentBg.replace('-n',''))) {
                 const num = currentBg.replace('bg-','').replace('-n','');
                 const layer = document.getElementById('bg-layer');
-                layer.style.background = `url('./bg${num}.png') center/cover no-repeat`;
+                layer.style.background = `url('bg/bg${num}.png') center/cover no-repeat`;
             }
             if (badge && text) {
                 badge.style.background = '';
