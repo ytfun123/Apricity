@@ -645,11 +645,42 @@
       { id: 'notepad', title: 'Notepad', icon: '📝', run: (txt, name, idx) => openNotepadApp(txt, name, idx) },
       { id: 'paint', title: 'Paint', icon: '🎨', run: () => openPaintApp() },
       { id: 'audacity', title: 'Audacity', icon: '🎧', run: () => openAudacityApp() },
-      { id: 'youtube', title: 'YouTube', icon: '📺', run: () => openIframeApp('YouTube', 'yt.html') },
-      { id: 'apricitygames', title: 'Apricity Games', icon: '🎮', run: () => openIframeApp('Apricity Games', 'g.html') },
-      { id: 'apricityapps', title: 'Apricity Apps', icon: '🚀', run: () => openIframeApp('Apricity Apps', 'apps.html') },
+      { id: 'youtube', title: 'YouTube', icon: '📺', run: () => openHostApp('youtube') },
+      { id: 'apricitygames', title: 'Apricity Games', icon: '🎮', run: () => openHostApp('games') },
+      { id: 'apricityapps', title: 'Apricity Apps', icon: '🚀', run: () => openHostApp('apps') },
       { id: 'settings', title: 'Settings', icon: '⚙️', run: () => openSettingsWindow() }
     ];
+
+    // This Desktop app runs inside an <iframe> hosted by Apricity's main
+    // index.html (apps/desktop.html). YouTube, the Games library, and the
+    // Apps panel already live as fully-working features in that parent
+    // document — there's no standalone yt.html/g.html/apps.html to embed.
+    // So instead of re-building them here, reach out to the parent window
+    // and trigger its existing, working implementations directly.
+    function openHostApp(which) {
+      const host = window.parent !== window ? window.parent : null;
+      try {
+        if (which === 'youtube' && host && typeof host.showYouTube === 'function') {
+          host.showYouTube();
+          return;
+        }
+        if (which === 'games' && host && typeof host.toggleGamesFullscreen === 'function') {
+          host.toggleGamesFullscreen();
+          return;
+        }
+        if (which === 'apps' && host && typeof host.toggleApps === 'function') {
+          host.toggleApps();
+          return;
+        }
+      } catch (e) {
+        // Cross-origin or otherwise blocked — fall through to the notice below.
+      }
+      const titles = { youtube: 'YouTube', games: 'Apricity Games', apps: 'Apricity Apps' };
+      const view = document.createElement('div');
+      view.style.cssText = 'height:100%;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;';
+      view.innerHTML = `<div>This app is only available when Desktop is opened inside Apricity.</div>`;
+      openWindow(titles[which] || 'App', view);
+    }
 
     window.onload = function() {
       if(!isSetupCompleted) {
