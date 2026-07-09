@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apricity Desktop</title>
+  <style>
+    /* CSS Variables for Core Themes */
+    :root {
+      --panel-bg: rgba(255, 255, 255, 0.4);
+      --panel-border: rgba(255, 255, 255, 0.4);
+      --panel-shadow: rgba(31, 38, 135, 0.15);
+      --text-color: #1a1a1a;
+      --window-bg: rgba(255, 255, 255, 0.94);
+      --title-bg: rgba(240, 240, 240, 0.95);
+      --title-border: rgba(0, 0, 0, 0.05);
+      --title-text-color: #1a1a1a;
+      --start-menu-bg: rgba(255, 255, 255, 0.85);
+      --icon-hover: rgba(255, 255, 255, 0.3);
+      --accent-color: #3584e4; 
+      --gnome-bg: #f6f5f4;
+      --gnome-sidebar: #e8e6e3;
+      --desktop-text-color: #ffffff; 
+      --browser-ui-bg: #f0f0f4;
+      --window-radius: 20px;
+      --control-radius: 12px;
+      --ctx-hover-bg: var(--accent-color);
+      --ctx-hover-text: #ffffff;
+    }
+
+    [data-theme-mode="dark"] {
+      --panel-bg: rgba(20, 20, 20, 0.5);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --panel-shadow: rgba(0, 0, 0, 0.4);
+      --text-color: #f5f5f5;
+      --window-bg: rgba(30, 30, 30, 0.94);
+      --title-bg: rgba(45, 45, 45, 0.95);
+      --title-border: rgba(255, 255, 255, 0.05);
+      --title-text-color: #f5f5f5;
+      --start-menu-bg: rgba(20, 20, 20, 0.9);
+      --icon-hover: rgba(255, 255, 255, 0.1);
+      --gnome-bg: #242424;
+      --gnome-sidebar: #303030;
+      --browser-ui-bg: #2b2a33;
+    }
+
+    /* Pastel Theme Override Definitions */
+    [data-system-style="pastel"] {
+      --panel-bg: rgba(255, 230, 235, 0.7);
+      --panel-border: rgba(255, 182, 193, 0.6);
+      --text-color: #6d4c53;
+      --window-bg: #fff0f3;
+      --title-bg: #ffccd5;
+      --title-border: rgba(255, 182, 193, 0.4);
+      --title-text-color: #6d4c53;
+      --start-menu-bg: #fff0f3;
+      --icon-hover: rgba(255, 182, 193, 0.4);
+      --accent-color: #ff85a2;
+      --gnome-bg: #fff5f6;
+      --gnome-sidebar: #ffe3e8;
+      --browser-ui-bg: #ffeef1;
+      --window-radius: 30px;
+      --control-radius: 20px;
+    }
+
+    /* Windows Classic Theme Override Definitions */
+    [data-system-style="classic"] {
+      --panel-bg: #d4d0c8;
+      --panel-border: #808080;
+      --text-color: #000000;
+      --window-bg: #d4d0c8;
+      --title-bg: #000080;
+      --title-border: #d4d0c8;
+      --title-text-color: #ffffff;
+      --start-menu-bg: #d4d0c8;
+      --icon-hover: rgba(0, 0, 128, 0.1);
+      --accent-color: #000080;
+      --gnome-bg: #d4d0c8;
+      --gnome-sidebar: #c0c0c0;
+      --browser-ui-bg: #ffffff;
+      --window-radius: 0px;
+      --control-radius: 0px;
+      --classic-border-light: #ffffff;
+      --classic-border-dark: #808080;
+      --ctx-hover-bg: #000080;
+      --ctx-hover-text: #ffffff;
+    }
+
+    /* Windows XP Luna Theme Override Definitions */
+    [data-system-style="luna"] {
+      --panel-bg: linear-gradient(to bottom, #245edb 0%, #397cee 100%);
+      --panel-border: #0046d5;
+      --text-color: #000000;
+      --window-bg: #f1efe7;
+      --title-bg: linear-gradient(to bottom, #0058e6 0%, #3a83fc 12%, #0053e1 30%, #0046d5 70%, #0058e6 100%);
+      --title-border: #002e9b;
+      --title-text-color: #ffffff;
+      --start-menu-bg: #d3e5fa;
+      --icon-hover: rgba(42, 119, 236, 0.2);
+      --accent-color: #245edb;
+      --gnome-bg: #f1efe7;
+      --gnome-sidebar: #d3e5fa;
+      --browser-ui-bg: #ffffff;
+      --window-radius: 8px;
+      --control-radius: 4px;
+      --ctx-hover-bg: #316ac5;
+      --ctx-hover-text: #ffffff;
+    }
+
+    select option {
+      background-color: #ffffff !important;
+      color: #1a1a1a !important;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      color: var(--text-color);
+      transition: background 0.3s ease;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    [data-system-style="classic"] body { font-family: 'Tahoma', 'MS Sans Serif', sans-serif; font-size: 12px; }
+    [data-system-style="luna"] body { font-family: 'Tahoma', sans-serif; }
+
+    #desktop {
+      flex-grow: 1;
+      position: relative;
+      padding: 25px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* Icon Hiding Utility Modifier */
+    #desktop.hide-icons .desktop-icon {
+      display: none !important;
+    }
+
+    .desktop-icon {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 95px;
+      height: 95px;
+      border-radius: var(--control-radius);
+      cursor: move;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 500;
+      user-select: none;
+      transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s ease;
+    }
+    .desktop-icon:hover {
+      background: var(--icon-hover);
+    }
+    .desktop-icon span {
+      margin-top: 8px;
+      color: var(--desktop-text-color);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 85px;
+      pointer-events: none;
+    }
+
+    /* Context Menu Styles */
+    .desktop-ctx-menu {
+      position: fixed;
+      display: none;
+      background: var(--window-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: calc(var(--control-radius) - 2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      z-index: 200000;
+      padding: 5px 0;
+      min-width: 180px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    [data-system-style="classic"] .desktop-ctx-menu {
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+      border-top: 2px solid var(--classic-border-light);
+      border-left: 2px solid var(--classic-border-light);
+      border-right: 2px solid var(--classic-border-dark);
+      border-bottom: 2px solid var(--classic-border-dark);
+      box-shadow: none;
+      background: #d4d0c8;
+    }
+    [data-system-style="luna"] .desktop-ctx-menu {
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+      border: 1px solid #7f9db9;
+      background: #ffffff;
+      box-shadow: 2px 2px 3px rgba(0,0,0,0.2);
+    }
+    .ctx-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-color);
+    }
+    [data-system-style="classic"] .ctx-item {
+      padding: 4px 20px;
+    }
+    .ctx-item:hover {
+      background: var(--ctx-hover-bg);
+      color: var(--ctx-hover-text);
+    }
+    .ctx-separator {
+      height: 1px;
+      background: var(--panel-border);
+      margin: 4px 0;
+    }
+    [data-system-style="classic"] .ctx-separator {
+      background: #808080;
+      border-bottom: 1px solid #fff;
+    }
+
+    #taskbar-container {
+      width: 100%;
+      display: none;
+      justify-content: center;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      z-index: 9999;
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+    
+    #taskbar {
+      pointer-events: auto;
+      height: 52px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(25px) saturate(160%);
+      -webkit-backdrop-filter: blur(25px) saturate(160%);
+      border: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 12px;
+      box-shadow: 0 8px 32px 0 var(--panel-shadow);
+    }
+
+    [data-system-style="classic"] #taskbar {
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+      border-top: 2px solid var(--classic-border-light);
+      border-left: 2px solid var(--classic-border-light);
+      border-right: 2px solid var(--classic-border-dark);
+      border-bottom: 2px solid var(--classic-border-dark);
+      box-shadow: none; height: 40px;
+    }
+    [data-system-style="luna"] #taskbar {
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+      border: none; border-top: 2px solid #4282f4; height: 40px; box-shadow: none;
+    }
+
+    .panel-dock { width: auto; min-width: 450px; max-width: 85%; border-radius: 24px; }
+    [data-system-style="classic"] .panel-dock, [data-system-style="luna"] .panel-dock { border-radius: 0px; }
+    .panel-full { width: 100% !important; max-width: 100% !important; border-radius: 0px !important; border: none; }
+
+    #start-btn, .panel-btn {
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-color);
+      padding: 8px 20px;
+      border-radius: var(--control-radius);
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #start-btn:hover { background: var(--accent-color); color: white; }
+
+    [data-system-style="classic"] #start-btn {
+      background: #d4d0c8; font-weight: bold; padding: 4px 12px;
+      border-top: 2px solid var(--classic-border-light); border-left: 2px solid var(--classic-border-light);
+      border-right: 2px solid var(--classic-border-dark); border-bottom: 2px solid var(--classic-border-dark);
+    }
+    [data-system-style="luna"] #start-btn {
+      background: linear-gradient(to bottom, #388e3c 0%, #4caf50 100%);
+      color: #ffffff; font-style: italic; font-weight: bold; font-size: 1.1rem;
+      border: none; border-top-right-radius: 10px; border-bottom-right-radius: 10px;
+      padding: 4px 18px; box-shadow: 2px 0px 5px rgba(0,0,0,0.3);
+    }
+
+    #taskbar-windows { display: flex; gap: 8px; flex-grow: 1; justify-content: center; overflow: hidden; }
+
+    .taskbar-item {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-color);
+      padding: 6px 16px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 0.85em;
+      font-weight: 500;
+      max-width: 130px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .taskbar-item.active { background: var(--window-bg); box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-weight: 600; }
+
+    [data-system-style="classic"] .taskbar-item {
+      border-top: 2px solid var(--classic-border-light); border-left: 2px solid var(--classic-border-light);
+      border-right: 2px solid var(--classic-border-dark); border-bottom: 2px solid var(--classic-border-dark);
+      border-radius: 0px; background: #d4d0c8;
+    }
+    [data-system-style="classic"] .taskbar-item.active {
+      border-top: 2px solid var(--classic-border-dark); border-left: 2px solid var(--classic-border-dark);
+      border-right: 2px solid var(--classic-border-light); border-bottom: 2px solid var(--classic-border-light);
+      background: #e6e6e6;
+    }
+    [data-system-style="luna"] .taskbar-item {
+      background: #3c81f3; color: #ffffff; border: 1px solid #2256c5; border-radius: 4px;
+    }
+    [data-system-style="luna"] .taskbar-item.active {
+      background: #1e52b7; font-weight: bold;
+    }
+
+    #system-tray { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; font-weight: 600; padding-right: 8px; white-space: nowrap; color: var(--title-text-color); }
+    [data-system-style="luna"] #system-tray { background: #0f96f8; padding: 0 10px; height: 100%; border-left: 1px solid #0046d5; }
+    .tray-icon-btn { background: none; border: none; padding: 6px; cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .tray-icon-btn svg { fill: var(--text-color); }
+    [data-system-style="luna"] .tray-icon-btn svg { fill: #ffffff; }
+
+    /* Start Menu */
+    #start-menu {
+      position: absolute;
+      background: var(--start-menu-bg);
+      backdrop-filter: blur(30px) saturate(150%);
+      -webkit-backdrop-filter: blur(30px) saturate(150%);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--window-radius);
+      padding: 0;
+      display: none;
+      flex-direction: column;
+      z-index: 10000;
+      box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.2);
+      width: 320px;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    #start-menu.visible { display: flex; }
+    
+    .start-menu-header {
+      background: var(--accent-color);
+      color: white;
+      padding: 14px 20px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    [data-system-style="luna"] .start-menu-header {
+      background: linear-gradient(to bottom, #0058e6 0%, #3a83fc 100%);
+      border-bottom: 2px solid #e6a300;
+    }
+
+    .start-menu-body { padding: 15px; display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; }
+
+    [data-system-style="classic"] #start-menu {
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+      border-top: 2px solid var(--classic-border-light); border-left: 2px solid var(--classic-border-light);
+      border-right: 2px solid var(--classic-border-dark); border-bottom: 2px solid var(--classic-border-dark);
+      border-radius: 0px; width: 220px;
+    }
+
+    .menu-btn {
+      background: rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      color: var(--text-color);
+      padding: 10px 14px;
+      border-radius: var(--control-radius);
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.9rem;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .menu-btn:hover { background: var(--accent-color); color: white; }
+    [data-system-style="classic"] .menu-btn { border-radius: 0; background: none; border: none; }
+    [data-system-style="classic"] .menu-btn:hover { background: #000080; color: white; }
+
+    /* Setup Wizard Layout */
+    #setup-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+      background: linear-gradient(135deg, #1f4068 0%, #162447 100%); 
+      z-index: 999999; display: flex; align-items: center; justify-content: center; overflow-y: auto;
+      transition: background 0.3s ease;
+    }
+    .setup-card {
+      background: #ffffff; color: #1a1a1a; width: 100%; max-width: 480px; padding: 35px; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 18px; box-sizing: border-box; margin: 20px 0;
+    }
+    .setup-input { width: 100%; padding: 10px 14px; border: 1px solid #ccc; border-radius: 10px; outline: none; font-size: 0.95rem; box-sizing: border-box; }
+    .setup-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+    .setup-btn { background: #3584e4; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; transition: background 0.2s ease; }
+
+    /* Windows */
+    .window {
+      position: absolute; width: 920px; height: 620px; min-width: 480px; min-height: 380px;
+      background: var(--window-bg); border: 1px solid var(--panel-border); border-radius: var(--window-radius);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15); display: flex; flex-direction: column; resize: both; overflow: hidden; 
+    }
+    [data-system-style="classic"] .window {
+      border-top: 2px solid var(--classic-border-light); border-left: 2px solid var(--classic-border-light);
+      border-right: 2px solid var(--classic-border-dark); border-bottom: 2px solid var(--classic-border-dark);
+      box-shadow: none; padding: 2px;
+    }
+    [data-system-style="luna"] .window {
+      border: 3px solid #0046d5; border-top-left-radius: 8px; border-top-right-radius: 8px; box-shadow: none;
+    }
+
+    .title-bar {
+      background: var(--title-bg); padding: 12px 18px; cursor: grab; display: flex; justify-content: space-between; align-items: center; user-select: none; border-bottom: 1px solid var(--title-border); color: var(--title-text-color);
+    }
+    [data-system-style="classic"] .title-bar { padding: 4px 6px; border-bottom: none; }
+    [data-system-style="luna"] .title-bar { padding: 6px 12px; border-bottom: none; }
+    .title-text { flex-grow: 1; font-weight: 600; font-size: 0.9rem; pointer-events: none; margin-left: 10px;}
+    .controls { display: flex; gap: 8px; }
+    .btn { width: 13px; height: 13px; border-radius: 50%; border: none; cursor: pointer; }
+    .btn-min { background-color: #febc2e; }
+    .btn-close { background-color: #ff5f56; }
+    [data-system-style="classic"] .btn { border-radius: 0; width: 16px; height: 14px; background: #d4d0c8; font-size: 9px; font-weight: bold; border-top: 1px solid #fff; border-left: 1px solid #fff; border-right: 1px solid #808080; border-bottom: 1px solid #808080; color: black; display: flex; align-items: center; justify-content: center; }
+    [data-system-style="luna"] .btn { border-radius: 3px; width: 21px; height: 21px; border: 1px solid #ffffff; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5); color: white; font-weight: bold; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+    [data-system-style="luna"] .btn-close { background: linear-gradient(to bottom, #e76446 0%, #b83314 100%); }
+    [data-system-style="luna"] .btn-min { background: linear-gradient(to bottom, #3a83fc 0%, #0046d5 100%); }
+
+    .content { flex-grow: 1; background: #fff; position: relative; display: flex; flex-direction: column; overflow: hidden;}
+    [data-system-style="classic"] .content {
+      border-top: 2px solid var(--classic-border-dark); border-left: 2px solid var(--classic-border-dark);
+      border-right: 2px solid var(--classic-border-light); border-bottom: 2px solid var(--classic-border-light);
+      background: #d4d0c8;
+    }
+    [data-system-style="luna"] .content { background: #f1efe7; }
+
+    /* Settings View Layouts */
+    .gnome-settings { display: flex; width: 100%; height: 100%; background: var(--gnome-bg); color: var(--text-color); }
+    .gnome-sidebar { width: 200px; background: var(--gnome-sidebar); border-right: 1px solid var(--title-border); padding: 15px 10px; display: flex; flex-direction: column; gap: 5px; }
+    .gnome-tab-btn { background: none; border: none; color: var(--text-color); padding: 10px 14px; text-align: left; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9rem; }
+    .gnome-tab-btn.active { background: var(--accent-color); color: white; }
+    .gnome-main-content { flex-grow: 1; padding: 25px; overflow-y: auto; }
+    .gnome-page { display: none; flex-direction: column; gap: 20px; }
+    .gnome-page.active { display: flex; }
+    .gnome-card { background: var(--window-bg); border: 1px solid var(--title-border); border-radius: 12px; display: flex; flex-direction: column; }
+    [data-system-style="classic"] .gnome-card { border: 2px solid var(--classic-border-dark); border-radius: 0; }
+    .gnome-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--title-border); gap: 10px; }
+    .gnome-row:last-child { border-bottom: none; }
+    .gnome-about-header { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; margin-bottom: 15px; }
+    .ua-string { word-break: break-all; font-family: monospace; font-size: 0.8rem; background: var(--browser-ui-bg); padding: 8px; border-radius: 6px; display: block; max-width: 320px; }
+
+    /* Notepad Specific Toolbars */
+    .nt-toolbar { background: var(--title-bg); padding: 6px 12px; display: flex; gap: 8px; border-bottom: 1px solid var(--title-border); }
+    .nt-btn { background: var(--panel-bg); border: 1px solid var(--panel-border); color: var(--text-color); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500; }
+    .nt-btn:hover { background: var(--accent-color); color: white; }
+
+    /* Firefox Application Elements */
+    .fx-container { display: flex; flex-direction: column; height: 100%; background: var(--window-bg); color: var(--text-color); }
+    .fx-tabbar { display: flex; align-items: flex-end; background: var(--title-bg); padding: 5px 8px 0 8px; gap: 4px; border-bottom: 1px solid var(--title-border); }
+    .fx-tab { background: rgba(0,0,0,0.06); color: var(--text-color); padding: 6px 14px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.8rem; max-width: 130px; display: flex; align-items: center; gap: 8px; border: 1px solid transparent; border-bottom: none; user-select: none; }
+    .fx-tab.active { background: var(--window-bg); border-color: var(--title-border); font-weight: 600; }
+    .fx-tab-close { opacity: 0.5; font-weight: bold; cursor: pointer; border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; }
+    .fx-tab-close:hover { background: rgba(255,0,0,0.2); opacity: 1; }
+    .fx-add-tab { padding: 4px 10px; background: rgba(255,255,255,0.2); border: 1px solid var(--title-border); border-radius: 4px; margin-bottom: 4px; cursor: pointer; font-weight: bold; }
+    .fx-navbar { display: flex; align-items: center; padding: 6px 10px; gap: 8px; background: var(--window-bg); border-bottom: 1px solid var(--title-border); }
+    .fx-nav-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 6px; border-radius: 4px; color: var(--text-color); }
+    .fx-nav-btn:hover { background: var(--icon-hover); }
+    .fx-address-input { flex-grow: 1; padding: 6px 12px; border-radius: var(--control-radius); border: 1px solid var(--title-border); background: var(--browser-ui-bg); color: var(--text-color); font-size: 0.85rem; outline: none; }
+    .fx-bookmarks-bar { display: flex; align-items: center; gap: 8px; padding: 4px 12px; background: var(--window-bg); border-bottom: 1px solid var(--title-border); font-size: 0.78rem; overflow-x: auto; }
+    .fx-bookmark-node { cursor: pointer; padding: 2px 6px; border-radius: 4px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.03); border: 1px solid var(--title-border); }
+    .fx-view-viewport { flex-grow: 1; background: #ffffff; position: relative; }
+    
+    /* Dynamic New Tab Dashboard Layout */
+    .fx-ntp-container { padding: 40px 20px; display: flex; flex-direction: column; align-items: center; font-family: inherit; height: 100%; box-sizing: border-box; background: var(--window-bg); overflow-y: auto; }
+    .fx-ntp-logo { font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; color: var(--text-color); }
+    .fx-ntp-search-box { width: 100%; max-width: 500px; display: flex; gap: 10px; margin-bottom: 40px; }
+    .fx-ntp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 20px; width: 100%; max-width: 550px; }
+    .fx-ntp-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px 10px; background: var(--browser-ui-bg); border: 1px solid var(--title-border); border-radius: var(--control-radius); cursor: pointer; text-decoration: none; color: var(--text-color); transition: transform 0.15s ease; text-align: center; }
+    .fx-ntp-tile:hover { transform: translateY(-3px); background: var(--icon-hover); }
+
+    /* Classic / Luna Fallback Overrides for Firefox Browser UI Elements */
+    [data-system-style="classic"] .fx-tab { border-radius: 0 !important; background: #d4d0c8; border-top: 2px solid var(--classic-border-light); border-left: 2px solid var(--classic-border-light); border-right: 2px solid var(--classic-border-dark); margin-right: 2px; }
+    [data-system-style="classic"] .fx-tab.active { background: #e6e6e6; border-bottom: none; z-index: 5; }
+    [data-system-style="classic"] .fx-address-input { border-radius: 0; border-top: 2px solid var(--classic-border-dark); border-left: 2px solid var(--classic-border-dark); border-right: 2px solid var(--classic-border-light); border-bottom: 2px solid var(--classic-border-light); background: #fff; color: #000; }
+    [data-system-style="classic"] .fx-add-tab { border-radius: 0; border-top: 2px solid var(--classic-border-light); border-left: 2px solid var(--classic-border-light); border-right: 2px solid var(--classic-border-dark); border-bottom: 2px solid var(--classic-border-dark); background: #d4d0c8; color: #000; }
+    [data-system-style="classic"] .fx-bookmark-node { border-radius: 0; background: #d4d0c8; border-top: 1px solid #fff; border-left: 1px solid #fff; border-right: 1px solid #808080; border-bottom: 1px solid #808080; }
+    
+    [data-system-style="luna"] .fx-tab { border-radius: 5px 5px 0 0 !important; background: linear-gradient(to bottom, #7ca7f8 0%, #3c81f3 100%); color: #fff; border: 1px solid #2256c5; }
+    [data-system-style="luna"] .fx-tab.active { background: #f1efe7; color: #000; border-bottom: none; }
+    [data-system-style="luna"] .fx-address-input { border-radius: 3px; border: 1px solid #7f9db9; background: #fff; color: #000; }
+  </style>
+</head>
+<body data-system-style="modern" data-theme-mode="dark">
+
+  <div id="setup-overlay" style="display: none;">
+    <div class="setup-card">
+      <h2 style="margin: 0; text-align: center; font-weight: 700;">Welcome to Apricity</h2>
+      <p style="margin: 0; text-align: center; font-size: 0.9rem; opacity: 0.7;">Customize your workspace environment configuration.</p>
+      
+      <div>
+        <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Your Name</label>
+        <input type="text" id="setup-username-input" class="setup-input" placeholder="Enter your profile name">
+      </div>
+
+      <div class="setup-row">
+        <label style="font-weight: 600; font-size: 0.85rem;">System Interface Theme</label>
+        <select id="setup-style-select" class="setup-input" style="width: 170px; padding: 8px;" onchange="handleSetupStyleTransition(this.value)">
+          <option value="modern" selected>Modern Theme</option>
+          <option value="pastel">Pastel Theme</option>
+          <option value="classic">Windows Classic</option>
+          <option value="luna">Windows XP Luna</option>
+        </select>
+      </div>
+
+      <div id="setup-modern-options-group">
+        <div class="setup-row" style="margin-bottom: 12px;">
+          <label style="font-weight: 600; font-size: 0.85rem;">Modern Mode Variant</label>
+          <select id="setup-theme-select" class="setup-input" style="width: 170px; padding: 8px;">
+            <option value="dark" selected>Dark Mode</option>
+            <option value="light">Light Mode</option>
+          </select>
+        </div>
+        <div class="setup-row">
+          <label style="font-weight: 600; font-size: 0.85rem;">Accent Interface Color</label>
+          <input type="color" id="setup-accent-input" value="#3584e4" style="width: 60px; height: 35px; padding:0; border:none; cursor:pointer;" oninput="syncSetupAccentPreview(this.value)">
+        </div>
+      </div>
+
+      <div class="setup-row">
+        <label style="font-weight: 600; font-size: 0.85rem;">Background Wallpaper</label>
+        <select id="setup-wp-select" class="setup-input" style="width: 170px; padding: 8px;" onchange="handleSetupWallpaperChange(this.value)">
+          <option value="theme-default" selected>Theme Standard Default</option>
+          <option value="gradient">Modern Dark Gradient</option>
+          <option value="custom-gradient">Custom Live Gradient</option>
+          <option value="pastel-gradient">Pastel Pink Gradient</option>
+          <option value="luna-blue">Luna Classic Blue</option>
+          <option value="custom-image">Upload Custom Image</option>
+          <option value="#1e1e24">Midnight Solid</option>
+        </select>
+      </div>
+
+      <div id="setup-custom-gradient-row" class="setup-row" style="display: none;">
+        <label style="font-weight: 600; font-size: 0.85rem;">Custom Colors</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="color" id="setup-grad-color1" value="#1f4068" style="width:40px; height:30px; border:none; cursor:pointer;" oninput="triggerSetupGradientRefresh()">
+          <input type="color" id="setup-grad-color2" value="#162447" style="width:40px; height:30px; border:none; cursor:pointer;" oninput="triggerSetupGradientRefresh()">
+        </div>
+      </div>
+
+      <div id="setup-custom-wp-row" style="display: none;">
+        <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px;">Choose Wallpaper Image</label>
+        <input type="file" id="setup-wp-file-input" accept="image/*" class="setup-input" onchange="handleSetupWallpaperUpload(event)">
+      </div>
+
+      <div class="setup-row">
+        <label style="font-weight: 600; font-size: 0.85rem;">Launch Settings</label>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <input type="checkbox" id="setup-fullscreen-chk"> <span style="font-size:0.85rem;">Always Launch Fullscreen</span>
+        </div>
+      </div>
+
+      <button id="setup-submit-btn" class="setup-btn" onclick="submitFirstTimeSetup()">Complete Workspace Setup</button>
+    </div>
+  </div>
+
+  <div id="desktop"></div>
+
+  <div id="desktop-context-menu" class="desktop-ctx-menu">
+    <div class="ctx-item" id="ctx-delete-file" style="display: none;" onclick="deleteVirtualFile()">🗑️ Delete File</div>
+    <div class="ctx-item" onclick="resetIconLayoutPositions()">🔄 Reset Icon Positions</div>
+    <div class="ctx-item" id="ctx-toggle-icons" onclick="toggleDesktopIconsVisibility()">👁️ Hide Desktop Icons</div>
+    <div class="ctx-separator"></div>
+    <div class="ctx-item" onclick="openSettingsWindow()">⚙️ System Settings</div>
+    <div class="ctx-item" onclick="toggleContextFullscreen()">📺 Toggle Fullscreen</div>
+  </div>
+
+  <div id="taskbar-container" style="padding-bottom: 12px;">
+    <div id="taskbar" class="panel-dock">
+      <button id="start-btn" onclick="toggleStartMenu(event)">Apps</button>
+      <div id="taskbar-windows"></div>
+      <div id="system-tray">
+        <button class="tray-icon-btn" onclick="openSettingsWindow()" title="System Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+        </button>
+        <div id="clock">00:00:00 AM</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="start-menu">
+    <div class="start-menu-header" id="start-menu-user-title">Guest</div>
+    <div class="start-menu-body" id="start-menu-apps"></div>
+  </div>
+
+  <script>
+    let zIndexCounter = 10;
+    let windowIdCounter = 0;
+    
+    let isSetupCompleted = localStorage.getItem('cfg_setupCompleted') === 'true';
+    let profileUsername = localStorage.getItem('cfg_profileName') || 'Guest';
+    let systemStyleDesign = localStorage.getItem('cfg_systemStyle') || 'modern';
+    let savedSystemTheme = localStorage.getItem('cfg_systemTheme') || 'dark';
+    let accentColorHex = localStorage.getItem('cfg_accentColor') || '#3584e4';
+    let forceFullscreenMode = localStorage.getItem('cfg_forceFullscreen') === 'true';
+    let desktopIconsVisible = localStorage.getItem('cfg_desktopIconsVisible') !== 'false';
+    let rightClickedFileIndex = null;
+
+    let showDateInPanel = localStorage.getItem('cfg_showDate') === 'true';
+    let fullScreenPanel = localStorage.getItem('cfg_fullScreenPanel') === 'true';
+    let currentWallpaperMode = localStorage.getItem('cfg_wallpaperMode') || 'theme-default';
+    let activeWallpaperUrl = localStorage.getItem('cfg_activeWallpaper') || '';
+    let gradientColor1 = localStorage.getItem('cfg_gradientColor1') || '#1f4068';
+    let gradientColor2 = localStorage.getItem('cfg_gradientColor2') || '#162447';
+
+    // Firefox Bookmark Storage Engine
+    let fxBookmarks = JSON.parse(localStorage.getItem('cfg_fx_bookmarks')) || [
+      { name: 'Wikipedia', url: 'https://www.wikipedia.org' },
+      { name: 'Duck.ai', url: 'https://www.duck.ai'},
+      { name: 'DuckDuckGo', url: 'https://duckduckgo.com' }
+    ];
+
+    // Virtual files saved onto the user's desktop view
+    let desktopVirtualFiles = JSON.parse(localStorage.getItem('cfg_desktop_files')) || [];
+
+    const systemApps = [
+      { id: 'firefox', title: 'Browser', icon: '🌐', run: () => openFirefoxApp() },
+      { id: 'notepad', title: 'Notepad', icon: '📝', run: (txt, name, idx) => openNotepadApp(txt, name, idx) },
+      { id: 'paint', title: 'Paint', icon: '🎨', run: () => openPaintApp() },
+      { id: 'audacity', title: 'Audacity', icon: '🎧', run: () => openAudacityApp() },
+      { id: 'youtube', title: 'YouTube', icon: '📺', run: () => openIframeApp('YouTube', 'yt.html') },
+      { id: 'apricitygames', title: 'Apricity Games', icon: '🎮', run: () => openIframeApp('Apricity Games', 'g.html') },
+      { id: 'apricityapps', title: 'Apricity Apps', icon: '🚀', run: () => openIframeApp('Apricity Apps', 'apps.html') },
+      { id: 'settings', title: 'Settings', icon: '⚙️', run: () => openSettingsWindow() }
+    ];
+
+    window.onload = function() {
+      if(!isSetupCompleted) {
+        document.getElementById('setup-overlay').style.display = 'flex';
+        document.getElementById('taskbar-container').style.setProperty('display', 'none', 'important');
+        return; 
+      }
+      
+      if(forceFullscreenMode) {
+        document.addEventListener('click', () => {
+          if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(()=>{}); }
+        }, { once: true });
+      }
+      initializeSystemWorkspace();
+    };
+
+    function initializeSystemWorkspace() {
+      document.getElementById('taskbar-container').style.display = 'flex';
+      updateClock();
+      setInterval(updateClock, 1000);
+      renderDesktopIcons();
+      setupStartMenuApps();
+      setupContextMenus();
+      updateDesktopIconsVisibility();
+      
+      applySystemStyleMatrix();
+      updateSystemWallpaper();
+      togglePanelSize(fullScreenPanel);
+    }
+
+    /* Right-Click Context Menu Listeners */
+    function setupContextMenus() {
+      const desktop = document.getElementById('desktop');
+      const menu = document.getElementById('desktop-context-menu');
+      const deleteItem = document.getElementById('ctx-delete-file');
+
+      desktop.addEventListener('contextmenu', (e) => {
+        const iconEl = e.target.closest('.desktop-icon');
+        
+        if(e.target === desktop || iconEl) {
+          e.preventDefault();
+          menu.style.left = e.clientX + 'px';
+          menu.style.top = e.clientY + 'px';
+          menu.style.display = 'block';
+
+          if (iconEl && iconEl.hasAttribute('data-file-index')) {
+            rightClickedFileIndex = parseInt(iconEl.getAttribute('data-file-index'));
+            if (deleteItem) deleteItem.style.display = 'flex';
+          } else {
+            rightClickedFileIndex = null;
+            if (deleteItem) deleteItem.style.display = 'none';
+          }
+        }
+      });
+
+      document.addEventListener('click', () => {
+        menu.style.display = 'none';
+      });
+    }
+
+    function deleteVirtualFile() {
+      if (rightClickedFileIndex !== null && rightClickedFileIndex !== undefined) {
+        const fileName = desktopVirtualFiles[rightClickedFileIndex].name;
+        if (confirm(`Are you sure you want to delete "${fileName}"?`)) {
+          let savedPositions = JSON.parse(localStorage.getItem('cfg_desktop_icon_positions')) || {};
+          const fileId = desktopVirtualFiles[rightClickedFileIndex].id;
+          if (savedPositions[fileId]) {
+            delete savedPositions[fileId];
+            localStorage.setItem('cfg_desktop_icon_positions', JSON.stringify(savedPositions));
+          }
+
+          desktopVirtualFiles.splice(rightClickedFileIndex, 1);
+          localStorage.setItem('cfg_desktop_files', JSON.stringify(desktopVirtualFiles));
+          renderDesktopIcons();
+        }
+      }
+    }
+
+    function resetIconLayoutPositions() {
+      localStorage.removeItem('cfg_desktop_icon_positions');
+      renderDesktopIcons();
+    }
+
+    function toggleDesktopIconsVisibility() {
+      desktopIconsVisible = !desktopIconsVisible;
+      localStorage.setItem('cfg_desktopIconsVisible', desktopIconsVisible);
+      updateDesktopIconsVisibility();
+    }
+
+    function updateDesktopIconsVisibility() {
+      const desktop = document.getElementById('desktop');
+      const toggleItem = document.getElementById('ctx-toggle-icons');
+      if (desktopIconsVisible) {
+        desktop.classList.remove('hide-icons');
+        if (toggleItem) toggleItem.innerHTML = '👁️ Hide Desktop Icons';
+      } else {
+        desktop.classList.add('hide-icons');
+        if (toggleItem) toggleItem.innerHTML = '👁️ Show Desktop Icons';
+      }
+    }
+
+    function toggleContextFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(()=>{});
+        toggleRuntimeFullscreenMode(true);
+      } else {
+        document.exitFullscreen();
+        toggleRuntimeFullscreenMode(false);
+      }
+      const chk = document.getElementById('gnome-chk-fullscreen-app');
+      if(chk) chk.checked = !document.fullscreenElement;
+    }
+
+    function handleSetupStyleTransition(style) {
+      document.getElementById('setup-modern-options-group').style.display = (style === 'modern') ? 'block' : 'none';
+      if (document.getElementById('setup-wp-select').value === 'theme-default') {
+        handleSetupWallpaperChange('theme-default');
+      }
+      if(style === 'pastel') syncSetupAccentPreview('#ff85a2');
+      else if(style === 'classic') syncSetupAccentPreview('#000080');
+      else if(style === 'luna') syncSetupAccentPreview('#245edb');
+      else syncSetupAccentPreview(document.getElementById('setup-accent-input').value);
+    }
+
+    function syncSetupAccentPreview(color) {
+      document.getElementById('setup-submit-btn').style.backgroundColor = color;
+    }
+
+    function handleSetupWallpaperChange(value) {
+      const overlay = document.getElementById('setup-overlay');
+      document.getElementById('setup-custom-wp-row').style.display = (value === 'custom-image') ? 'block' : 'none';
+      document.getElementById('setup-custom-gradient-row').style.display = (value === 'custom-gradient') ? 'flex' : 'none';
+      overlay.style.backgroundImage = 'none';
+
+      if (value === 'custom-gradient') {
+        triggerSetupGradientRefresh();
+        return;
+      }
+
+      let computedValue = value;
+      if (value === 'theme-default') {
+        const style = document.getElementById('setup-style-select').value;
+        if (style === 'pastel') computedValue = 'pastel-gradient';
+        else if (style === 'classic') computedValue = '#008080';
+        else if (style === 'luna') computedValue = 'luna-blue';
+        else computedValue = 'gradient';
+      }
+
+      if(computedValue === 'gradient') {
+        overlay.style.background = "linear-gradient(135deg, #1f4068 0%, #162447 100%)";
+      } else if(computedValue === 'pastel-gradient') {
+        overlay.style.background = "linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)";
+      } else if(computedValue === 'luna-blue') {
+        overlay.style.background = "#003399";
+      } else if(computedValue === 'custom-image') {
+        overlay.style.background = "linear-gradient(135deg, #a8c0ff 0%, #fbc7d4 100%)";
+      } else {
+        overlay.style.background = computedValue;
+      }
+    }
+
+    function triggerSetupGradientRefresh() {
+      const c1 = document.getElementById('setup-grad-color1').value;
+      const c2 = document.getElementById('setup-grad-color2').value;
+      document.getElementById('setup-overlay').style.background = `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`;
+    }
+
+    function handleSetupWallpaperUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('setup-overlay').style.backgroundImage = `url('${e.target.result}')`;
+        document.getElementById('setup-overlay').style.backgroundSize = 'cover';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function submitFirstTimeSetup() {
+      const nameInput = document.getElementById('setup-username-input').value.trim();
+      if(!nameInput) { alert('Please enter your name.'); return; }
+
+      profileUsername = nameInput;
+      localStorage.setItem('cfg_profileName', profileUsername);
+
+      systemStyleDesign = document.getElementById('setup-style-select').value;
+      localStorage.setItem('cfg_systemStyle', systemStyleDesign);
+
+      forceFullscreenMode = document.getElementById('setup-fullscreen-chk').checked;
+      localStorage.setItem('cfg_forceFullscreen', forceFullscreenMode ? 'true' : 'false');
+
+      if(systemStyleDesign === 'modern') {
+        savedSystemTheme = document.getElementById('setup-theme-select').value;
+        accentColorHex = document.getElementById('setup-accent-input').value;
+      } else {
+        savedSystemTheme = 'light';
+        if(systemStyleDesign === 'pastel') accentColorHex = '#ff85a2';
+        else if(systemStyleDesign === 'classic') accentColorHex = '#000080';
+        else if(systemStyleDesign === 'luna') accentColorHex = '#245edb';
+      }
+      
+      localStorage.setItem('cfg_systemTheme', savedSystemTheme);
+      localStorage.setItem('cfg_accentColor', accentColorHex);
+
+      currentWallpaperMode = document.getElementById('setup-wp-select').value;
+      localStorage.setItem('cfg_wallpaperMode', currentWallpaperMode);
+
+      if (currentWallpaperMode === 'custom-gradient') {
+        gradientColor1 = document.getElementById('setup-grad-color1').value;
+        gradientColor2 = document.getElementById('setup-grad-color2').value;
+        localStorage.setItem('cfg_gradientColor1', gradientColor1);
+        localStorage.setItem('cfg_gradientColor2', gradientColor2);
+      }
+
+      if(['classic', 'luna'].includes(systemStyleDesign)) {
+        fullScreenPanel = true;
+        localStorage.setItem('cfg_fullScreenPanel', 'true');
+      }
+
+      const wpFile = document.getElementById('setup-wp-file-input').files[0];
+      if (currentWallpaperMode === 'custom-image' && wpFile) {
+        const r = new FileReader();
+        r.onload = (e) => { activeWallpaperUrl = e.target.result; localStorage.setItem('cfg_activeWallpaper', activeWallpaperUrl); finalizeSetupSequence(); };
+        r.readAsDataURL(wpFile);
+      } else {
+        finalizeSetupSequence();
+      }
+    }
+
+    function finalizeSetupSequence() {
+      localStorage.setItem('cfg_setupCompleted', 'true');
+      isSetupCompleted = true;
+      document.getElementById('setup-overlay').style.setProperty('display', 'none', 'important');
+      if (forceFullscreenMode && !document.fullscreenElement) { document.documentElement.requestFullscreen().catch(()=>{}); }
+      initializeSystemWorkspace();
+    }
+
+    function applySystemStyleMatrix() {
+      document.body.setAttribute('data-system-style', systemStyleDesign);
+      document.body.setAttribute('data-theme-mode', savedSystemTheme);
+      document.documentElement.style.setProperty('--accent-color', accentColorHex);
+      document.getElementById('start-menu-user-title').innerText = "👤 " + profileUsername;
+    }
+
+    function triggerSystemHardReset() {
+      if(confirm("⚠️ WARNING: Wipe workspace? All entries and customizations reset permanently.")) {
+        localStorage.clear();
+        window.location.reload();
+      }
+    }
+
+    function updateClock() {
+      const now = new Date();
+      let formatOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      if (showDateInPanel) { formatOptions.weekday = 'short'; formatOptions.month = 'short'; formatOptions.day = 'numeric'; }
+      document.getElementById('clock').innerText = now.toLocaleTimeString([], formatOptions);
+    }
+
+    function renderDesktopIcons() {
+      const desktop = document.getElementById('desktop');
+      desktop.querySelectorAll('.desktop-icon').forEach(el => el.remove());
+      
+      let savedPositions = JSON.parse(localStorage.getItem('cfg_desktop_icon_positions')) || {};
+      let col = 0, row = 0;
+      const colWidth = 115, rowHeight = 115, padding = 25;
+      const maxRows = Math.floor((window.innerHeight - 100) / rowHeight) || 4;
+
+      function getPlacement(id) {
+        if (savedPositions[id]) return savedPositions[id];
+        let x = col * colWidth + padding;
+        let y = row * rowHeight + padding;
+        row++;
+        if (row >= maxRows) { row = 0; col++; }
+        return { x, y };
+      }
+
+      // Render Standard System Apps
+      systemApps.forEach(app => {
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'desktop-icon';
+        const pos = getPlacement(app.id);
+        iconDiv.style.left = pos.x + 'px';
+        iconDiv.style.top = pos.y + 'px';
+        iconDiv.innerHTML = `<span style="font-size: 2.2rem;">${app.icon}</span><span>${app.title}</span>`;
+        
+        bindIconDragEvents(iconDiv, app.id, () => app.run());
+        desktop.appendChild(iconDiv);
+      });
+
+      // Render Virtual Text Documents
+      desktopVirtualFiles.forEach((file, index) => {
+        if (!file.id) { file.id = 'file-' + Date.now() + '-' + index; localStorage.setItem('cfg_desktop_files', JSON.stringify(desktopVirtualFiles)); }
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'desktop-icon';
+        iconDiv.setAttribute('data-file-index', index);
+        const pos = getPlacement(file.id);
+        iconDiv.style.left = pos.x + 'px';
+        iconDiv.style.top = pos.y + 'px';
+        iconDiv.innerHTML = `<span style="font-size: 2.2rem;">📄</span><span>${file.name}</span>`;
+        
+        bindIconDragEvents(iconDiv, file.id, () => openNotepadApp(file.content, file.name, index));
+        desktop.appendChild(iconDiv);
+      });
+    }
+
+    function bindIconDragEvents(el, id, onClickAction) {
+      let isDragging = false;
+      let startX, startY, initX, initY, deltaX = 0, deltaY = 0;
+
+      el.addEventListener('mousedown', (e) => {
+        if(e.button === 2) return; 
+        isDragging = true;
+        startX = e.clientX; startY = e.clientY;
+        initX = el.offsetLeft; initY = el.offsetTop;
+        deltaX = 0; deltaY = 0;
+        el.style.zIndex = zIndexCounter++;
+        
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+
+      function onMouseMove(e) {
+        if (!isDragging) return;
+        deltaX = e.clientX - startX;
+        deltaY = e.clientY - startY;
+        el.style.left = (initX + deltaX) + 'px';
+        el.style.top = (initY + deltaY) + 'px';
+      }
+
+      function onMouseUp() {
+        if (!isDragging) return;
+        isDragging = false;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+
+        if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) {
+          el.style.left = initX + 'px';
+          el.style.top = initY + 'px';
+          onClickAction();
+        } else {
+          let savedPositions = JSON.parse(localStorage.getItem('cfg_desktop_icon_positions')) || {};
+          savedPositions[id] = { x: el.offsetLeft, y: el.offsetTop };
+          localStorage.setItem('cfg_desktop_icon_positions', JSON.stringify(savedPositions));
+        }
+      }
+    }
+
+    function setupStartMenuApps() {
+      const container = document.getElementById('start-menu-apps');
+      container.innerHTML = '';
+      systemApps.forEach(app => {
+        const btn = document.createElement('button');
+        btn.className = 'menu-btn';
+        btn.onclick = () => { app.run(); closeStartMenu(); };
+        btn.innerHTML = `<span>${app.icon}</span> <span>${app.title}</span>`;
+        container.appendChild(btn);
+      });
+    }
+
+    function toggleStartMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('start-menu');
+      const startBtn = document.getElementById('start-btn');
+      if (menu.classList.contains('visible')) { closeStartMenu(); } else {
+        menu.classList.add('visible');
+        const rect = startBtn.getBoundingClientRect();
+        menu.style.left = rect.left + 'px';
+        menu.style.bottom = fullScreenPanel ? (['classic','luna'].includes(systemStyleDesign)?'40px':'56px') : (['classic','luna'].includes(systemStyleDesign)?'52px':'72px');
+      }
+    }
+    function closeStartMenu() { document.getElementById('start-menu').classList.remove('visible'); }
+    document.addEventListener('click', (e) => { if (!document.getElementById('start-menu').contains(e.target) && e.target.id !== 'start-btn') closeStartMenu(); });
+
+    function openWindow(title, customContent) {
+      const winId = 'win-' + windowIdCounter++;
+      const win = document.createElement('div');
+      win.className = 'window'; win.id = winId;
+      const offset = (zIndexCounter % 5) * 30;
+      win.style.top = (60 + offset) + 'px'; win.style.left = (150 + offset) + 'px';
+      win.style.zIndex = zIndexCounter++;
+
+      const titleBar = document.createElement('div'); titleBar.className = 'title-bar';
+      const titleText = document.createElement('span'); titleText.className = 'title-text'; titleText.innerText = title;
+
+      const windowControls = document.createElement('div'); windowControls.className = 'controls';
+      const minBtn = document.createElement('button'); minBtn.className = 'btn btn-min'; minBtn.innerHTML = systemStyleDesign==='classic'?'_':(systemStyleDesign==='luna'?'0':''); minBtn.onclick = (e) => { e.stopPropagation(); toggleMinimize(winId); };
+      const closeBtn = document.createElement('button'); closeBtn.className = 'btn btn-close'; closeBtn.innerHTML = systemStyleDesign==='classic'?'X':(systemStyleDesign==='luna'?'X':''); closeBtn.onclick = (e) => { e.stopPropagation(); closeWindow(winId); };
+
+      windowControls.appendChild(minBtn); windowControls.appendChild(closeBtn);
+      titleBar.appendChild(titleText); titleBar.appendChild(windowControls);
+
+      const content = document.createElement('div'); content.className = 'content'; content.appendChild(customContent);
+      win.appendChild(titleBar); win.appendChild(content);
+      document.getElementById('desktop').appendChild(win);
+      createTaskbarItem(winId, title);
+
+      makeDraggable(win, titleBar);
+      win.addEventListener('mousedown', () => focusWindow(winId));
+      focusWindow(winId);
+      return winId;
+    }
+
+    function createTaskbarItem(id, title) {
+      const taskbar = document.getElementById('taskbar-windows');
+      const item = document.createElement('div'); item.className = 'taskbar-item'; item.id = 'task-' + id; item.innerText = title;
+      item.onclick = (e) => {
+        e.stopPropagation(); const win = document.getElementById(id);
+        if (win.style.display === 'none') { win.style.display = 'flex'; focusWindow(id); } 
+        else if (parseInt(win.style.zIndex) < zIndexCounter - 1) { focusWindow(id); } 
+        else { win.style.display = 'none'; item.classList.remove('active'); }
+      };
+      taskbar.appendChild(item);
+    }
+
+    function closeWindow(id) { if(document.getElementById(id)) document.getElementById(id).remove(); if(document.getElementById('task-' + id)) document.getElementById('task-' + id).remove(); }
+    function toggleMinimize(id) { const win = document.getElementById(id); const taskItem = document.getElementById('task-' + id); if (win.style.display === 'none') { win.style.display = 'flex'; focusWindow(id); } else { win.style.display = 'none'; taskItem.classList.remove('active'); } }
+    function focusWindow(id) { const win = document.getElementById(id); if(win) win.style.zIndex = zIndexCounter++; document.querySelectorAll('.taskbar-item').forEach(el => el.classList.remove('active')); const taskItem = document.getElementById('task-' + id); if(taskItem) taskItem.classList.add('active'); }
+
+    function makeDraggable(win, handle) {
+      let isDragging = false, startX, startY, initialX, initialY;
+      handle.addEventListener('mousedown', (e) => { if(e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; isDragging = true; startX = e.clientX; startY = e.clientY; initialX = win.offsetLeft; initialY = win.offsetTop; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp); });
+      function onMouseMove(e) { if (!isDragging) return; win.style.left = (initialX + (e.clientX - startX)) + 'px'; win.style.top = (initialY + (e.clientY - startY)) + 'px'; }
+      function onMouseUp() { isDragging = false; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); }
+    }
+
+    /* Firefox Multi-Tab / Bookmark Engine Architecture */
+    function openFirefoxApp() {
+      const browserFrame = document.createElement('div');
+      browserFrame.className = 'fx-container';
+      
+      let tabCounter = 1;
+      let browserTabs = [{ id: tabCounter, title: 'New Tab', url: 'about:newtab' }];
+      let activeTabId = tabCounter;
+
+      browserFrame.innerHTML = `
+        <div class="fx-tabbar">
+          <div class="fx-tabs-wrapper" style="display:flex; gap:4px; overflow-x:auto;"></div>
+          <button class="fx-add-tab">+</button>
+        </div>
+        <div class="fx-navbar">
+          <button class="fx-nav-btn fx-back-btn">⬅</button>
+          <button class="fx-nav-btn fx-refresh-btn">🔄</button>
+          <input type="text" class="fx-address-input" value="about:newtab">
+          <button class="fx-nav-btn fx-bookmark-toggle">⭐</button>
+        </div>
+        <div class="fx-bookmarks-bar"></div>
+        <div class="fx-view-viewport"></div>
+      `;
+
+      const wrapper = browserFrame.querySelector('.fx-tabs-wrapper');
+      const addBtn = browserFrame.querySelector('.fx-add-tab');
+      const addressInput = browserFrame.querySelector('.fx-address-input');
+      const viewport = browserFrame.querySelector('.fx-view-viewport');
+      const bookmarksRow = browserFrame.querySelector('.fx-bookmarks-bar');
+
+      function renderBrowserState() {
+        wrapper.innerHTML = '';
+        browserTabs.forEach(t => {
+          const tabEl = document.createElement('div');
+          tabEl.className = `fx-tab ${t.id === activeTabId ? 'active' : ''}`;
+          tabEl.innerHTML = `<span>${t.title}</span><span class="fx-tab-close" data-id="${t.id}">×</span>`;
+          tabEl.onclick = (e) => {
+            if(e.target.classList.contains('fx-tab-close')) return;
+            activeTabId = t.id;
+            renderBrowserState();
+          };
+          wrapper.appendChild(tabEl);
+        });
+
+        wrapper.querySelectorAll('.fx-tab-close').forEach(btn => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const targetId = parseInt(btn.getAttribute('data-id'));
+            if(browserTabs.length === 1) return;
+            browserTabs = browserTabs.filter(x => x.id !== targetId);
+            if(activeTabId === targetId) activeTabId = browserTabs[browserTabs.length - 1].id;
+            renderBrowserState();
+          };
+        });
+
+        const currentTab = browserTabs.find(x => x.id === activeTabId);
+        addressInput.value = currentTab.url;
+        viewport.innerHTML = '';
+
+        if(currentTab.url === 'about:newtab') {
+          const ntp = document.createElement('div');
+          ntp.className = 'fx-ntp-container';
+          ntp.innerHTML = `
+            <div class="fx-ntp-logo"><span>🌐</span> Apricity Browser</div>
+            <div class="fx-ntp-search-box">
+              <input type="text" class="setup-input ntp-search-field" placeholder="Search the web or type a URL...">
+              <button class="panel-btn ntp-go-btn" style="padding:10px 20px;">Go</button>
+            </div>
+            <div class="fx-ntp-grid">
+              <div class="fx-ntp-tile" data-url="https://www.wikipedia.org">📚<br><small>Wikipedia</small></div>
+              <div class="fx-ntp-tile" data-url="https://duckduckgo.com">🦆<br><small>DuckDuckGo</small></div>
+              <div class="fx-ntp-tile" data-url="https://github.com">🐙<br><small>GitHub</small></div>
+            </div>
+          `;
+
+          const triggerSearch = () => {
+            const val = ntp.querySelector('.ntp-search-field').value.trim();
+            if(!val) return;
+            navigateCurrentTab(val.includes('.') ? (val.startsWith('http') ? val : 'https://' + val) : 'https://duckduckgo.com/?q=' + encodeURIComponent(val));
+          };
+
+          ntp.querySelector('.ntp-search-field').onkeydown = (e) => { if(e.key === 'Enter') triggerSearch(); };
+          ntp.querySelector('.ntp-go-btn').onclick = triggerSearch;
+          ntp.querySelectorAll('.fx-ntp-tile').forEach(tile => {
+            tile.onclick = () => navigateCurrentTab(tile.getAttribute('data-url'));
+          });
+          viewport.appendChild(ntp);
+        } else {
+          const frame = document.createElement('iframe');
+          frame.className = 'fx-view-viewport';
+          frame.style.width = '100%'; frame.style.height = '100%'; frame.style.border = 'none';
+          frame.src = currentTab.url;
+          viewport.appendChild(frame);
+        }
+
+        bookmarksRow.innerHTML = '';
+        fxBookmarks.forEach(bm => {
+          const node = document.createElement('span');
+          node.className = 'fx-bookmark-node';
+          node.innerHTML = `🔖 ${bm.name}`;
+          node.onclick = () => navigateCurrentTab(bm.url);
+          bookmarksRow.appendChild(node);
+        });
+      }
+
+      function navigateCurrentTab(url) {
+        const tab = browserTabs.find(x => x.id === activeTabId);
+        tab.url = url;
+        tab.title = url === 'about:newtab' ? 'New Tab' : url.replace('https://','').replace('www.','').split('/')[0];
+        renderBrowserState();
+      }
+
+      addBtn.onclick = () => {
+        tabCounter++;
+        browserTabs.push({ id: tabCounter, title: 'New Tab', url: 'about:newtab' });
+        activeTabId = tabCounter;
+        renderBrowserState();
+      };
+
+      addressInput.onkeydown = (e) => {
+        if(e.key === 'Enter') {
+          let targetUrl = addressInput.value.trim();
+          if(targetUrl !== 'about:newtab' && !targetUrl.includes('.')) targetUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(targetUrl);
+          else if(targetUrl !== 'about:newtab' && !targetUrl.startsWith('http')) targetUrl = 'https://' + targetUrl;
+          navigateCurrentTab(targetUrl);
+        }
+      };
+
+      browserFrame.querySelector('.fx-back-btn').onclick = () => navigateCurrentTab('about:newtab');
+      browserFrame.querySelector('.fx-refresh-btn').onclick = () => renderBrowserState();
+      
+      browserFrame.querySelector('.fx-bookmark-toggle').onclick = () => {
+        const tab = browserTabs.find(x => x.id === activeTabId);
+        if(tab.url === 'about:newtab') return;
+        const bName = prompt("Save bookmark as:", tab.title);
+        if(!bName) return;
+        fxBookmarks.push({ name: bName, url: tab.url });
+        localStorage.setItem('cfg_fx_bookmarks', JSON.stringify(fxBookmarks));
+        renderBrowserState();
+      };
+
+      renderBrowserState();
+      openWindow('Browser', browserFrame);
+    }
+
+    function openNotepadApp(initialContent = '', initialName = 'Untitled.txt', virtualFileIndex = null) {
+      const noteView = document.createElement('div'); 
+      noteView.style.height="100%"; noteView.style.display="flex"; noteView.style.flexDirection="column";
+      
+      noteView.innerHTML = `
+        <div class="nt-toolbar">
+          <button class="nt-btn nt-open-pc">Open from PC</button>
+          <button class="nt-btn nt-save-pc">Save to PC</button>
+          <button class="nt-btn nt-save-desk">Save to Desktop</button>
+          <input type="file" class="nt-file-input" accept=".txt" style="display:none;">
+        </div>
+        <div style="flex-grow:1; padding:10px; box-sizing:border-box;">
+          <textarea class="nt-textarea" style="width:100%; height:95%; font-family:monospace; resize:none; border:1px solid #ccc; outline:none; box-sizing:border-box; background:white; color:#000;"></textarea>
+        </div>
+      `;
+
+      const textarea = noteView.querySelector('.nt-textarea');
+      const fileInput = noteView.querySelector('.nt-file-input');
+      textarea.value = initialContent;
+
+      let currentFileName = initialName;
+
+      noteView.querySelector('.nt-open-pc').onclick = () => fileInput.click();
+      fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        currentFileName = file.name;
+        const reader = new FileReader();
+        reader.onload = (evt) => { textarea.value = evt.target.result; };
+        reader.readAsText(file);
+      };
+
+      noteView.querySelector('.nt-save-pc').onclick = () => {
+        let name = prompt("Enter file name to download:", currentFileName);
+        if (!name) return;
+        if (!name.endsWith('.txt')) name += '.txt';
+        
+        const blob = new Blob([textarea.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = name; a.click();
+        URL.revokeObjectURL(url);
+        currentFileName = name;
+      };
+
+      noteView.querySelector('.nt-save-desk').onclick = () => {
+        let name = prompt("Enter file name to display on Desktop:", currentFileName);
+        if (!name) return;
+        if (!name.endsWith('.txt')) name += '.txt';
+
+        if (virtualFileIndex !== null) {
+          desktopVirtualFiles[virtualFileIndex] = { ...desktopVirtualFiles[virtualFileIndex], name: name, content: textarea.value };
+        } else {
+          desktopVirtualFiles.push({ id: 'file-' + Date.now(), name: name, content: textarea.value });
+        }
+        localStorage.setItem('cfg_desktop_files', JSON.stringify(desktopVirtualFiles));
+        renderDesktopIcons();
+        alert(`Successfully saved "${name}" to your workspace layout.`);
+      };
+
+      openWindow(`Notepad - ${currentFileName}`, noteView);
+    }
+
+    function openPaintApp() {
+      const paintView = document.createElement('div'); paintView.style.height="100%";
+      paintView.innerHTML = `<iframe src="https://jspaint.app" style="width:100%; height:100%; border:none; background:white;"></iframe>`;
+      openWindow('Paint', paintView);
+    }
+
+    function openAudacityApp() {
+      const audView = document.createElement('div'); audView.style.height="100%";
+      audView.innerHTML = `<iframe src="Wavacity/index.html" style="width:100%; height:100%; border:none; background:white;"></iframe>`;
+      openWindow('Audacity', audView);
+    }
+
+    function openIframeApp(title, sourceUrl) {
+      const view = document.createElement('div'); view.style.height = "100%";
+      view.innerHTML = `<iframe src="${sourceUrl}" style="width:100%; height:100%; border:none; background:white;"></iframe>`;
+      openWindow(title, view);
+    }
+
+    function openSettingsWindow() {
+      const existingSettings = document.getElementById('gnome-settings-app');
+      if (existingSettings) { focusWindow(existingSettings.parentElement.parentElement.id); return; }
+
+      const settingsContainer = document.createElement('div');
+      settingsContainer.id = 'gnome-settings-app'; settingsContainer.className = 'gnome-settings';
+      settingsContainer.innerHTML = `
+        <div class="gnome-sidebar">
+          <button class="gnome-tab-btn active" onclick="switchGnomeTab(this, 'gnome-page-appearance')">🎨 Appearance</button>
+          <button class="gnome-tab-btn" onclick="switchGnomeTab(this, 'gnome-page-panel')">📟 Panel</button>
+          <button class="gnome-tab-btn" onclick="switchGnomeTab(this, 'gnome-page-about')">⚙️ System</button>
+        </div>
+        <div class="gnome-main-content">
+          <div id="gnome-page-appearance" class="gnome-page active">
+            <h2>Appearance Settings</h2>
+            <div class="gnome-card">
+              <div class="gnome-row">
+                <label>System Theme Style</label>
+                <select id="gnome-style-engine" class="panel-btn" style="width:170px;" onchange="updateGlobalStyleEngine(this.value)">
+                  <option value="modern" ${systemStyleDesign==='modern'?'selected':''}>Modern Style</option>
+                  <option value="pastel" ${systemStyleDesign==='pastel'?'selected':''}>Pastel Style</option>
+                  <option value="classic" ${systemStyleDesign==='classic'?'selected':''}>Windows Classic</option>
+                  <option value="luna" ${systemStyleDesign==='luna'?'selected':''}>Windows XP Luna</option>
+                </select>
+              </div>
+              <div id="settings-modern-options" style="display: ${systemStyleDesign==='modern'?'block':'none'};">
+                <div class="gnome-row"><label>Toggle Light/Dark Variant</label><button class="panel-btn" onclick="toggleThemeMode()">Switch Mode</button></div>
+                <div class="gnome-row"><label>Accent Color Token</label><input type="color" id="gnome-accent-color-picker" value="${accentColorHex}" oninput="updateAccentColorRuntime(this.value)"></div>
+              </div>
+              <div class="gnome-row">
+                <label>Wallpaper Configuration</label>
+                <select id="gnome-wp-mode" class="panel-btn" style="width:170px;" onchange="changeWallpaperMode(this.value)">
+                  <option value="theme-default" ${currentWallpaperMode==='theme-default'?'selected':''}>Theme Standard Default</option>
+                  <option value="gradient" ${currentWallpaperMode==='gradient'?'selected':''}>Dark Gradient</option>
+                  <option value="custom-gradient" ${currentWallpaperMode==='custom-gradient'?'selected':''}>Custom Live Gradient</option>
+                  <option value="pastel-gradient" ${currentWallpaperMode==='pastel-gradient'?'selected':''}>Pastel Pink Gradient</option>
+                  <option value="luna-blue" ${currentWallpaperMode==='luna-blue'?'selected':''}>Luna Classic Blue</option>
+                  <option value="image" ${currentWallpaperMode==='image'||currentWallpaperMode==='custom-image'?'selected':''}>Custom Uploaded Image</option>
+                </select>
+              </div>
+              <div id="gnome-grad-pickers-row" class="gnome-row" style="display: ${currentWallpaperMode==='custom-gradient'?'flex':'none'};">
+                <label>Gradient Secondary Nodes</label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="color" id="gnome-grad-c1" value="${gradientColor1}" oninput="updateRuntimeGradientColors()">
+                  <input type="color" id="gnome-grad-c2" value="${gradientColor2}" oninput="updateRuntimeGradientColors()">
+                </div>
+              </div>
+              <div id="gnome-upload-row" class="gnome-row" style="display: ${currentWallpaperMode==='image'||currentWallpaperMode==='custom-image'?'flex':'none'};">
+                <label>Upload Background Image</label>
+                <input type="file" accept="image/*" onchange="handleRuntimeWallpaperUpload(event)">
+              </div>
+              <div class="gnome-row"><label>Launch Fullscreen Always</label><input type="checkbox" id="gnome-chk-fullscreen-app" onchange="toggleRuntimeFullscreenMode(this.checked)"></div>
+            </div>
+          </div>
+          <div id="gnome-page-panel" class="gnome-page">
+            <h2>Panel Options</h2>
+            <div class="gnome-card">
+              <div class="gnome-row"><label>Display Date String</label><input type="checkbox" id="gnome-chk-date" onchange="togglePanelDate(this.checked)"></div>
+              <div class="gnome-row"><label>Full Width Edge Panel</label><input type="checkbox" id="gnome-chk-fullscreen" onchange="togglePanelSize(this.checked)"></div>
+            </div>
+          </div>
+          <div id="gnome-page-about" class="gnome-page">
+            <div class="gnome-about-header">
+              <div style="font-size:3.5rem;">🚀</div>
+              <h2 style="margin:0;">Apricity Desktop</h2>
+              <p style="opacity:0.7; margin:0;">Release 2026.07.01</p>
+            </div>
+            <div class="gnome-card">
+              <div class="gnome-row" style="flex-direction: column; align-items: flex-start;"><label>Browser Information</label><span class="ua-string">${navigator.userAgent}</span></div>
+              <div class="gnome-row"><label>Kernel</label><span style="opacity:0.65; font-family:monospace;">4.20.69-apricity</span></div>
+              <div class="gnome-row"><label>Window Manager</label><span style="opacity:0.65; font-family:monospace;">ApricityWM v0.1</span></div>
+              <div class="gnome-row" style="background: rgba(255,0,0,0.05);"><label style="color: #c0392b;">System Maintenance</label><button class="panel-btn" style="background:#e74c3c; color:white; border:none;" onclick="triggerSystemHardReset()">Reset Desktop</button></div>
+            </div>
+          </div>
+        </div>
+      `;
+      openWindow('Settings', settingsContainer);
+      document.getElementById('gnome-chk-date').checked = showDateInPanel;
+      document.getElementById('gnome-chk-fullscreen').checked = fullScreenPanel;
+      document.getElementById('gnome-chk-fullscreen-app').checked = forceFullscreenMode;
+    }
+
+    function switchGnomeTab(btn, targetPageId) {
+      const parent = btn.closest('.gnome-settings');
+      parent.querySelectorAll('.gnome-tab-btn').forEach(b => b.classList.remove('active'));
+      parent.querySelectorAll('.gnome-page').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active'); if (document.getElementById(targetPageId)) document.getElementById(targetPageId).classList.add('active');
+    }
+
+    function updateGlobalStyleEngine(style) {
+      systemStyleDesign = style; localStorage.setItem('cfg_systemStyle', style);
+      document.getElementById('settings-modern-options').style.display = (style === 'modern') ? 'block' : 'none';
+      
+      if(style === 'pastel') accentColorHex = '#ff85a2';
+      else if(style === 'classic') accentColorHex = '#000080';
+      else if(style === 'luna') accentColorHex = '#245edb';
+      
+      localStorage.setItem('cfg_accentColor', accentColorHex);
+
+      if (['classic', 'luna'].includes(style)) {
+        togglePanelSize(true);
+        if(document.getElementById('gnome-chk-fullscreen')) document.getElementById('gnome-chk-fullscreen').checked = true;
+      } else {
+        togglePanelSize(false);
+        if(document.getElementById('gnome-chk-fullscreen')) document.getElementById('gnome-chk-fullscreen').checked = false;
+      }
+
+      applySystemStyleMatrix();
+      updateSystemWallpaper();
+      renderDesktopIcons();
+    }
+
+    function toggleThemeMode() { savedSystemTheme = (savedSystemTheme === 'dark') ? 'light' : 'dark'; localStorage.setItem('cfg_systemTheme', savedSystemTheme); applySystemStyleMatrix(); }
+    function updateAccentColorRuntime(val) { accentColorHex = val; localStorage.setItem('cfg_accentColor', val); applySystemStyleMatrix(); }
+    function togglePanelDate(checked) { showDateInPanel = checked; localStorage.setItem('cfg_showDate', checked); updateClock(); }
+    function togglePanelSize(checked) { fullScreenPanel = checked; localStorage.setItem('cfg_fullScreenPanel', checked); const tc = document.getElementById('taskbar-container'), tb = document.getElementById('taskbar'); if (checked) { tc.style.paddingBottom = "0px"; tb.className = "panel-full"; } else { tc.style.paddingBottom = "12px"; tb.className = "panel-dock"; } }
+    
+    function changeWallpaperMode(mode) { 
+      currentWallpaperMode = mode; 
+      localStorage.setItem('cfg_wallpaperMode', mode);
+      document.getElementById('gnome-grad-pickers-row').style.display = (mode === 'custom-gradient') ? 'flex' : 'none';
+      document.getElementById('gnome-upload-row').style.display = (mode === 'image' || mode === 'custom-image') ? 'flex' : 'none';
+      updateSystemWallpaper(); 
+    }
+
+    function updateRuntimeGradientColors() {
+      gradientColor1 = document.getElementById('gnome-grad-c1').value;
+      gradientColor2 = document.getElementById('gnome-grad-c2').value;
+      localStorage.setItem('cfg_gradientColor1', gradientColor1);
+      localStorage.setItem('cfg_gradientColor2', gradientColor2);
+      updateSystemWallpaper();
+    }
+
+    function handleRuntimeWallpaperUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        activeWallpaperUrl = e.target.result;
+        localStorage.setItem('cfg_activeWallpaper', activeWallpaperUrl);
+        updateSystemWallpaper();
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    function toggleRuntimeFullscreenMode(checked) {
+      forceFullscreenMode = checked; localStorage.setItem('cfg_forceFullscreen', checked ? 'true' : 'false');
+      if(checked && !document.fullscreenElement) { document.documentElement.requestFullscreen().catch(()=>{}); }
+    }
+
+    function updateSystemWallpaper() {
+      document.body.style.background = 'none'; document.body.style.backgroundImage = 'none'; document.body.style.backgroundColor = 'transparent';
+      
+      let effectiveMode = currentWallpaperMode;
+      if (currentWallpaperMode === 'theme-default') {
+        if (systemStyleDesign === 'pastel') effectiveMode = 'pastel-gradient';
+        else if (systemStyleDesign === 'classic') effectiveMode = 'classic-teal';
+        else if (systemStyleDesign === 'luna') effectiveMode = 'luna-blue';
+        else effectiveMode = 'gradient';
+      }
+
+      if (effectiveMode === 'custom-gradient') {
+        document.body.style.backgroundImage = `linear-gradient(135deg, ${gradientColor1} 0%, ${gradientColor2} 100%)`;
+      } else if ((effectiveMode === 'image' || effectiveMode === 'custom-image') && activeWallpaperUrl) { 
+        document.body.style.backgroundImage = `url('${activeWallpaperUrl}')`; 
+      } else if (effectiveMode === 'pastel-gradient') {
+        document.body.style.backgroundImage = "linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)";
+      } else if (effectiveMode === 'luna-blue') {
+        document.body.style.backgroundColor = '#003399';
+      } else if (effectiveMode === 'classic-teal') {
+        document.body.style.backgroundColor = '#008080';
+      } else if (effectiveMode === 'gradient') { 
+        document.body.style.backgroundImage = `linear-gradient(135deg, #1f4068 0%, #162447 100%)`; 
+      } else {
+        document.body.style.backgroundColor = effectiveMode;
+      }
+    }
+  </script>
+</body>
+</html>
