@@ -260,7 +260,7 @@ function generateFingerprint() {
                 rgba(0, 0, 0, 0.18);
         }
 
-        #home-page, #sunlit-page, #youtube-page, #hollow-knight-page, #snow-rider-page, #spotify-page, #meet-stable-page, .settings-trigger, .modal-overlay, .apps-overlay {
+        #home-page, #sunlit-page, #desktop-page, #youtube-page, #hollow-knight-page, #snow-rider-page, #spotify-page, #meet-stable-page, .settings-trigger, .modal-overlay, .apps-overlay {
             position: relative;
             z-index: 1;
         }
@@ -1365,6 +1365,8 @@ function generateFingerprint() {
 
         #sunlit-page { width: 100%; height: 100vh; }
         #sunlit-page iframe { width: 100%; height: 100%; border: none; display: block; }
+        #desktop-page { width: 100%; height: 100vh; }
+        #desktop-page iframe { width: 100%; height: 100%; border: none; display: block; }
         #hollow-knight-page, #snow-rider-page { width: 100%; height: 100vh; }
         #hollow-knight-page iframe, #snow-rider-page iframe { width: 100%; height: 100%; border: none; display: block; }
         .sunlit-back {
@@ -1858,6 +1860,7 @@ function generateFingerprint() {
         /* Pages that are position:fixed full-screen need top offset */
         body.tabs-active #gemini-page.active,
         body.tabs-active #sunlit-page.active,
+        body.tabs-active #desktop-page.active,
         body.tabs-active #hollow-knight-page.active,
         body.tabs-active #snow-rider-page.active,
         body.tabs-active #meet-stable-page.active,
@@ -2366,6 +2369,10 @@ function generateFingerprint() {
             </div>
             Spotify
         </div>
+        <div class="app-item" onclick="openDesktop()">
+            <div class="app-icon"><span class="material-symbols-outlined">computer</span></div>
+            Desktop
+        </div>
         <button class="apps-close-btn" onclick="toggleApps()">Close</button>
     </div>
 </div>
@@ -2432,6 +2439,12 @@ function generateFingerprint() {
 <div id="sunlit-page" class="page">
     <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
     <iframe id="sunlit-frame" src="about:blank"></iframe>
+</div>
+
+<!-- Desktop Page -->
+<div id="desktop-page" class="page">
+    <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+    <iframe id="desktop-frame" src="about:blank"></iframe>
 </div>
 
 <!-- Groq Page -->
@@ -3241,6 +3254,9 @@ function generateFingerprint() {
         } else if (tab.pageId === 'sunlit-page') {
             const frame = document.getElementById('sunlit-frame');
             if (!frame.dataset.loaded) { frame.src = 'apps/sunlit_os.html'; frame.dataset.loaded = '1'; }
+        } else if (tab.pageId === 'desktop-page') {
+            const frame = document.getElementById('desktop-frame');
+            if (!frame.dataset.loaded) { frame.src = 'apps/desktop.html'; frame.dataset.loaded = '1'; }
         } else if (tab.pageId === 'spotify-page') {
             wlBoot();
         } else if (tab.extra && tab.extra.gameSrc) {
@@ -3304,6 +3320,16 @@ function generateFingerprint() {
         const frame = document.getElementById('sunlit-frame');
         if (!frame.dataset.loaded) { frame.src = 'apps/sunlit_os.html'; frame.dataset.loaded = '1'; }
         tabNew('sunlit-page', 'Sunlit OS', '☀️');
+    }
+
+    // ===== DESKTOP =====
+    function openDesktop() {
+        toggleApps();
+        const existing = tabs.find(t => t.pageId === 'desktop-page');
+        if (existing) { tabSwitch(existing.id); return; }
+        const frame = document.getElementById('desktop-frame');
+        if (!frame.dataset.loaded) { frame.src = 'apps/desktop.html'; frame.dataset.loaded = '1'; }
+        tabNew('desktop-page', 'Desktop', '🖥️');
     }
 
     // ===== GAMES =====
