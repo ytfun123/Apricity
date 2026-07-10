@@ -3342,24 +3342,31 @@ function generateFingerprint() {
     }
     // ===== SEARCH (proxied DuckDuckGo, embedded in the tab system) =====
     // We never navigate the iframe directly to duckduckgo.com — X-Frame-Options
-    // would block that. Instead we fetch the HTML through a CORS proxy (with a
-    // fallback proxy) and inject it via srcdoc, same idea as GUST's "fetch, then
+    // would block that. Instead we fetch the HTML through a CORS proxy (with
+    // fallbacks) and inject it via srcdoc, same idea as GUST's "fetch, then
     // render" approach, just without a full WASM/WISP tunnel.
+    // NOTE: corsproxy.io's free tier now only works from localhost/known dev
+    // origins (returns 403 elsewhere), so it's deliberately not used here.
     const SEARCH_CORS_PROXIES = [
-        url => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
-        url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
+        url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
+        url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+        url => 'https://proxy.killcors.com/?url=' + encodeURIComponent(url)
     ];
 
     async function fetchProxiedHtml(url) {
         let lastErr = null;
         for (const build of SEARCH_CORS_PROXIES) {
+            const proxied = build(url);
             try {
-                const res = await fetch(build(url), { cache: 'no-store' });
+                const res = await fetch(proxied, { cache: 'no-store' });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const html = await res.text();
                 if (!html || html.length < 50) throw new Error('Empty response');
                 return html;
-            } catch (e) { lastErr = e; }
+            } catch (e) {
+                console.warn('Search proxy failed:', proxied, '—', e.message);
+                lastErr = e;
+            }
         }
         throw lastErr || new Error('All proxies failed');
     }
