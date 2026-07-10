@@ -55,6 +55,8 @@ function generateFingerprint() {
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <!-- Dedicated Google Font for the browser-style tab bar (clean, neutral UI face) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- Same libcurl.js (curl-to-WASM) used by GUST — tunnels over a WISP WebSocket
          relay instead of a plain fetch, so it isn't subject to browser CORS at all.
@@ -80,6 +82,7 @@ function generateFingerprint() {
             --md-sys-color-surface-container-high: #ECE2DC;
             --md-sys-color-surface-container-highest: #E6DCD6;
             --font-ui: 'Outfit', sans-serif;
+            --font-tabs: 'Inter', sans-serif;
             --font-logo: 'Great Vibes', cursive;
             --yt-surface: color-mix(in srgb, var(--md-sys-color-surface) 95%, var(--md-sys-color-primary) 5%);
             --yt-surface2: color-mix(in srgb, var(--md-sys-color-primary-container) 30%, var(--md-sys-color-surface) 70%);
@@ -1828,7 +1831,7 @@ function generateFingerprint() {
             padding: 0 8px 0 12px;
             min-width: 120px; max-width: 200px;
             height: 34px;
-            font-size: 12.5px; font-family: var(--font-ui);
+            font-size: 12.5px; font-family: var(--font-tabs);
             color: var(--md-sys-color-on-surface-variant);
             cursor: pointer;
             white-space: nowrap; overflow: hidden;
@@ -1879,7 +1882,7 @@ function generateFingerprint() {
         #tab-bar-empty {
             display: none; flex: 1; align-items: center; justify-content: center;
             font-size: 12px; color: var(--md-sys-color-outline);
-            font-family: var(--font-ui); gap: 8px; padding-bottom: 6px;
+            font-family: var(--font-tabs); gap: 8px; padding-bottom: 6px;
         }
         #tab-bar.show-empty #tab-bar-empty { display: flex; }
         #tab-bar.show-empty #tab-items,
@@ -2486,7 +2489,7 @@ function generateFingerprint() {
 
 <!-- Search Results Page (proxied DuckDuckGo) -->
 <div id="search-page" class="page">
-    <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+    <button class="sunlit-back" onclick="searchGoBack()">&#8592; Back</button>
     <div id="search-status"></div>
     <iframe id="search-frame" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"></iframe>
 </div>
@@ -3314,6 +3317,7 @@ function generateFingerprint() {
         if (e) e.stopPropagation();
         const idx = tabs.findIndex(t => t.id === id);
         if (idx === -1) return;
+        if (tabs[idx].pageId === 'search-page') { _navStack = []; _navIndex = -1; }
         tabs.splice(idx, 1);
         if (activeTabId === id) {
             if (tabs.length > 0) {
@@ -3438,37 +3442,53 @@ function generateFingerprint() {
             const btn = document.createElement('button');
             btn.className = 'search-status-retry';
             btn.textContent = 'Retry';
-            btn.onclick = () => loadProxiedUrl(url, label);
+            btn.onclick = () => loadProxiedUrl(url, label, { fromHistoryIndex: _navIndex });
             el.appendChild(btn);
         }
         el.classList.add('show');
     }
 
-    // Injects a tiny helper script into the fetched DDG page that intercepts
-    // form submissions (the search box itself, and the "More results"
-    // pagination form) and reroutes them through loadProxiedUrl instead of
-    // letting the sandboxed iframe navigate there natively. A native
-    // navigation to duckduckgo.com from inside the iframe hits X-Frame-Options
-    // and just errors out — this is exactly that bug, fixed.
-    function injectSearchPageHelpers(html) {
+    // Back-navigation history for the in-app "search-page" browser tab.
+    let _navStack = [];   // [{ url, label }]
+    let _navIndex = -1;
+
+    // Injects a tiny helper script into ANY fetched page that intercepts link
+    // clicks and form submissions BEFORE the sandboxed iframe can navigate
+    // there natively (which would hit X-Frame-Options and just error out).
+    // Instead every click/submit gets rerouted through loadProxiedUrl, so
+    // clicking a search result — or any link on any page loaded after it —
+    // stays inside Apricity instead of opening a new browser tab.
+    function injectPageHelpers(html, pageUrl) {
         if (!/<base[\s>]/i.test(html)) {
-            html = html.replace(/<head(\s[^>]*)?>/i, m => m + '<base href="https://html.duckduckgo.com/">');
+            html = html.replace(/<head(\s[^>]*)?>/i, m => m + `<base href="${pageUrl}">`);
         }
-        // Result links still open in a real new browser tab (we don't recursively
-        // re-proxy every clicked link — out of scope for now).
-        html = html.replace(/<a\s/gi, '<a target="_blank" rel="noopener" ');
         const helper = `
         <script>
+        document.addEventListener('click', function(e) {
+            var a = e.target.closest && e.target.closest('a[href]');
+            if (!a) return;
+            var href = a.getAttribute('href');
+            if (!href || href.charAt(0) === '#' || /^(javascript|mailto|tel):/i.test(href)) return;
+            e.preventDefault();
+            var target;
+            try { target = new URL(href, document.baseURI); } catch (err) { return; }
+            var label = (a.textContent || '').trim().slice(0, 40) || target.hostname;
+            if (window.parent && typeof window.parent.loadProxiedUrl === 'function') {
+                window.parent.loadProxiedUrl(target.href, label, { isNav: true });
+            }
+        }, true);
         document.addEventListener('submit', function(e) {
             var form = e.target;
             if (!(form instanceof HTMLFormElement)) return;
+            var method = (form.getAttribute('method') || 'GET').toUpperCase();
+            if (method !== 'GET') return; // don't proxy POST forms (e.g. logins) through a third-party tunnel
             e.preventDefault();
             var action = form.getAttribute('action') || document.baseURI;
             var target = new URL(action, document.baseURI);
             target.search = new URLSearchParams(new FormData(form)).toString();
             var q = target.searchParams.get('q') || '';
             if (window.parent && typeof window.parent.loadProxiedUrl === 'function') {
-                window.parent.loadProxiedUrl(target.href, q || 'Search');
+                window.parent.loadProxiedUrl(target.href, q || target.hostname, { isNav: true });
             }
         }, true);
         <\/script>`;
@@ -3476,9 +3496,20 @@ function generateFingerprint() {
         return html;
     }
 
-    async function loadProxiedUrl(url, label) {
-        label = (label || 'Search').trim() || 'Search';
+    async function loadProxiedUrl(url, label, opts) {
+        opts = opts || {};
+        label = (label || 'Loading…').trim() || 'Loading…';
         const shortLabel = label.length > 18 ? label.slice(0, 18) + '…' : label;
+
+        // Maintain back-history: navigating forward truncates any redo-stack
+        // and pushes the new entry; back-jumps just move the index instead.
+        if (opts.fromHistoryIndex === undefined) {
+            _navStack = _navStack.slice(0, _navIndex + 1);
+            _navStack.push({ url, label });
+            _navIndex = _navStack.length - 1;
+        } else {
+            _navIndex = opts.fromHistoryIndex;
+        }
 
         const existing = tabs.find(t => t.pageId === 'search-page');
         if (existing) {
@@ -3490,16 +3521,33 @@ function generateFingerprint() {
         }
 
         const iframe = document.getElementById('search-frame');
-        setSearchStatus('Loading DuckDuckGo results…');
+        setSearchStatus('Loading…');
         iframe.srcdoc = 'about:blank';
 
         try {
             let html = await fetchProxiedHtml(url);
-            html = injectSearchPageHelpers(html);
+            const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+            if (titleMatch && titleMatch[1].trim()) {
+                const t = titleMatch[1].trim();
+                const tabEntry = tabs.find(x => x.pageId === 'search-page');
+                if (tabEntry) { tabEntry.label = t.length > 18 ? t.slice(0, 18) + '…' : t; tabRender(); }
+            }
+            html = injectPageHelpers(html, url);
             iframe.srcdoc = html;
             setSearchStatus('');
         } catch (e) {
-            setSearchStatus('Could not load search results — ' + e.message + '. Open the browser console for details.', true, url, label);
+            setSearchStatus('Could not load page — ' + e.message + '. Open the browser console for details.', true, url, label);
+        }
+    }
+
+    // Back button for the search-page tab: step back through in-app browsing
+    // history first, only falling through to the home page once exhausted.
+    function searchGoBack() {
+        if (_navIndex > 0) {
+            const prev = _navStack[_navIndex - 1];
+            loadProxiedUrl(prev.url, prev.label, { fromHistoryIndex: _navIndex - 1 });
+        } else {
+            showHome();
         }
     }
 
