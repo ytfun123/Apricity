@@ -56,6 +56,13 @@ function generateFingerprint() {
     <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- Same libcurl.js (curl-to-WASM) used by GUST — tunnels over a WISP WebSocket
+         relay instead of a plain fetch, so it isn't subject to browser CORS at all.
+         This is why search works with zero hosting/proxy setup. -->
+    <script src="https://cdn.jsdelivr.net/npm/libcurl.js@latest/libcurl_full.js" defer
+        onload="window._libcurlReady=true;"
+        onerror="window._libcurlLoadError='libcurl.js failed to load from CDN (blocked or unreachable)';"
+    ></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -3342,20 +3349,69 @@ function generateFingerprint() {
     }
     // ===== SEARCH (proxied DuckDuckGo, embedded in the tab system) =====
     // We never navigate the iframe directly to duckduckgo.com — X-Frame-Options
-    // would block that. Instead we fetch the HTML through a CORS proxy (with
-    // fallbacks) and inject it via srcdoc, same idea as GUST's "fetch, then
-    // render" approach, just without a full WASM/WISP tunnel.
-    // NOTE: corsproxy.io's free tier now only works from localhost/known dev
-    // origins (returns 403 elsewhere), so it's deliberately not used here.
-    const SEARCH_CORS_PROXIES = [
-        url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
-        url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-        url => 'https://proxy.killcors.com/?url=' + encodeURIComponent(url)
-    ];
+    // would block that. Primary path: the same mechanism GUST uses — libcurl.js
+    // (curl compiled to WASM) tunneled over a WISP WebSocket relay. That's a raw
+    // socket tunnel, not an HTTP fetch, so it's never subject to CORS at all —
+    // which is why it works with zero hosting. Public CORS-proxy REST APIs
+    // (codetabs/allorigins/killcors) are kept only as a last-resort fallback,
+    // since those constantly change terms / rate-limit / go down.
+    const WISP = 'wss://wisp.mercurywork.shop/'; // same public relay GUST uses
+    let _curlSession = null;
+    let _curlInitPromise = null;
+
+    async function ensureCurl() {
+        if (_curlSession) return _curlSession;
+        if (_curlInitPromise) return _curlInitPromise;
+        _curlInitPromise = (async () => {
+            if (window._libcurlLoadError) throw new Error(window._libcurlLoadError);
+            const alreadyLoaded = typeof libcurl !== 'undefined' && libcurl.load_wasm;
+            if (!alreadyLoaded) {
+                await new Promise((resolve, reject) => {
+                    const poll = setInterval(() => {
+                        if (typeof libcurl !== 'undefined' && libcurl.load_wasm) { clearInterval(poll); resolve(); }
+                    }, 100);
+                    setTimeout(() => { clearInterval(poll); reject(new Error('Timed out waiting for libcurl.js to load (20s)')); }, 20000);
+                });
+            }
+            await libcurl.load_wasm();
+            libcurl.set_websocket(WISP);
+            _curlSession = new libcurl.HTTPSession();
+            return _curlSession;
+        })();
+        return _curlInitPromise;
+    }
+
+    async function fetchViaCurl(url) {
+        const curl = await ensureCurl();
+        const resp = await curl.fetch(url, { method: 'GET', headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (resp.status >= 400) throw new Error('HTTP ' + resp.status + ' via WISP tunnel');
+        const buf = await resp.arrayBuffer();
+        return new TextDecoder('utf-8').decode(buf);
+    }
+
+    function buildFallbackProxyList() {
+        const list = [];
+        if (window._apricitySearchProxy) {
+            const base = window._apricitySearchProxy;
+            list.push(url => base + (base.includes('?') ? '&' : '?') + 'url=' + encodeURIComponent(url));
+        }
+        list.push(url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url));
+        list.push(url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+        list.push(url => 'https://proxy.killcors.com/?url=' + encodeURIComponent(url));
+        return list;
+    }
+    window._apricitySearchProxy = ''; // optional self-hosted proxy, e.g. a Cloudflare Worker, tried before the public fallbacks
 
     async function fetchProxiedHtml(url) {
+        // 1) Primary: libcurl over WISP — matches GUST, no CORS involved at all.
+        try {
+            return await fetchViaCurl(url);
+        } catch (e) {
+            console.warn('WISP/libcurl fetch failed, falling back to CORS proxies —', e.message);
+        }
+        // 2) Fallback: public/self-hosted CORS-proxy REST APIs.
         let lastErr = null;
-        for (const build of SEARCH_CORS_PROXIES) {
+        for (const build of buildFallbackProxyList()) {
             const proxied = build(url);
             try {
                 const res = await fetch(proxied, { cache: 'no-store' });
@@ -3371,7 +3427,7 @@ function generateFingerprint() {
         throw lastErr || new Error('All proxies failed');
     }
 
-    function setSearchStatus(msg, showRetry, query) {
+    function setSearchStatus(msg, showRetry, url, label) {
         const el = document.getElementById('search-status');
         el.innerHTML = '';
         if (!msg) { el.classList.remove('show'); return; }
@@ -3382,44 +3438,75 @@ function generateFingerprint() {
             const btn = document.createElement('button');
             btn.className = 'search-status-retry';
             btn.textContent = 'Retry';
-            btn.onclick = () => loadSearchResults(query);
+            btn.onclick = () => loadProxiedUrl(url, label);
             el.appendChild(btn);
         }
         el.classList.add('show');
     }
 
-    async function loadSearchResults(query) {
-        query = (query || '').trim();
-        if (!query) return;
+    // Injects a tiny helper script into the fetched DDG page that intercepts
+    // form submissions (the search box itself, and the "More results"
+    // pagination form) and reroutes them through loadProxiedUrl instead of
+    // letting the sandboxed iframe navigate there natively. A native
+    // navigation to duckduckgo.com from inside the iframe hits X-Frame-Options
+    // and just errors out — this is exactly that bug, fixed.
+    function injectSearchPageHelpers(html) {
+        if (!/<base[\s>]/i.test(html)) {
+            html = html.replace(/<head(\s[^>]*)?>/i, m => m + '<base href="https://html.duckduckgo.com/">');
+        }
+        // Result links still open in a real new browser tab (we don't recursively
+        // re-proxy every clicked link — out of scope for now).
+        html = html.replace(/<a\s/gi, '<a target="_blank" rel="noopener" ');
+        const helper = `
+        <script>
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            if (!(form instanceof HTMLFormElement)) return;
+            e.preventDefault();
+            var action = form.getAttribute('action') || document.baseURI;
+            var target = new URL(action, document.baseURI);
+            target.search = new URLSearchParams(new FormData(form)).toString();
+            var q = target.searchParams.get('q') || '';
+            if (window.parent && typeof window.parent.loadProxiedUrl === 'function') {
+                window.parent.loadProxiedUrl(target.href, q || 'Search');
+            }
+        }, true);
+        <\/script>`;
+        html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, helper + '</body>') : html + helper;
+        return html;
+    }
+
+    async function loadProxiedUrl(url, label) {
+        label = (label || 'Search').trim() || 'Search';
+        const shortLabel = label.length > 18 ? label.slice(0, 18) + '…' : label;
 
         const existing = tabs.find(t => t.pageId === 'search-page');
         if (existing) {
-            existing.extra = { query };
-            existing.label = query.length > 18 ? query.slice(0, 18) + '…' : query;
+            existing.label = shortLabel;
             tabSwitch(existing.id);
             tabRender();
         } else {
-            tabNew('search-page', query.length > 18 ? query.slice(0, 18) + '…' : query, TAB_ICONS.search, { query });
+            tabNew('search-page', shortLabel, TAB_ICONS.search, {});
         }
 
         const iframe = document.getElementById('search-frame');
         setSearchStatus('Loading DuckDuckGo results…');
         iframe.srcdoc = 'about:blank';
 
-        const ddgUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
         try {
-            let html = await fetchProxiedHtml(ddgUrl);
-            // Make relative URLs (css/images/result links) resolve against DDG's real origin
-            if (!/<base[\s>]/i.test(html)) {
-                html = html.replace(/<head(\s[^>]*)?>/i, m => m + '<base href="https://html.duckduckgo.com/">');
-            }
-            // Result links should open in a real new tab rather than navigate our sandboxed iframe
-            html = html.replace(/<a\s/gi, '<a target="_blank" rel="noopener" ');
+            let html = await fetchProxiedHtml(url);
+            html = injectSearchPageHelpers(html);
             iframe.srcdoc = html;
             setSearchStatus('');
         } catch (e) {
-            setSearchStatus('Could not load search results (proxy blocked or offline).', true, query);
+            setSearchStatus('Could not load search results — ' + e.message + '. Open the browser console for details.', true, url, label);
         }
+    }
+
+    function loadSearchResults(query) {
+        query = (query || '').trim();
+        if (!query) return;
+        loadProxiedUrl('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query), query);
     }
 
     function goSearch() {
