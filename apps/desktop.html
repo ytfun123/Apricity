@@ -452,54 +452,106 @@
     }
     [data-system-style="luna"] .content { background: #f1efe7; }
 
-    /* Themed "launching…" splash shown while handing off to a host Apricity feature */
-    .launch-splash {
-      width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 10px; color: var(--text-color); text-align: center; padding: 20px; box-sizing: border-box;
-      background: var(--gnome-bg);
-    }
-    .launch-splash-icon {
-      font-size: 3rem; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2));
-    }
-    .launch-splash-icon.dock-bounce { animation: dock-bounce 0.9s ease-in-out infinite; }
-    .launch-splash-title { font-weight: 700; font-size: 1.05rem; }
-    .launch-splash-sub { font-size: 0.85rem; opacity: 0.65; }
-    .launch-spinner {
-      width: 26px; height: 26px; margin-top: 6px; border-radius: 50%;
-      border: 3px solid color-mix(in srgb, var(--accent-color) 25%, transparent);
-      border-top-color: var(--accent-color);
-      animation: launch-spin 0.8s linear infinite;
-    }
-    [data-system-style="classic"] .launch-splash,
-    [data-system-style="luna"] .launch-splash { border-radius: 0; }
-    @keyframes launch-spin { to { transform: rotate(360deg); } }
-
-    /* macOS-style "genie" launch: window springs up from the dock/taskbar,
-       icon bounces the way an app icon bounces in the macOS Dock while opening. */
-    @keyframes dock-bounce {
-      0%, 100% { transform: translateY(0); }
-      25% { transform: translateY(-14px); }
-      50% { transform: translateY(0); }
-      70% { transform: translateY(-6px); }
-      85% { transform: translateY(0); }
-    }
+    /* macOS-style "genie" window entrance: new app windows spring up from the
+       taskbar/dock, matching how apps bounce open on macOS. Windows-style
+       themes (classic/luna) get a quick plain fade instead. */
     @keyframes genie-in {
       0% { transform: translate(-50%, -50%) scale(0.35) translateY(70px); opacity: 0; }
       65% { transform: translate(-50%, -50%) scale(1.04) translateY(-6px); opacity: 1; }
       100% { transform: translate(-50%, -50%) scale(1) translateY(0); opacity: 1; }
     }
-    @keyframes genie-out {
-      0% { transform: translate(-50%, -50%) scale(1) translateY(0); opacity: 1; }
-      100% { transform: translate(-50%, -50%) scale(0.3) translateY(90px); opacity: 0; }
-    }
     .launch-window-enter { transform-origin: bottom center; animation: genie-in 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-    .launch-window-exit { transform-origin: bottom center; animation: genie-out 0.3s ease-in forwards; }
 
-    /* Simple fade for the Windows-style themes, which don't do genie/dock effects */
     @keyframes launch-fade-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.97); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-    @keyframes launch-fade-out { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(-50%, -50%) scale(0.97); } }
     .launch-window-fade-in { animation: launch-fade-in 0.2s ease-out both; }
-    .launch-window-fade-out { animation: launch-fade-out 0.18s ease-in forwards; }
+
+    /* ===== Games Library (native to Desktop) ===== */
+    .games-lib-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 14px;
+      padding: 20px; overflow-y: auto; height: 100%; box-sizing: border-box; background: var(--window-bg);
+    }
+    .games-lib-card {
+      display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px;
+      border-radius: var(--control-radius); cursor: pointer; text-align: center;
+      background: var(--browser-ui-bg); border: 1px solid var(--title-border);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .games-lib-card:hover { transform: translateY(-3px); background: var(--icon-hover); }
+    .games-lib-icon { font-size: 2rem; }
+    .games-lib-name { font-size: 0.76rem; font-weight: 600; color: var(--text-color); line-height: 1.25; }
+
+    /* ===== YouTube mini app (native to Desktop) ===== */
+    .yt-app { display: flex; flex-direction: column; height: 100%; background: var(--window-bg); color: var(--text-color); }
+    .yt-app-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--title-border); }
+    .yt-app-search { flex-grow: 1; padding: 8px 14px; border-radius: var(--control-radius); border: 1px solid var(--title-border); background: var(--browser-ui-bg); color: var(--text-color); font-size: 0.9rem; outline: none; }
+    .yt-app-body { flex-grow: 1; overflow-y: auto; padding: 16px; }
+    .yt-app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+    .yt-app-card { cursor: pointer; border-radius: var(--control-radius); overflow: hidden; background: var(--browser-ui-bg); border: 1px solid var(--title-border); transition: transform 0.15s ease; }
+    .yt-app-card:hover { transform: translateY(-3px); }
+    .yt-app-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #000; }
+    .yt-app-title { font-size: 0.8rem; font-weight: 600; padding: 8px 10px 2px; line-height: 1.3; }
+    .yt-app-channel { font-size: 0.72rem; opacity: 0.65; padding: 0 10px 10px; }
+    .yt-app-player-wrap { padding: 16px; }
+    .yt-app-back { margin-bottom: 12px; }
+    .yt-app-status { padding: 30px; text-align: center; opacity: 0.6; font-size: 0.85rem; }
+
+    /* ===== Music (native to Desktop) ===== */
+    .music-app { display: flex; flex-direction: column; height: 100%; background: var(--window-bg); color: var(--text-color); }
+    .music-app-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--title-border); }
+    .music-app-body { flex-grow: 1; overflow-y: auto; padding: 8px 10px; }
+    .music-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: var(--control-radius); cursor: pointer; transition: background 0.15s ease; }
+    .music-row:hover { background: var(--icon-hover); }
+    .music-row-thumb { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; background: #000; }
+    .music-row-info { flex-grow: 1; min-width: 0; }
+    .music-row-title { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .music-row-artist { font-size: 0.72rem; opacity: 0.65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .music-row-play { opacity: 0.5; font-size: 0.9rem; }
+    .music-app-nowplaying { align-items: center; gap: 14px; padding: 12px 16px; border-top: 1px solid var(--title-border); background: var(--browser-ui-bg); }
+    .music-np-title { font-size: 0.82rem; font-weight: 700; }
+    .music-np-artist { font-size: 0.72rem; opacity: 0.65; }
+    .music-np-bars { display: flex; align-items: flex-end; gap: 3px; height: 18px; margin-left: auto; }
+    .music-np-bars span { width: 3px; background: var(--accent-color); border-radius: 2px; animation: music-bar 0.9s ease-in-out infinite; }
+    .music-np-bars span:nth-child(1) { height: 40%; animation-delay: 0s; }
+    .music-np-bars span:nth-child(2) { height: 100%; animation-delay: 0.15s; }
+    .music-np-bars span:nth-child(3) { height: 65%; animation-delay: 0.3s; }
+    .music-np-bars span:nth-child(4) { height: 85%; animation-delay: 0.45s; }
+    @keyframes music-bar { 0%, 100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
+
+    /* ===== AI Chat (native to Desktop) ===== */
+    .ai-chat-app { display: flex; flex-direction: column; height: 100%; background: var(--window-bg); color: var(--text-color); }
+    .ai-chat-messages { flex-grow: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .ai-chat-bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 0.85rem; line-height: 1.4; white-space: pre-wrap; }
+    .ai-chat-bubble.me { align-self: flex-end; background: var(--accent-color); color: #fff; border-bottom-right-radius: 4px; }
+    .ai-chat-bubble.bot { align-self: flex-start; background: var(--browser-ui-bg); border: 1px solid var(--title-border); border-bottom-left-radius: 4px; }
+    .ai-chat-inputbar { display: flex; align-items: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--title-border); }
+    .ai-chat-input { flex-grow: 1; resize: none; padding: 8px 14px; border-radius: var(--control-radius); border: 1px solid var(--title-border); background: var(--browser-ui-bg); color: var(--text-color); font-family: inherit; font-size: 0.85rem; outline: none; max-height: 100px; }
+
+    /* ===== Meet Stable (native to Desktop) ===== */
+    .meet-app { display: flex; flex-direction: column; height: 100%; background: var(--window-bg); color: var(--text-color); }
+    .meet-app-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--title-border); flex-wrap: wrap; }
+    .meet-app-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--title-border); flex-wrap: wrap; }
+    .meet-tool-btn.off { background: var(--accent-color); color: #fff; }
+    .meet-app-status { padding: 6px 4px; font-size: 0.78rem; opacity: 0.65; margin-left: auto; }
+    .meet-app-main { flex-grow: 1; display: flex; min-height: 0; }
+    .meet-app-videos { flex-grow: 1; display: flex; flex-wrap: wrap; gap: 10px; padding: 14px; align-content: flex-start; overflow-y: auto; }
+    .meet-video-tile { width: 260px; height: 190px; background: #000; border-radius: var(--control-radius); object-fit: cover; }
+    .meet-app-chat { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; border-left: 1px solid var(--title-border); background: var(--browser-ui-bg); }
+    .meet-chat-messages { flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .meet-chat-msg { font-size: 0.78rem; line-height: 1.35; background: var(--window-bg); border: 1px solid var(--title-border); border-radius: 10px; padding: 6px 10px; }
+    .meet-chat-msg.me { background: var(--accent-color); color: #fff; border-color: transparent; }
+    .meet-chat-name { display: block; font-size: 0.65rem; font-weight: 700; opacity: 0.7; margin-bottom: 1px; }
+    .meet-chat-inputbar { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--title-border); }
+    .meet-chat-input { flex-grow: 1; min-width: 0; padding: 6px 10px; border-radius: var(--control-radius); border: 1px solid var(--title-border); background: var(--window-bg); color: var(--text-color); font-size: 0.78rem; outline: none; }
+    .meet-app-credit { padding: 6px 14px; font-size: 0.65rem; opacity: 0.5; text-align: center; border-top: 1px solid var(--title-border); }
+
+    [data-system-style="classic"] .music-row,
+    [data-system-style="classic"] .meet-video-tile { border-radius: 0; }
+
+
+    [data-system-style="classic"] .games-lib-card,
+    [data-system-style="classic"] .yt-app-card { border-radius: 0; }
+    [data-system-style="luna"] .games-lib-card,
+    [data-system-style="luna"] .yt-app-card { border-radius: 4px; }
 
     /* Settings View Layouts */
     .gnome-settings { display: flex; width: 100%; height: 100%; background: var(--gnome-bg); color: var(--text-color); }
@@ -556,6 +608,7 @@
     [data-system-style="luna"] .fx-tab.active { background: #f1efe7; color: #000; border-bottom: none; }
     [data-system-style="luna"] .fx-address-input { border-radius: 3px; border: 1px solid #7f9db9; background: #fff; color: #000; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body data-system-style="modern" data-theme-mode="dark">
 
@@ -694,81 +747,494 @@
       { id: 'notepad', title: 'Notepad', icon: '📝', run: (txt, name, idx) => openNotepadApp(txt, name, idx) },
       { id: 'paint', title: 'Paint', icon: '🎨', run: () => openPaintApp() },
       { id: 'audacity', title: 'Audacity', icon: '🎧', run: () => openAudacityApp() },
-      { id: 'youtube', title: 'YouTube', icon: '📺', run: () => openHostApp('youtube') },
-      { id: 'apricitygames', title: 'Apricity Games', icon: '🎮', run: () => openHostApp('games') },
-      { id: 'apricityapps', title: 'Apricity Apps', icon: '🚀', run: () => openHostApp('apps') },
+      { id: 'youtube', title: 'YouTube', icon: '📺', run: () => openYouTubeApp() },
+      { id: 'gamecenter', title: 'Game Center', icon: '🕹️', run: () => openGameCenter() },
+      { id: 'music', title: 'Music', icon: '🎵', run: () => openMusicApp() },
+      { id: 'aichat', title: 'AI Chat', icon: '🤖', run: () => openAIChatApp() },
+      { id: 'meet', title: 'Meet Stable', icon: '📹', run: () => openMeetApp() },
+      { id: 'sunlit', title: 'Sunlit OS', icon: '☀️', run: () => openSunlitOSApp() },
       { id: 'settings', title: 'Settings', icon: '⚙️', run: () => openSettingsWindow() }
     ];
 
-    // This Desktop app runs inside an <iframe> hosted by Apricity's main
-    // index.html (apps/desktop.html). YouTube, the Games library, and the
-    // Apps panel already live as fully-working features in that parent
-    // document — there's no standalone yt.html/g.html/apps.html to embed.
-    // So instead of re-building them here, reach out to the parent window
-    // and trigger its existing, working implementations directly — but do
-    // it through a themed "launching…" window first, so it reads as an app
-    // opening from the desktop rather than an abrupt jump to another site.
-    const HOST_APP_META = {
-      youtube: { title: 'YouTube', icon: '📺', fn: 'showYouTube' },
-      games:   { title: 'Apricity Games', icon: '🎮', fn: 'toggleGamesFullscreen' },
-      apps:    { title: 'Apricity Apps', icon: '🚀', fn: 'toggleApps' }
-    };
+    function escHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
 
-    function openHostApp(which) {
-      const meta = HOST_APP_META[which];
-      if (!meta) return;
-
-      const isMacStyle = !['classic', 'luna'].includes(systemStyleDesign);
-
-      const view = document.createElement('div');
-      view.className = 'launch-splash';
-      view.innerHTML = `
-        <div class="launch-splash-icon${isMacStyle ? ' dock-bounce' : ''}">${meta.icon}</div>
-        <div class="launch-splash-title">${meta.title}</div>
-        <div class="launch-splash-sub">Launching…</div>
-        <div class="launch-spinner"></div>
-      `;
-
-      const winId = openWindow(meta.title, view);
+    // Opens a window centered on screen with a themed spring-in animation —
+    // a mac-style genie/dock-bounce feel on the modern/pastel styles, and a
+    // quick plain fade on the Windows-style themes (classic/luna).
+    function openThemedWindow(title, contentEl, opts) {
+      opts = opts || {};
+      const winId = openWindow(title, contentEl);
       const winEl = document.getElementById(winId);
       if (winEl) {
-        // Read as a compact splash, not a full resizable app window — centered,
-        // springing up from the dock/taskbar like a macOS app launch.
-        winEl.style.width = '360px';
-        winEl.style.height = '260px';
-        winEl.style.resize = 'none';
+        winEl.style.width = (opts.width || 760) + 'px';
+        winEl.style.height = (opts.height || 560) + 'px';
         winEl.style.left = '50%';
         winEl.style.top = '50%';
-        winEl.classList.add(isMacStyle ? 'launch-window-enter' : 'launch-window-fade-in');
+        const isMacStyle = !['classic', 'luna'].includes(systemStyleDesign);
+        const enterClass = isMacStyle ? 'launch-window-enter' : 'launch-window-fade-in';
+        winEl.classList.add(enterClass);
+        winEl.addEventListener('animationend', () => winEl.classList.remove(enterClass), { once: true });
       }
+      return winId;
+    }
 
-      const host = window.parent !== window ? window.parent : null;
+    // ===================== GAME CENTER (native to Desktop) =====================
+    // Desktop lives at apps/desktop.html, so paths that Apricity's own game
+    // panel writes relative to the site root (e.g. './games/foo.html') need
+    // one '../' to reach the same folder from here.
+    const DESKTOP_GAMES = [
+      { id: 'gn-math', name: 'gn-math', icon: '🎮', src: '../games/gn-math.html' },
+      { id: 'hollow-knight', name: 'Hollow Knight', icon: '⚔️', src: '../hollow_knight.html' },
+      { id: 'snow-rider', name: 'Snow Rider', icon: '🎿', src: '../snow_rider.html' },
+      { id: 'pvz', name: 'Plants vs Zombies', icon: '🌻', src: '../games/pvz.html' },
+      { id: 'motox3m', name: 'Moto X3M', icon: '🏍️', src: '../games/motox3m.html' },
+      { id: 'drive_in_russia', name: 'Drive in Russia', icon: '🚗', src: '../games/driverussia.html' },
+      { id: 'growagarden', name: 'Grow a Garden', icon: '🌱', src: '../games/gag.html' },
+      { id: 'infinitycraft', name: 'Infinity Craft', icon: '✨', src: '../games/infinitycraft.html' },
+      { id: 'minecraft', name: 'Minecraft 1.12', icon: '🧱', src: '../games/mc.html' },
+      { id: 'run3', name: 'Run 3', icon: '🏃', src: '../games/run3/index.html' },
+      { id: 'pf', name: 'Papas Freezeria', icon: '🍦', src: '../games/pf.html' },
+      { id: 'tanuki', name: 'Tanuki Sunset', icon: '🌆', src: '../games/tanuki/index.html' },
+      { id: 'drive', name: 'Drive Mad', icon: '🚦', src: '../games/drive.html' },
+      { id: 'gd', name: 'Geometry Dash', icon: '🔷', src: '../games/gd.html' },
+      { id: 'whg', name: "World's Hardest Game", icon: '⬛', src: '../games/worldhardestgame.html' },
+      { id: 'pp', name: 'Papas Pizzeria', icon: '🍕', src: '../games/pp.html' },
+      { id: 'bb', name: 'Block Blast', icon: '🧩', src: '../games/bb.html' },
+      { id: 'drift-boss', name: 'Drift Boss', icon: '🏁', src: '../games/drift-boss.html' },
+      { id: 'hole', name: 'Hole.io', icon: '⚫', src: '../games/hole_io.html' },
+      { id: 'wordle', name: 'Wordle', icon: '🔤', src: '../games/wordle.html' },
+      { id: 'cookies-clicker', name: 'Cookies Clicker', icon: '🍪', src: '../games/cookies_clicker.html' },
+      { id: '99nif', name: '99 Nights in Forest', icon: '🌲', src: '../games/99nif.html' },
+      { id: 'schoolboy-runaway', name: 'Schoolboy Runaway', icon: '🏫', src: '../games/schoolboy-runaway/index.html' },
+      { id: 'stickman-prison', name: 'Stickman Prison', icon: '🏃‍♂️', src: '../games/stickman_prison.html' },
+      { id: 'chess', name: 'Classic Chess', icon: '♞', src: '../games/chess.html' },
+      { id: 'fb4', name: 'Factory Balls 4', icon: '🏭', src: '../games/fb4.html' },
+      { id: 'rb4', name: 'Red Ball 4', icon: '🔴', src: '../games/rb4.html' }
+    ];
 
-      function dismiss() {
-        if (!winEl) return;
-        winEl.classList.remove('launch-window-enter', 'launch-window-fade-in');
-        winEl.classList.add(isMacStyle ? 'launch-window-exit' : 'launch-window-fade-out');
-        setTimeout(() => closeWindow(winId), isMacStyle ? 300 : 190);
+    function openGameCenter() {
+      const wrap = document.createElement('div');
+      wrap.className = 'games-lib-grid';
+      wrap.innerHTML = DESKTOP_GAMES.map(g =>
+        `<div class="games-lib-card" onclick="launchDesktopGame('${g.id}')">
+          <div class="games-lib-icon">${g.icon}</div>
+          <div class="games-lib-name">${escHtml(g.name)}</div>
+        </div>`
+      ).join('');
+      openThemedWindow('Game Center', wrap, { width: 760, height: 560 });
+    }
+
+    window.launchDesktopGame = function(id) {
+      const g = DESKTOP_GAMES.find(x => x.id === id);
+      if (!g) return;
+      const view = document.createElement('div');
+      view.style.cssText = 'width:100%;height:100%;';
+      view.innerHTML = `<iframe src="${g.src}" style="width:100%;height:100%;border:none;display:block;background:#000;" allowfullscreen allow="autoplay; fullscreen; gamepad"></iframe>`;
+      openWindow(g.name, view);
+    };
+
+    // ===================== YOUTUBE (native to Desktop) =====================
+    // Reuses the same public YouTube Data API key Apricity's own YouTube
+    // page already ships with client-side (index.html is untouched — this
+    // just points Desktop's own mini player at the same API).
+    const DESKTOP_YT_KEY = 'AIzaSyB7x5zyGdt3_9JnaIWqQYrvNkcB6lef_xA';
+
+    function openYouTubeApp() {
+      const view = document.createElement('div');
+      view.className = 'yt-app';
+      view.innerHTML = `
+        <div class="yt-app-bar">
+          <input type="text" class="yt-app-search" placeholder="Search YouTube…">
+          <button class="panel-btn" onclick="ytAppSearch(this)">Search</button>
+        </div>
+        <div class="yt-app-body"><div class="yt-app-status">Loading trending videos…</div></div>
+      `;
+      const winId = openThemedWindow('YouTube', view, { width: 820, height: 600 });
+      const input = view.querySelector('.yt-app-search');
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') ytAppSearch(input); });
+      view.dataset.winId = winId;
+      ytAppLoad(view, 'https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&maxResults=24&regionCode=US&key=' + DESKTOP_YT_KEY);
+    }
+
+    window.ytAppSearch = function(triggerEl) {
+      const view = triggerEl.closest('.yt-app');
+      const q = view.querySelector('.yt-app-search').value.trim();
+      if (!q) return;
+      ytAppLoad(view, 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=24&q=' + encodeURIComponent(q) + '&key=' + DESKTOP_YT_KEY);
+    };
+
+    async function ytAppLoad(view, url) {
+      const body = view.querySelector('.yt-app-body');
+      body.innerHTML = '<div class="yt-app-status">Loading…</div>';
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const items = data.items || [];
+        if (!items.length) { body.innerHTML = '<div class="yt-app-status">No results.</div>'; return; }
+        body.innerHTML = `<div class="yt-app-grid">${items.map(it => {
+          const vid = it.id && it.id.videoId ? it.id.videoId : it.id;
+          const sn = it.snippet || {};
+          const thumb = sn.thumbnails && (sn.thumbnails.medium || sn.thumbnails.default);
+          return `<div class="yt-app-card" onclick="ytAppPlay(this, '${vid}')">
+            <img class="yt-app-thumb" src="${thumb ? escHtml(thumb.url) : ''}" alt="" loading="lazy">
+            <div class="yt-app-title">${escHtml(sn.title)}</div>
+            <div class="yt-app-channel">${escHtml(sn.channelTitle)}</div>
+          </div>`;
+        }).join('')}</div>`;
+      } catch (e) {
+        body.innerHTML = '<div class="yt-app-status">Couldn\'t load videos right now.</div>';
       }
+    }
 
-      setTimeout(() => {
-        try {
-          if (host && typeof host[meta.fn] === 'function') {
-            host[meta.fn]();
-            dismiss();
-            return;
-          }
-        } catch (e) {
-          // Cross-origin or otherwise blocked — fall through to the notice below.
+    window.ytAppPlay = function(cardEl, videoId) {
+      const view = cardEl.closest('.yt-app');
+      const body = view.querySelector('.yt-app-body');
+      body.innerHTML = `
+        <div class="yt-app-player-wrap">
+          <button class="panel-btn yt-app-back" onclick="ytAppBack(this)">&#8592; Back to results</button>
+          <iframe width="100%" height="420" style="border:none;border-radius:var(--control-radius);display:block;" src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>`;
+    };
+
+    window.ytAppBack = function(btnEl) {
+      const view = btnEl.closest('.yt-app');
+      ytAppLoad(view, 'https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&maxResults=24&regionCode=US&key=' + DESKTOP_YT_KEY);
+    };
+
+    // ===================== MUSIC (native to Desktop) =====================
+    // A Spotify-style row list backed by the same public YouTube Data API
+    // key used by the YouTube app above, filtered to music videos.
+    function openMusicApp() {
+      const view = document.createElement('div');
+      view.className = 'music-app';
+      view.innerHTML = `
+        <div class="music-app-bar">
+          <input type="text" class="yt-app-search music-search" placeholder="Search for songs or artists…">
+          <button class="panel-btn" onclick="musicAppSearch(this)">Search</button>
+        </div>
+        <div class="music-app-body"><div class="yt-app-status">Loading top tracks…</div></div>
+        <div class="music-app-nowplaying" style="display:none;"></div>
+      `;
+      openThemedWindow('Music', view, { width: 640, height: 620 });
+      const input = view.querySelector('.music-search');
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') musicAppSearch(input); });
+      musicAppLoad(view, 'https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&maxResults=25&regionCode=US&key=' + DESKTOP_YT_KEY);
+    }
+
+    window.musicAppSearch = function(triggerEl) {
+      const view = triggerEl.closest('.music-app');
+      const q = view.querySelector('.music-search').value.trim();
+      if (!q) return;
+      musicAppLoad(view, 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=25&q=' + encodeURIComponent(q) + '&key=' + DESKTOP_YT_KEY);
+    };
+
+    async function musicAppLoad(view, url) {
+      const body = view.querySelector('.music-app-body');
+      body.innerHTML = '<div class="yt-app-status">Loading…</div>';
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const items = data.items || [];
+        if (!items.length) { body.innerHTML = '<div class="yt-app-status">No tracks found.</div>'; return; }
+        body.innerHTML = items.map(it => {
+          const vid = it.id && it.id.videoId ? it.id.videoId : it.id;
+          const sn = it.snippet || {};
+          const thumb = sn.thumbnails && (sn.thumbnails.default || sn.thumbnails.medium);
+          return `<div class="music-row" onclick="musicAppPlay(this, '${vid}', '${escHtml(sn.title).replace(/'/g,"&#39;")}', '${escHtml(sn.channelTitle).replace(/'/g,"&#39;")}')">
+            <img class="music-row-thumb" src="${thumb ? escHtml(thumb.url) : ''}" alt="">
+            <div class="music-row-info">
+              <div class="music-row-title">${escHtml(sn.title)}</div>
+              <div class="music-row-artist">${escHtml(sn.channelTitle)}</div>
+            </div>
+            <div class="music-row-play">▶</div>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        body.innerHTML = '<div class="yt-app-status">Couldn\'t load tracks right now.</div>';
+      }
+    }
+
+    window.musicAppPlay = function(rowEl, videoId, title, artist) {
+      const view = rowEl.closest('.music-app');
+      const bar = view.querySelector('.music-app-nowplaying');
+      bar.style.display = 'flex';
+      bar.innerHTML = `
+        <div class="music-np-info">
+          <div class="music-np-title">${title}</div>
+          <div class="music-np-artist">${artist}</div>
+        </div>
+        <div class="music-np-player">
+          <iframe width="1" height="1" style="opacity:0;position:absolute;pointer-events:none;" src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="autoplay; encrypted-media"></iframe>
+        </div>`;
+      // A tiny visible audio-style control strip, without a distracting video frame
+      bar.innerHTML += `<div class="music-np-bars"><span></span><span></span><span></span><span></span></div>`;
+    };
+
+    // ===================== AI CHAT (native to Desktop) =====================
+    // Talks directly to Groq's chat completions API using the same key
+    // Apricity's own Groq page ships with client-side — works immediately,
+    // no setup step, same as the YouTube/Music apps above.
+    const DESKTOP_GROQ_KEY = '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';
+
+    function openAIChatApp() {
+      const view = document.createElement('div');
+      view.className = 'ai-chat-app';
+      view.innerHTML = `
+        <div class="ai-chat-messages"></div>
+        <div class="ai-chat-inputbar">
+          <textarea class="ai-chat-input" rows="1" placeholder="Message AI Chat…"></textarea>
+          <button class="panel-btn" onclick="aiChatSend(this)">Send</button>
+        </div>`;
+      view.dataset.history = '[]';
+      openThemedWindow('AI Chat', view, { width: 620, height: 640 });
+      const ta = view.querySelector('.ai-chat-input');
+      ta.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); aiChatSend(ta); }
+      });
+    }
+
+    window.aiChatSend = async function(triggerEl) {
+      const view = triggerEl.closest('.ai-chat-app');
+      const input = view.querySelector('.ai-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      const history = JSON.parse(view.dataset.history || '[]');
+      history.push({ role: 'user', content: text });
+      aiChatAppendMsg(view, 'user', text);
+      const typingId = 'typing-' + Date.now();
+      aiChatAppendMsg(view, 'assistant', '…', typingId);
+      try {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DESKTOP_GROQ_KEY },
+          body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: history })
+        });
+        const data = await res.json();
+        const bubble = view.querySelector('#' + typingId);
+        if (data.error) {
+          bubble.textContent = 'Error: ' + data.error.message;
+        } else {
+          const reply = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '(no response)';
+          bubble.textContent = reply;
+          history.push({ role: 'assistant', content: reply });
         }
-        const icon = view.querySelector('.launch-splash-icon');
-        if (icon) icon.classList.remove('dock-bounce');
-        view.innerHTML = `
-          <div class="launch-splash-icon">${meta.icon}</div>
-          <div class="launch-splash-title">${meta.title}</div>
-          <div class="launch-splash-sub" style="opacity:0.75;">Only available when Desktop is opened inside Apricity.</div>
-        `;
-      }, 550);
+      } catch (e) {
+        const bubble = view.querySelector('#' + typingId);
+        if (bubble) bubble.textContent = 'Network error — try again.';
+      }
+      view.dataset.history = JSON.stringify(history);
+      const msgs = view.querySelector('.ai-chat-messages');
+      msgs.scrollTop = msgs.scrollHeight;
+    };
+
+    function aiChatAppendMsg(view, role, text, id) {
+      const msgs = view.querySelector('.ai-chat-messages');
+      const bubble = document.createElement('div');
+      bubble.className = 'ai-chat-bubble ' + (role === 'user' ? 'me' : 'bot');
+      if (id) bubble.id = id;
+      bubble.textContent = text;
+      msgs.appendChild(bubble);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    // ===================== MEET STABLE (native to Desktop) =====================
+    // Peer-to-peer video calling over PeerJS's free public broker
+    // (0.peerjs.com) — the same signaling service Apricity's own Meet
+    // Stable feature uses, wired up fresh here for Desktop.
+    let meetPeer = null, meetStream = null, meetConns = {};
+    let meetRecorder = null, meetRecordedChunks = [];
+
+    function openMeetApp() {
+      const view = document.createElement('div');
+      view.className = 'meet-app';
+      view.innerHTML = `
+        <div class="meet-app-bar">
+          <input type="text" class="yt-app-search meet-name" placeholder="Your name" style="max-width:120px;">
+          <input type="text" class="yt-app-search meet-room" placeholder="Room code" style="max-width:120px;">
+          <button class="panel-btn" onclick="meetCreateRoom(this)">Create</button>
+          <button class="panel-btn" onclick="meetJoinRoom(this)">Join</button>
+        </div>
+        <div class="meet-app-toolbar">
+          <button class="panel-btn meet-tool-btn" onclick="meetToggleMic(this)">🎤 Mic</button>
+          <button class="panel-btn meet-tool-btn" onclick="meetToggleCam(this)">📷 Cam</button>
+          <button class="panel-btn meet-tool-btn" onclick="meetCapturePhoto(this)">📸 Photo</button>
+          <button class="panel-btn meet-tool-btn" onclick="meetToggleRecord(this)">⏺ Rec</button>
+          <div class="meet-app-status">Not connected</div>
+        </div>
+        <div class="meet-app-main">
+          <div class="meet-app-videos"></div>
+          <div class="meet-app-chat">
+            <div class="meet-chat-messages"></div>
+            <div class="meet-chat-inputbar">
+              <input type="text" class="meet-chat-input" placeholder="Message…">
+              <button class="panel-btn" onclick="meetSendChat(this)">Send</button>
+            </div>
+          </div>
+        </div>
+        <div class="meet-app-credit">Meet Stable is built by one of Apricity's original creators — please don't redistribute or claim this as your own.</div>
+      `;
+      const winId = openThemedWindow('Meet Stable', view, { width: 820, height: 620 });
+      const chatInput = view.querySelector('.meet-chat-input');
+      chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') meetSendChat(chatInput); });
+      return winId;
+    }
+
+    async function meetInitMedia(view) {
+      meetStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      meetAddVideo(view, meetStream, true, 'me');
+    }
+
+    function meetAddVideo(view, stream, muted, key) {
+      const wrap = view.querySelector('.meet-app-videos');
+      let vid = wrap.querySelector('#meet-vid-' + key);
+      if (!vid) {
+        vid = document.createElement('video');
+        vid.id = 'meet-vid-' + key;
+        vid.autoplay = true;
+        vid.playsInline = true;
+        vid.muted = muted;
+        vid.className = 'meet-video-tile';
+        wrap.appendChild(vid);
+      }
+      vid.srcObject = stream;
+    }
+
+    function meetSetupDataConn(view, conn) {
+      meetConns[conn.peer] = meetConns[conn.peer] || {};
+      meetConns[conn.peer].data = conn;
+      conn.on('data', d => meetHandleData(view, d));
+    }
+
+    function meetHandleData(view, d) {
+      if (d && d.type === 'msg') meetAppendChatMsg(view, d.name || 'Peer', d.text, false);
+    }
+
+    function meetAppendChatMsg(view, name, text, isMe) {
+      const list = view.querySelector('.meet-chat-messages');
+      const el = document.createElement('div');
+      el.className = 'meet-chat-msg' + (isMe ? ' me' : '');
+      el.innerHTML = `<span class="meet-chat-name">${escHtml(name)}</span>${escHtml(text)}`;
+      list.appendChild(el);
+      list.scrollTop = list.scrollHeight;
+    }
+
+    window.meetSendChat = function(triggerEl) {
+      const view = triggerEl.closest('.meet-app');
+      const input = view.querySelector('.meet-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      const name = view.querySelector('.meet-name').value.trim() || 'You';
+      Object.values(meetConns).forEach(c => { if (c.data && c.data.open) c.data.send({ type: 'msg', name, text }); });
+      meetAppendChatMsg(view, 'You', text, true);
+    };
+
+    window.meetToggleMic = function(btnEl) {
+      if (!meetStream) return;
+      const track = meetStream.getAudioTracks()[0];
+      if (!track) return;
+      track.enabled = !track.enabled;
+      btnEl.classList.toggle('off', !track.enabled);
+    };
+
+    window.meetToggleCam = function(btnEl) {
+      if (!meetStream) return;
+      const track = meetStream.getVideoTracks()[0];
+      if (!track) return;
+      track.enabled = !track.enabled;
+      btnEl.classList.toggle('off', !track.enabled);
+    };
+
+    window.meetCapturePhoto = function(btnEl) {
+      const view = btnEl.closest('.meet-app');
+      const vid = view.querySelector('#meet-vid-me');
+      if (!vid || !vid.videoWidth) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = vid.videoWidth;
+      canvas.height = vid.videoHeight;
+      canvas.getContext('2d').drawImage(vid, 0, 0, canvas.width, canvas.height);
+      const link = document.createElement('a');
+      link.download = 'meet-stable-photo.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    };
+
+    window.meetToggleRecord = function(btnEl) {
+      if (!meetStream) return;
+      if (meetRecorder && meetRecorder.state === 'recording') {
+        meetRecorder.stop();
+        btnEl.classList.remove('off');
+        btnEl.textContent = '⏺ Rec';
+        return;
+      }
+      meetRecordedChunks = [];
+      try {
+        meetRecorder = new MediaRecorder(meetStream);
+      } catch (e) { return; }
+      meetRecorder.ondataavailable = e => { if (e.data.size > 0) meetRecordedChunks.push(e.data); };
+      meetRecorder.onstop = () => {
+        const blob = new Blob(meetRecordedChunks, { type: 'video/webm' });
+        const link = document.createElement('a');
+        link.download = 'meet-stable-recording.webm';
+        link.href = URL.createObjectURL(blob);
+        link.click();
+      };
+      meetRecorder.start();
+      btnEl.classList.add('off');
+      btnEl.textContent = '⏺ Stop';
+    };
+
+    window.meetCreateRoom = async function(btnEl) {
+      const view = btnEl.closest('.meet-app');
+      const status = view.querySelector('.meet-app-status');
+      try {
+        await meetInitMedia(view);
+      } catch (e) { status.textContent = 'Camera/mic permission needed to start a meeting.'; return; }
+      const room = Math.random().toString(36).substr(2, 6);
+      view.querySelector('.meet-room').value = room;
+      meetPeer = new Peer(room, { host: '0.peerjs.com', secure: true, port: 443 });
+      meetPeer.on('open', () => { status.textContent = 'Room ready — share code "' + room + '"'; });
+      meetPeer.on('call', call => {
+        call.answer(meetStream);
+        call.on('stream', s => meetAddVideo(view, s, false, call.peer));
+        meetConns[call.peer] = meetConns[call.peer] || {};
+        meetConns[call.peer].call = call;
+      });
+      meetPeer.on('connection', conn => meetSetupDataConn(view, conn));
+    };
+
+    window.meetJoinRoom = async function(btnEl) {
+      const view = btnEl.closest('.meet-app');
+      const status = view.querySelector('.meet-app-status');
+      const room = view.querySelector('.meet-room').value.trim();
+      if (!room) { status.textContent = 'Enter a room code to join.'; return; }
+      try {
+        await meetInitMedia(view);
+      } catch (e) { status.textContent = 'Camera/mic permission needed to join.'; return; }
+      meetPeer = new Peer(Math.random().toString(36).substr(2, 8), { host: '0.peerjs.com', secure: true, port: 443 });
+      meetPeer.on('open', () => {
+        const call = meetPeer.call(room, meetStream);
+        call.on('stream', s => meetAddVideo(view, s, false, room));
+        meetConns[room] = meetConns[room] || {};
+        meetConns[room].call = call;
+
+        const conn = meetPeer.connect(room);
+        conn.on('open', () => { status.textContent = 'Connected to "' + room + '"'; });
+        meetSetupDataConn(view, conn);
+      });
+    };
+
+    // ===================== SUNLIT OS =====================
+    // A real standalone app that lives right next to desktop.html in the
+    // apps/ folder — embeds directly, no path guessing needed.
+    function openSunlitOSApp() {
+      const view = document.createElement('div');
+      view.style.cssText = 'width:100%;height:100%;';
+      view.innerHTML = `<iframe src="sunlit_os.html" style="width:100%;height:100%;border:none;display:block;"></iframe>`;
+      openWindow('Sunlit OS', view);
     }
 
     window.onload = function() {
