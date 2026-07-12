@@ -1479,6 +1479,20 @@ function generateFingerprint() {
         #movies-page.mv-overlay-mode.mv-overlay-visible {
             transform: translateX(0);
         }
+        /* Discord overlay mode: slides in over home page just like YouTube/Movies */
+        #discord-page.discord-overlay-mode {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            background: var(--md-sys-color-surface);
+            transform: translateX(100%);
+            transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            display: flex !important;
+        }
+        #discord-page.discord-overlay-mode.discord-overlay-visible {
+            transform: translateX(0);
+        }
         /* When bg is shown on YT page, apply bg directly and frost the UI panels */
         #youtube-page.yt-bg-on {
             background-size: cover !important;
@@ -1910,7 +1924,6 @@ function generateFingerprint() {
         body.tabs-active #gemini-page.active,
         body.tabs-active #sunlit-page.active,
         body.tabs-active #desktop-page.active,
-        body.tabs-active #discord-page.active,
         body.tabs-active #hollow-knight-page.active,
         body.tabs-active #snow-rider-page.active,
         body.tabs-active #meet-stable-page.active,
@@ -1937,6 +1950,10 @@ function generateFingerprint() {
             height: calc(100vh - var(--tab-h)) !important;
         }
         body.tabs-active #movies-page.mv-overlay-mode {
+            top: var(--tab-h) !important;
+            height: calc(100vh - var(--tab-h)) !important;
+        }
+        body.tabs-active #discord-page.discord-overlay-mode {
             top: var(--tab-h) !important;
             height: calc(100vh - var(--tab-h)) !important;
         }
@@ -2519,7 +2536,7 @@ function generateFingerprint() {
 
 <!-- Discord Page -->
 <div id="discord-page" class="page">
-    <button class="sunlit-back" onclick="showHome()">&#8592; Back</button>
+    <button class="sunlit-back" onclick="goBackFromDiscord()">&#8592; Back</button>
     <iframe id="discord-frame" src="about:blank"></iframe>
 </div>
 
@@ -3223,10 +3240,11 @@ function generateFingerprint() {
     function updateTopbarVisibility() {
         const activeTab = tabs.find(t => t.id === activeTabId);
         const ytOverlayActive = document.getElementById('youtube-page').classList.contains('yt-overlay-visible');
-        const isHome = !ytOverlayActive && (!activeTab || activeTab.pageId === 'home-page');
+        const discordOverlayActive = document.getElementById('discord-page').classList.contains('discord-overlay-visible');
+        const isHome = !ytOverlayActive && !discordOverlayActive && (!activeTab || activeTab.pageId === 'home-page');
         const isMeet = activeTab && activeTab.pageId === 'meet-stable-page';
         document.getElementById('topbar-home-icons').style.display = isHome ? 'flex' : 'none';
-        document.getElementById('topbar-menu-btn').style.display = (isHome || isMeet) ? 'none' : 'flex';
+        document.getElementById('topbar-menu-btn').style.display = (isHome || isMeet || discordOverlayActive) ? 'none' : 'flex';
         closePageMenu();
     }
 
@@ -3299,6 +3317,21 @@ function generateFingerprint() {
         tabSwitch(id);
     }
 
+    // Discord's own UI already has ways out, and having the panic button
+    // floating over it looks out of place — hide it whenever the Discord
+    // overlay is showing, then restore it (respecting the user's panic
+    // settings) once they navigate elsewhere.
+    function updatePanicVisibilityForPage() {
+        const btn = document.getElementById('panic-btn');
+        if (!btn || panicActive) return; // don't fight the panic overlay's own hide logic
+        const discordPage = document.getElementById('discord-page');
+        if (discordPage && discordPage.classList.contains('discord-overlay-visible')) {
+            btn.style.display = 'none';
+        } else {
+            btn.style.display = '';
+        }
+    }
+
     function tabSwitch(id) {
         const tab = tabs.find(t => t.id === id);
         if (!tab) return;
@@ -3320,6 +3353,17 @@ function generateFingerprint() {
         } else if (previousPageId === 'youtube-page') {
             ytPage.classList.remove('yt-overlay-visible', 'yt-overlay-mode');
             ytPage.style.display = '';
+        }
+        // Discord always slides in as an overlay too — same reset pattern.
+        const discordPage = document.getElementById('discord-page');
+        if (tab.pageId === 'discord-page') {
+            discordPage.classList.add('discord-overlay-mode');
+            discordPage.style.display = 'flex';
+            discordPage.getBoundingClientRect(); // force reflow so the transition fires
+            discordPage.classList.add('discord-overlay-visible');
+        } else if (previousPageId === 'discord-page') {
+            discordPage.classList.remove('discord-overlay-visible', 'discord-overlay-mode');
+            discordPage.style.display = '';
         }
         updateTopbarVisibility();
         updateBgLayerVisibility();
@@ -3369,6 +3413,7 @@ function generateFingerprint() {
             if (frame && !frame.dataset.loaded) { frame.src = tab.extra.gameSrc; frame.dataset.loaded = '1'; }
         }
         tabRender();
+        updatePanicVisibilityForPage();
     }
 
     function tabClose(id, e) {
@@ -3388,6 +3433,7 @@ function generateFingerprint() {
                 document.getElementById('home-page').classList.add('active');
                 updateBgLayerVisibility();
                 tabRender();
+                updatePanicVisibilityForPage();
             }
         } else {
             tabRender();
@@ -3832,11 +3878,46 @@ function generateFingerprint() {
 
     // ===== DISCORD =====
     function openDiscordApp() {
-        const existing = tabs.find(t => t.pageId === 'discord-page');
-        if (existing) { tabSwitch(existing.id); return; }
+        const discordPage = document.getElementById('discord-page');
         const frame = document.getElementById('discord-frame');
         if (!frame.dataset.loaded) { frame.src = 'apps/discord/index.html'; frame.dataset.loaded = '1'; }
-        tabNew('discord-page', 'Discord', 'forum');
+
+        const tabsEnabled = localStorage.getItem('apricity-tabs-enabled') === '1';
+
+        if (tabsEnabled) {
+            const existing = tabs.find(t => t.pageId === 'discord-page');
+            if (existing) { tabSwitch(existing.id); return; } // tabSwitch triggers the slide itself
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            discordPage.classList.add('active');
+            tabNew('discord-page', 'Discord', 'forum');
+        }
+
+        // Always slide Discord in as an overlay — tabs on or off — same as YouTube.
+        discordPage.classList.add('discord-overlay-mode');
+        discordPage.style.display = 'flex';
+        // Force reflow so CSS transition fires
+        discordPage.getBoundingClientRect();
+        discordPage.classList.add('discord-overlay-visible');
+        updateTopbarVisibility();
+        updatePanicVisibilityForPage();
+        if (tabsEnabled) scrollToPageTop();
+    }
+
+    function goBackFromDiscord() {
+        // Discord is always in overlay mode — slide it out without touching other pages
+        const discordPage = document.getElementById('discord-page');
+        if (discordPage.classList.contains('discord-overlay-mode')) {
+            discordPage.classList.remove('discord-overlay-visible');
+            // After transition, hide the overlay entirely
+            setTimeout(() => {
+                discordPage.classList.remove('discord-overlay-mode');
+                discordPage.style.display = '';
+            }, 340);
+            updateTopbarVisibility();
+            updatePanicVisibilityForPage();
+            return;
+        }
+        showHome();
     }
 
     // ===== GAMES =====
