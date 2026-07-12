@@ -670,10 +670,13 @@ function generateFingerprint() {
             transition: top 0.15s;
         }
         body.tabs-active .topbar-icons {
-            top: calc(36px + 16px);
+            top: calc(var(--tab-h) + 16px);
+        }
+        body.tabs-active .sunlit-back {
+            top: calc(var(--tab-h) + 12px) !important;
         }
         body.tabs-active #page-menu-dropdown {
-            top: calc(36px + 16px) !important;
+            top: calc(var(--tab-h) + 16px) !important;
         }
         .page-menu-item {
             display: flex; align-items: center; gap: 10px;
@@ -1853,10 +1856,13 @@ function generateFingerprint() {
             border-radius: 2px 2px 0 0;
         }
         .tab-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+        .tab-item.active .tab-favicon { font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20; }
         .tab-favicon {
-            font-size: 13px; flex-shrink: 0;
+            font-size: 16px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
             width: 16px; height: 16px;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            color: inherit;
         }
         .tab-close {
             width: 18px; height: 18px; border-radius: 50%;
@@ -1918,11 +1924,30 @@ function generateFingerprint() {
            use 100vh / 64px math — shrink those by the tab bar height */
         body.tabs-active #youtube-page.active {
             padding-top: 0 !important;
-            height: 100vh !important;
+            top: var(--tab-h) !important;
+            height: calc(100vh - var(--tab-h)) !important;
+        }
+        body.tabs-active #youtube-page.yt-overlay-mode {
+            top: var(--tab-h) !important;
+            height: calc(100vh - var(--tab-h)) !important;
+        }
+        body.tabs-active #movies-page.mv-overlay-mode {
+            top: var(--tab-h) !important;
+            height: calc(100vh - var(--tab-h)) !important;
         }
         body.tabs-active #youtube-page.active .yt-sidebar,
         body.tabs-active #youtube-page.active .yt-main {
             top: calc(64px + var(--tab-h));
+            height: calc(100vh - 64px - var(--tab-h)) !important;
+        }
+        /* YouTube now always uses yt-overlay-mode (transform) when tabs are
+           active, which makes #youtube-page itself the containing block for
+           its position:fixed children — so top is relative to the container
+           (already shifted by --tab-h), not the true viewport. Using the same
+           "+ tab-h" offset here would double-count it. */
+        body.tabs-active #youtube-page.yt-overlay-mode .yt-sidebar,
+        body.tabs-active #youtube-page.yt-overlay-mode .yt-main {
+            top: 64px !important;
             height: calc(100vh - 64px - var(--tab-h)) !important;
         }
 
@@ -3130,26 +3155,25 @@ function generateFingerprint() {
         const currentPageId = getActivePageId();
         rememberYoutubeBackPage(currentPageId);
 
-        // If tabs are active, use the existing tab-based navigation
         const tabsEnabled = localStorage.getItem('apricity-tabs-enabled') === '1';
+        const ytPage = document.getElementById('youtube-page');
+
         if (tabsEnabled) {
             const existing = tabs.find(t => t.pageId === 'youtube-page');
-            if (existing) { tabSwitch(existing.id); return; }
+            if (existing) { tabSwitch(existing.id); return; } // tabSwitch triggers the slide itself
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('youtube-page').classList.add('active');
-            tabNew('youtube-page', 'YouTube', '▶️');
-            scrollToPageTop();
-            return;
+            ytPage.classList.add('active');
+            tabNew('youtube-page', 'YouTube', TAB_ICONS.youtube);
         }
 
-        // Overlay mode: keep home page visible underneath, slide YouTube in on top
-        const ytPage = document.getElementById('youtube-page');
+        // Always slide YouTube in as an overlay — tabs on or off.
         ytPage.classList.add('yt-overlay-mode');
         ytPage.style.display = 'flex';
         // Force reflow so CSS transition fires
         ytPage.getBoundingClientRect();
         ytPage.classList.add('yt-overlay-visible');
         updateTopbarVisibility();
+        if (tabsEnabled) scrollToPageTop();
     }
 
     // ===== MOVIES =====
@@ -3214,9 +3238,11 @@ function generateFingerprint() {
     });
 
     // ===== TAB SYSTEM =====
+    // Icon names reference Google's Material Symbols icon font (already loaded
+    // via Google Fonts) instead of emoji, rendered through .material-symbols-outlined.
     const TAB_ICONS = {
-        home: '🏠', youtube: '▶️', groq: '🤖',
-        sunlit: '☀️', game: '🎮', settings: '⚙️', search: '🔎'
+        home: 'home', youtube: 'play_circle', groq: 'smart_toy',
+        sunlit: 'wb_sunny', game: 'sports_esports', settings: 'settings', search: 'search'
     };
 
     let tabs = []; // [{id, label, icon, pageId, extra}]
@@ -3240,7 +3266,7 @@ function generateFingerprint() {
         tabs.forEach(tab => {
             const el = document.createElement('div');
             el.className = 'tab-item' + (tab.id === activeTabId ? ' active' : '');
-            el.innerHTML = `<span class="tab-favicon">${tab.icon}</span><span class="tab-label">${tab.label}</span><span class="tab-close" onclick="tabClose('${tab.id}',event)">✕</span>`;
+            el.innerHTML = `<span class="material-symbols-outlined tab-favicon">${tab.icon}</span><span class="tab-label">${tab.label}</span><span class="tab-close" onclick="tabClose('${tab.id}',event)"><span class="material-symbols-outlined" style="font-size:14px;">close</span></span>`;
             el.addEventListener('click', (e) => { if (!e.target.classList.contains('tab-close')) tabSwitch(tab.id); });
             container.appendChild(el);
         });
@@ -3266,6 +3292,18 @@ function generateFingerprint() {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         const page = document.getElementById(tab.pageId);
         if (page) page.classList.add('active');
+        // YouTube always slides in as an overlay, tab system or not — reset it
+        // when leaving so it's ready to slide again next time it's opened.
+        const ytPage = document.getElementById('youtube-page');
+        if (tab.pageId === 'youtube-page') {
+            ytPage.classList.add('yt-overlay-mode');
+            ytPage.style.display = 'flex';
+            ytPage.getBoundingClientRect(); // force reflow so the transition fires
+            ytPage.classList.add('yt-overlay-visible');
+        } else if (previousPageId === 'youtube-page') {
+            ytPage.classList.remove('yt-overlay-visible', 'yt-overlay-mode');
+            ytPage.style.display = '';
+        }
         updateTopbarVisibility();
         updateBgLayerVisibility();
         scrollToPageTop();
@@ -3348,7 +3386,7 @@ function generateFingerprint() {
         // Check if a home tab already exists
         const existing = tabs.find(t => t.pageId === 'home-page');
         if (existing) { tabSwitch(existing.id); return; }
-        tabNew('home-page', 'Home', '🏠');
+        tabNew('home-page', 'Home', TAB_ICONS.home);
         updateTopbarVisibility();
     }
     // ===== SEARCH (proxied DuckDuckGo, embedded in the tab system) =====
@@ -3387,10 +3425,32 @@ function generateFingerprint() {
 
     async function fetchViaCurl(url) {
         const curl = await ensureCurl();
-        const resp = await curl.fetch(url, { method: 'GET', headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (resp.status >= 400) throw new Error('HTTP ' + resp.status + ' via WISP tunnel');
-        const buf = await resp.arrayBuffer();
-        return new TextDecoder('utf-8').decode(buf);
+        let redirectCount = 0;
+        while (true) {
+            const resp = await curl.fetch(url, { method: 'GET', headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9'
+            } });
+            // curl.fetch does NOT auto-follow redirects — same discovery GUST made.
+            // Without this, DDG's own result links (which are redirect/tracking
+            // URLs, not raw destinations) and most real sites' canonical-URL
+            // redirects would just render the tiny redirect stub as the "page",
+            // which is exactly what a white screen looks like.
+            if (resp.status >= 300 && resp.status < 400 && redirectCount < 12) {
+                const loc = resp.headers && resp.headers.get && resp.headers.get('location');
+                if (loc) {
+                    url = new URL(loc, url).href;
+                    redirectCount++;
+                    console.log('WISP fetch redirect', resp.status, '→', url);
+                    continue;
+                }
+            }
+            if (resp.status >= 400) throw new Error('HTTP ' + resp.status + ' via WISP tunnel');
+            const buf = await resp.arrayBuffer();
+            const text = new TextDecoder('utf-8').decode(buf);
+            console.log('WISP/libcurl fetch OK for', url, '— status', resp.status, '—', text.length, 'chars');
+            return text;
+        }
     }
 
     function buildFallbackProxyList() {
@@ -3422,6 +3482,7 @@ function generateFingerprint() {
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const html = await res.text();
                 if (!html || html.length < 50) throw new Error('Empty response');
+                console.log('Fallback proxy OK:', proxied, '—', html.length, 'chars');
                 return html;
             } catch (e) {
                 console.warn('Search proxy failed:', proxied, '—', e.message);
@@ -3452,18 +3513,152 @@ function generateFingerprint() {
     let _navStack = [];   // [{ url, label }]
     let _navIndex = -1;
 
-    // Injects a tiny helper script into ANY fetched page that intercepts link
-    // clicks and form submissions BEFORE the sandboxed iframe can navigate
-    // there natively (which would hit X-Frame-Options and just error out).
-    // Instead every click/submit gets rerouted through loadProxiedUrl, so
-    // clicking a search result — or any link on any page loaded after it —
-    // stays inside Apricity instead of opening a new browser tab.
+    // Bridge the loaded page's own network calls back through the WISP tunnel.
+    // Called from inside the sandboxed iframe via window.parent.apricityProxyFetch(...)
+    // (works as a direct same-origin call — no postMessage needed — because the
+    // srcdoc iframe has allow-same-origin, so it shares Apricity's origin).
+    window.apricityProxyFetch = async function (url, opts) {
+        opts = opts || {};
+        const curl = await ensureCurl();
+        const resp = await curl.fetch(url, {
+            method: opts.method || 'GET',
+            headers: opts.headers || {},
+            body: opts.body
+        });
+        const buffer = await resp.arrayBuffer();
+        const headers = {};
+        try { for (const [k, v] of resp.headers.entries()) headers[k] = v; } catch (e) {}
+        return { status: resp.status || 200, headers, buffer };
+    };
+
+    // Injects helpers into ANY fetched page so it behaves like a normal tab
+    // instead of trying to escape the sandbox:
+    //  1. Strips CSP/X-Frame-Options meta tags — they were written for the
+    //     page's real origin and would otherwise block our own injected
+    //     script (or things that are now perfectly fine once proxied).
+    //  2. Shims window.fetch AND XMLHttpRequest so the page's OWN ajax calls
+    //     (the ones that render most modern JS-heavy sites) also tunnel
+    //     through WISP instead of hitting a real cross-origin CORS wall —
+    //     this is what was causing white/blank screens on JS-rendered sites.
+    //  3. Intercepts link clicks + GET form submits so navigation stays
+    //     inside Apricity instead of the sandboxed iframe trying (and
+    //     failing) to navigate to the real site directly.
+    // All of this is injected as the very first thing inside <head>, before
+    // any of the page's own scripts run — same ordering GUST uses.
     function injectPageHelpers(html, pageUrl) {
-        if (!/<base[\s>]/i.test(html)) {
-            html = html.replace(/<head(\s[^>]*)?>/i, m => m + `<base href="${pageUrl}">`);
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+
+        // Strip CSP/framing meta tags — they were written for the page's real
+        // origin and would otherwise block our own injected script.
+        doc.querySelectorAll('meta[http-equiv]').forEach(m => {
+            const v = (m.getAttribute('http-equiv') || '').toLowerCase().trim();
+            if (v === 'content-security-policy' || v === 'content-security-policy-report-only' ||
+                v === 'x-frame-options' || v === 'x-content-type-options') {
+                m.remove();
+            }
+        });
+
+        const head = doc.head || doc.documentElement;
+
+        // <base> so every relative URL (css/images/links/forms) on the page
+        // resolves against its real origin, not Apricity's.
+        let base = doc.querySelector('base');
+        if (!base) {
+            base = doc.createElement('base');
+            head.insertBefore(base, head.firstChild);
         }
-        const helper = `
-        <script>
+        base.setAttribute('href', pageUrl);
+
+        const shim = doc.createElement('script');
+        shim.textContent = `
+        window.addEventListener('error', function(e) {
+            try { window.parent.console.warn('[proxied page error]', '${pageUrl}', '—', e.message, 'at', e.filename + ':' + e.lineno); } catch (err) {}
+        });
+        (function() {
+            var ORIGIN_FETCH = window.fetch ? window.fetch.bind(window) : null;
+            function toUrl(u) { try { return new URL(u, document.baseURI).href; } catch (e) { return null; } }
+            window.fetch = function(input, init) {
+                var raw = typeof input === 'string' ? input : (input && input.url);
+                var url = toUrl(raw);
+                if (!url || /^(data|blob):/i.test(url)) return ORIGIN_FETCH ? ORIGIN_FETCH(input, init) : Promise.reject(new Error('fetch unavailable'));
+                var opts = init || {};
+                return window.parent.apricityProxyFetch(url, { method: opts.method, headers: opts.headers, body: opts.body })
+                    .then(function(r) { return new Response(r.buffer, { status: r.status, headers: r.headers }); })
+                    .catch(function() { return ORIGIN_FETCH ? ORIGIN_FETCH(input, init) : Promise.reject(new Error('proxy fetch failed')); });
+            };
+            var OrigXHR = window.XMLHttpRequest;
+            function ProxyXHR() {
+                var xhr = { readyState: 0, status: 0, statusText: '', response: '', responseText: '', responseType: '', onreadystatechange: null, onload: null, onerror: null, _headers: {} };
+                var method = 'GET', url = null;
+                xhr.open = function(m, u) { method = m; url = toUrl(u); xhr.readyState = 1; };
+                xhr.setRequestHeader = function(k, v) { xhr._headers[k] = v; };
+                xhr.getAllResponseHeaders = function() { return ''; };
+                xhr.send = function(body) {
+                    if (!url) { if (xhr.onerror) xhr.onerror(new Event('error')); return; }
+                    window.parent.apricityProxyFetch(url, { method: method, headers: xhr._headers, body: body })
+                        .then(function(r) {
+                            var text = new TextDecoder('utf-8').decode(r.buffer);
+                            xhr.status = r.status; xhr.statusText = String(r.status);
+                            xhr.response = text; xhr.responseText = text; xhr.readyState = 4;
+                            if (xhr.onreadystatechange) xhr.onreadystatechange();
+                            if (xhr.onload) xhr.onload();
+                        })
+                        .catch(function() {
+                            xhr.readyState = 4; xhr.status = 0;
+                            if (xhr.onreadystatechange) xhr.onreadystatechange();
+                            if (xhr.onerror) xhr.onerror(new Event('error'));
+                        });
+                };
+                return xhr;
+            }
+            try { window.XMLHttpRequest = ProxyXHR; } catch (e) {}
+
+            // Many pages navigate via JS directly (location.href = ..., .replace(),
+            // .assign()) rather than a link click or form submit — neither of our
+            // other interceptors can catch that. Override location itself so any
+            // such attempt routes through the proxy instead of triggering a real,
+            // unproxied navigation that then gets blocked by the target's own
+            // framing policy.
+            try {
+                var fakeLoc = new URL(document.baseURI);
+                function routeLoc(u) {
+                    try {
+                        var abs = new URL(u, document.baseURI).href;
+                        if (window.parent && typeof window.parent.loadProxiedUrl === 'function') {
+                            window.parent.loadProxiedUrl(abs, new URL(abs).hostname, { isNav: true });
+                        }
+                    } catch (e) {}
+                }
+                var locProxy = new Proxy({}, {
+                    get: function(_, p) {
+                        if (p === 'href') return fakeLoc.href;
+                        if (p === 'origin') return fakeLoc.origin;
+                        if (p === 'protocol') return fakeLoc.protocol;
+                        if (p === 'host') return fakeLoc.host;
+                        if (p === 'hostname') return fakeLoc.hostname;
+                        if (p === 'port') return fakeLoc.port;
+                        if (p === 'pathname') return fakeLoc.pathname;
+                        if (p === 'search') return fakeLoc.search;
+                        if (p === 'hash') return fakeLoc.hash;
+                        if (p === 'assign' || p === 'replace') return routeLoc;
+                        if (p === 'reload') return function() {};
+                        if (p === 'toString') return function() { return fakeLoc.href; };
+                        if (p === 'ancestorOrigins') return { length: 0 };
+                    },
+                    set: function(_, p, v) {
+                        if (p === 'href') {
+                            if (!v || /^(about|javascript):/i.test(v)) return true;
+                            routeLoc(v);
+                            return true;
+                        }
+                        if (p === 'hash') { fakeLoc.hash = v; return true; }
+                        return true;
+                    }
+                });
+                try { Object.defineProperty(window, 'location', { value: locProxy, configurable: true }); } catch (e) {}
+                try { Object.defineProperty(document, 'location', { get: function () { return locProxy; }, set: function (v) { if (v) routeLoc(v); }, configurable: true }); } catch (e) {}
+            } catch (e) {}
+        })();
         document.addEventListener('click', function(e) {
             var a = e.target.closest && e.target.closest('a[href]');
             if (!a) return;
@@ -3472,17 +3667,20 @@ function generateFingerprint() {
             e.preventDefault();
             var target;
             try { target = new URL(href, document.baseURI); } catch (err) { return; }
+            // DuckDuckGo result links aren't direct URLs — they're wrapped in a
+            // redirect/tracking page (duckduckgo.com/l/?uddg=<real url>) that
+            // redirects via JS, which a sandboxed iframe can't execute. Unwrap
+            // it here and go straight to the real target instead.
+            if (/(^|\.)duckduckgo\.com$/i.test(target.hostname) && target.pathname === '/l/') {
+                var real = target.searchParams.get('uddg');
+                if (real) { try { target = new URL(decodeURIComponent(real)); } catch (err2) {} }
+            }
             var label = (a.textContent || '').trim().slice(0, 40) || target.hostname;
             if (window.parent && typeof window.parent.loadProxiedUrl === 'function') {
                 window.parent.loadProxiedUrl(target.href, label, { isNav: true });
             }
         }, true);
-        document.addEventListener('submit', function(e) {
-            var form = e.target;
-            if (!(form instanceof HTMLFormElement)) return;
-            var method = (form.getAttribute('method') || 'GET').toUpperCase();
-            if (method !== 'GET') return; // don't proxy POST forms (e.g. logins) through a third-party tunnel
-            e.preventDefault();
+        function routeGetForm(form) {
             var action = form.getAttribute('action') || document.baseURI;
             var target = new URL(action, document.baseURI);
             target.search = new URLSearchParams(new FormData(form)).toString();
@@ -3490,10 +3688,34 @@ function generateFingerprint() {
             if (window.parent && typeof window.parent.loadProxiedUrl === 'function') {
                 window.parent.loadProxiedUrl(target.href, q || target.hostname, { isNav: true });
             }
+        }
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            if (!(form instanceof HTMLFormElement)) return;
+            var method = (form.getAttribute('method') || 'GET').toUpperCase();
+            if (method !== 'GET') return; // don't proxy POST forms (e.g. logins) through a third-party tunnel
+            e.preventDefault();
+            routeGetForm(form);
         }, true);
-        <\/script>`;
-        html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, helper + '</body>') : html + helper;
-        return html;
+        // HTMLFormElement.submit() bypasses the 'submit' event entirely per
+        // spec — pages that call it directly (rather than a user clicking a
+        // submit button) would slip past the listener above and trigger a
+        // real, unproxied navigation that then gets blocked by the target's
+        // own framing policy. Patch the method itself as a second layer.
+        try {
+            var OrigFormSubmit = HTMLFormElement.prototype.submit;
+            HTMLFormElement.prototype.submit = function() {
+                var method = (this.getAttribute('method') || 'GET').toUpperCase();
+                if (method !== 'GET') { return OrigFormSubmit.call(this); }
+                routeGetForm(this);
+            };
+        } catch (e) {}
+        `;
+        // Insert right after <base> — i.e. as early as possible, before any of
+        // the page's own scripts run (same ordering GUST uses).
+        head.insertBefore(shim, base.nextSibling);
+
+        return '<!DOCTYPE html>' + doc.documentElement.outerHTML;
     }
 
     async function loadProxiedUrl(url, label, opts) {
@@ -3533,6 +3755,8 @@ function generateFingerprint() {
                 if (tabEntry) { tabEntry.label = t.length > 18 ? t.slice(0, 18) + '…' : t; tabRender(); }
             }
             html = injectPageHelpers(html, url);
+            console.log('Rendering', url, '—', html.length, 'chars after helper injection');
+            if (html.length < 500) console.warn('That\'s a very small response for', url, '— likely a block/error page rather than real content. Full text:', html);
             iframe.srcdoc = html;
             setSearchStatus('');
         } catch (e) {
@@ -3573,7 +3797,7 @@ function generateFingerprint() {
         if (existing) { tabSwitch(existing.id); return; }
         const frame = document.getElementById('sunlit-frame');
         if (!frame.dataset.loaded) { frame.src = 'apps/sunlit_os.html'; frame.dataset.loaded = '1'; }
-        tabNew('sunlit-page', 'Sunlit OS', '☀️');
+        tabNew('sunlit-page', 'Sunlit OS', TAB_ICONS.sunlit);
     }
 
     // ===== DESKTOP =====
@@ -3583,7 +3807,7 @@ function generateFingerprint() {
         if (existing) { tabSwitch(existing.id); return; }
         const frame = document.getElementById('desktop-frame');
         if (!frame.dataset.loaded) { frame.src = 'apps/desktop.html'; frame.dataset.loaded = '1'; }
-        tabNew('desktop-page', 'Desktop', '🖥️');
+        tabNew('desktop-page', 'Desktop', 'computer');
     }
 
     // ===== GAMES =====
@@ -4670,7 +4894,7 @@ function generateFingerprint() {
         toggleApps();
         const existing = tabs.find(t => t.pageId === 'meet-stable-page');
         if (existing) { tabSwitch(existing.id); return; }
-        tabNew('meet-stable-page', 'Meet Stable', '📹');
+        tabNew('meet-stable-page', 'Meet Stable', 'videocam');
     }
 
     // ===== SPOTIFY =====
@@ -4678,7 +4902,7 @@ function generateFingerprint() {
         toggleApps();
         const existing = tabs.find(t => t.pageId === 'spotify-page');
         if (existing) { tabSwitch(existing.id); return; }
-        tabNew('spotify-page', 'Spotify', '🎵');
+        tabNew('spotify-page', 'Spotify', 'music_note');
     }
 
     // ===== PANIC BUTTON =====
@@ -4772,7 +4996,7 @@ function generateFingerprint() {
         if (tabsEnabled === null) localStorage.setItem('apricity-tabs-enabled', '0');
         document.getElementById('tabSystemToggle').checked = (tabsEnabled === '1');
         // Open initial home tab
-        tabNew('home-page', 'Home', '🏠');
+        tabNew('home-page', 'Home', TAB_ICONS.home);
         updateTopbarVisibility();
 
         // Restore theme
