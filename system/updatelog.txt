@@ -5,3 +5,7 @@
 06/27/2026: fixed movies added multiple sources from which to eatch movie(Most movies work on source 2)
 
 07/10/2026: We have now minecraft server in eagler craft wss://obscure-space-happiness-5vj7w6gp5ph495v-25565.app.github.dev/
+
+07/12/2026: Added chillcord discord copy.
+
+07/18/2026: updated chillcord logo, now its better.
