@@ -117,6 +117,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .msg-pending-delete{opacity:.6;border-left:3px solid var(--gold);padding-left:8px}
 .pending-delete-note{font-size:11px;color:var(--gold);margin-top:4px}
 .mute-banner{background:#2a1200;border:1px solid var(--gold);color:#f5c518;font-size:12.5px;padding:8px 14px;border-radius:10px;margin:0 12px 8px 12px}
+.modlist-row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border)}
+.modlist-row:last-child{border-bottom:none}
+.modlist-info{flex:1;min-width:0}
+.modlist-name{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.modlist-meta{font-size:11px;color:var(--text-lo);margin-top:2px}
+.modlist-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:5px}
+.modlist-type.mute{background:#2a1200;color:#f5c518}
+.modlist-type.ban{background:#2a0a0a;color:#ff6b6b}
+.modlist-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.modlist-actions select{background:var(--bg-input);color:var(--text-hi);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:4px 6px}
+.modlist-actions button{background:var(--bg-input);color:var(--text-hi);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:4px 8px;cursor:pointer}
+.modlist-actions button.danger{color:#ff6b6b;border-color:#ff6b6b}
 .discord-disclaimer{display:flex;align-items:flex-start;gap:9px;background:rgba(250,166,26,.1);border:1px solid #faa61a;border-radius:8px;padding:11px 13px;margin-bottom:16px;font-size:12px;line-height:1.5;color:#e3d5b8;text-align:left}
 .discord-disclaimer .material-symbols-outlined{color:#faa61a;font-size:19px;flex-shrink:0;margin-top:1px}
 .discord-disclaimer .ic-emoji{flex-shrink:0}
@@ -420,6 +432,7 @@ const POLL_MS      = 3000;
         <div class="hdr-desc" id="hdr-desc">Everyone is here</div>
       </div>
       <div class="hdr-actions">
+        <button class="icon-btn" id="modlist-btn" onclick="openModListModal()" title="Muted / Banned users" style="display:none"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">gavel</span><span class="ic-emoji">🔨</span></span></button>
         <button class="icon-btn" id="members-btn" onclick="openMembersModal()" title="Members" style="display:none"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">group</span><span class="ic-emoji">👥</span></span></button>
         <button class="icon-btn" id="invite-btn" onclick="openInviteModal()" title="Invite people" style="display:none"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">person_add</span><span class="ic-emoji">📨</span></span></button>
         <button class="call-btn" onclick="startCall()"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">call</span><span class="ic-emoji">📞</span></span><span class="call-btn-label"> Call</span></button>
@@ -568,6 +581,18 @@ const POLL_MS      = 3000;
     <div class="user-list" id="members-list" style="max-height:320px"></div>
     <div class="mactions">
       <button class="mbtn cancel" onclick="closeModal('members-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODERATION LIST (muted / banned users) -->
+<div class="modal" id="modlist-modal">
+  <div class="mbox" style="max-width:480px">
+    <div class="mtitle">Muted &amp; Banned Users</div>
+    <div class="msub" id="modlist-scope">Global</div>
+    <div class="user-list" id="modlist-list" style="max-height:360px"></div>
+    <div class="mactions">
+      <button class="mbtn cancel" onclick="closeModal('modlist-modal')">Close</button>
     </div>
   </div>
 </div>
@@ -929,6 +954,7 @@ async function bootApp(){
   document.getElementById('my-name-el').innerHTML=escH(me.username)+renderRoleBadges(me);
   document.getElementById('my-tag-el').textContent=me.join_number?`#${me.join_number} · Online`:'Online';
   document.getElementById('sheet-btn').style.display=isOwnerOrCreator(me)?'flex':'none';
+  document.getElementById('modlist-btn').style.display=isMod(me)?'flex':'none';
   channels=await dbGet('channels','?order=created_at.asc');
   await loadAllUsers();
   myDMs=JSON.parse(localStorage.getItem('nc_dms')||'[]');
@@ -946,6 +972,7 @@ async function bootApp(){
       Object.assign(me,myRoles[me.id]);
       document.getElementById('my-name-el').innerHTML=escH(me.username)+renderRoleBadges(me);
       document.getElementById('sheet-btn').style.display=isOwnerOrCreator(me)?'flex':'none';
+      document.getElementById('modlist-btn').style.display=isMod(me)?'flex':'none';
     }
   }).catch(()=>{});
   checkMyModStatus(null).then(banStatus=>{
@@ -1319,6 +1346,9 @@ function showMsgCtx(ev,msgId,senderId){
     }else{
       html+=`<div class="ctx-item warn" onclick="handleDeleteMsg('${esc(msgId)}')">${icon('how_to_vote','🗳️')} Request delete (needs 2nd mod)</div>`;
     }
+    if(isAdmin(me)){
+      html+=`<div class="ctx-item danger" onclick="handleHardDeleteMsg('${esc(msgId)}')" title="Permanently removes the message — no 'Message deleted' trace left behind">${icon('delete_forever','🗑️')} Delete without trace</div>`;
+    }
   }
   menu.innerHTML=html;
   menu.classList.add('show');
@@ -1336,6 +1366,23 @@ function markMsgDeletedInDom(msgId){
   txt.className='msg-txt msg-deleted';
   txt.innerHTML=icon('block','🚫')+' Message deleted';
   body.appendChild(txt);
+}
+function removeMsgFromDom(msgId){
+  const row=Array.from(document.querySelectorAll('.msg-row[data-msg-id]')).find(r=>r.getAttribute('data-msg-id')===msgId);
+  if(row) row.remove();
+}
+async function handleHardDeleteMsg(msgId){
+  document.getElementById('ctx-menu').classList.remove('show');
+  if(!confirm('Permanently delete this message with no trace? This cannot be undone.')) return;
+  const table=currentMsgTable();
+  try{
+    const r=await rpc('hard_delete_message',{p_token:token,p_message_id:msgId,p_table:table});
+    if(r&&r.error){showToast(r.error,'error');return;}
+    showToast('Message permanently deleted','success');
+    locallyDeletedIds.add(msgId);
+    removeMsgFromDom(msgId);
+    poll();
+  }catch(e){showToast('Failed to delete: '+(e.message||'error'),'error');}
 }
 async function handleDeleteMsg(msgId){
   document.getElementById('ctx-menu').classList.remove('show');
@@ -1729,6 +1776,67 @@ async function openMembersModal(){
         </div>`).join('')
       :'<div style="padding:10px;color:var(--text-lo);font-size:13px">No members found</div>';
   }catch(e){document.getElementById('members-list').innerHTML='<div style="color:#f87171;padding:10px">Failed to load members</div>';}
+}
+
+// ================================================================
+// MODERATION LIST (muted / banned users) — visible to Mod and up.
+// Editing duration / unbanning-unmuting is Admin, Owner, Co-Owner,
+// Creator only (enforced server-side too).
+// ================================================================
+const MODLIST_DURATIONS=[
+  {label:'5 min',mins:5},{label:'15 min',mins:15},{label:'1 hour',mins:60},
+  {label:'6 hours',mins:360},{label:'1 day',mins:1440},{label:'7 days',mins:10080},
+  {label:'Permanent',mins:0}
+];
+async function openModListModal(){
+  if(!isMod(me)) return;
+  const inServer=active&&active.type==='srv-channel'&&!!activeServerId;
+  document.getElementById('modlist-scope').textContent=inServer?'This server':'Global (site-wide)';
+  document.getElementById('modlist-modal').classList.add('on');
+  const listEl=document.getElementById('modlist-list');
+  listEl.innerHTML='<div style="padding:10px;color:var(--text-lo);font-size:13px">Loading…</div>';
+  try{
+    const r=await rpc('get_active_mod_actions',{p_token:token,p_server_id:inServer?activeServerId:null});
+    if(r&&r.error){listEl.innerHTML=`<div style="color:#f87171;padding:10px">${escH(r.error)}</div>`;return;}
+    const rows=Array.isArray(r)?r:[];
+    if(!rows.length){listEl.innerHTML='<div style="padding:10px;color:var(--text-lo);font-size:13px">Nobody is currently muted or banned here.</div>';return;}
+    const canManage=isAdmin(me);
+    listEl.innerHTML=rows.map(row=>{
+      const untilText=row.expires_at?new Date(row.expires_at).toLocaleString():'Permanent';
+      const durOptions=MODLIST_DURATIONS.map(d=>`<option value="${d.mins}">${d.label}</option>`).join('');
+      const controls=canManage?`
+          <select onchange="handleModListDurationChange('${esc(row.id)}',this.value)">
+            <option value="">Change…</option>
+            ${durOptions}
+          </select>
+          <button class="danger" onclick="handleModListRevoke('${esc(row.id)}','${row.action_type}')">${row.action_type==='ban'?'Unban':'Unmute'}</button>`:'';
+      return `<div class="modlist-row">
+        <div style="width:32px;height:32px;border-radius:50%;background:${row.target.avatar_color||'#6c7cff'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0">${escH((row.target.username||'??').slice(0,2).toUpperCase())}</div>
+        <div class="modlist-info">
+          <div class="modlist-name">${escH(row.target.username)} <span class="modlist-type ${row.action_type}">${row.action_type}</span></div>
+          <div class="modlist-meta">By ${escH(row.moderator.username)} · ${row.expires_at?'Until '+escH(untilText):'Permanent'}${row.reason?' · '+escH(row.reason):''}</div>
+        </div>
+        <div class="modlist-actions">${controls}</div>
+      </div>`;
+    }).join('');
+  }catch(e){listEl.innerHTML='<div style="color:#f87171;padding:10px">Failed to load list</div>';}
+}
+async function handleModListRevoke(actionId,type){
+  try{
+    const r=await rpc('revoke_mod_action',{p_token:token,p_action_id:actionId});
+    if(r&&r.error){showToast(r.error,'error');return;}
+    showToast(type==='ban'?'User unbanned':'User unmuted','success');
+    openModListModal();
+  }catch(e){showToast('Failed to update','error');}
+}
+async function handleModListDurationChange(actionId,mins){
+  if(mins==='') return;
+  try{
+    const r=await rpc('update_mod_action_duration',{p_token:token,p_action_id:actionId,p_duration_minutes:parseInt(mins,10)});
+    if(r&&r.error){showToast(r.error,'error');return;}
+    showToast('Duration updated','success');
+    openModListModal();
+  }catch(e){showToast('Failed to update','error');}
 }
 
 // ----------------------------------------------------------------
