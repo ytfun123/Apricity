@@ -9,3 +9,5 @@
 07/12/2026: Added chillcord discord copy.
 
 07/18/2026: updated chillcord logo, now its better.
+
+07/23/2026: Fixed minecrfat 1.20, started adding actual games icons insted of old icons.
