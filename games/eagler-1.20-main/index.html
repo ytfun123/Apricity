@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+    <title>EaglercraftZ Launcher</title>
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <meta name="description" content="EaglercraftZ 1.20.4">
+    <meta name="keywords" content="eaglercraft, eaglercraftz, minecraft, 1.20, 1.20.4">
+    
+    <!-- Minecraft Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- INTRO SEQUENCE -->
+    <div id="intro-screen" style="position:fixed; z-index:9999; top:0; left:0; width:100vw; height:100vh; background-color:white; display:flex; justify-content:center; align-items:center; transition: opacity 0.5s ease;">
+        <img src="assets/loading/eagtek.png" alt="" id="logo1" style="position:absolute; width:1000px; opacity:0; top:50%; left:50%; transform:translate(-50%, -50%); transition: width 5s linear, opacity 0.3s ease;">
+        <img src="assets/loading/moyang.png" alt="" id="logo2" style="position:absolute; width:4000px; opacity:0; top:50%; left:50%; transform:translate(-50%, -50%); transition: width 5s linear, opacity 0.3s ease;">
+        <img src="images/EaglercraftZ.png" alt="" id="logo3" style="position:absolute; width:1000px; opacity:0; top:50%; left:50%; transform:translate(-50%, -50%); transition: transform 2s ease, opacity 0.3s ease;">
+    </div>
+
+    <video autoplay loop muted playsinline id="background-container" class="bg-video" poster="assets/background/panorama-shaders.png">
+        <source src="assets/background/panorama.mp4" type="video/mp4">
+    </video>
+    
+    <!-- AUDIO -->
+    <audio id="bg-music" src="assets/music/moog_city_2.ogg" hidden></audio>
+
+    <!-- NOTICES MODAL (Popup) -->
+    <div id="notice-modal" class="mc-modal-overlay">
+        <div class="mc-modal">
+            <h2 class="mc-title-small" style="color: #444;">Notice</h2>
+            <p>This isnt made by me. All credits go to the devs of EaglercraftZ.<br>
+               Im just sharing it for other users to access easier!</p>
+            <p class="mc-warning">Panic Key: Press the key Z on your keyboard to be redirected to blocked page in an emergency! ;></p>
+            <p>Should fr go check out the original devs! <br>
+                <a href="https://dsc.gg/eaglercraftz" target="_blank" class="mc-link">EaglercraftZ Discord</a>
+            </p>
+            <div class="mc-modal-footer">
+                <button class="mc-button" onclick="closeNotice()">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN MENU -->
+    <div id="main-menu" class="screen active">
+        <img src="images/EaglercraftZ.png" alt="EaglercraftZ Launcher" class="game-logo" onerror="this.style.display='none'; document.getElementById('text-logo').style.display='block';">
+        <h1 id="text-logo" class="mc-title" style="display:none; margin-bottom: 40px; text-shadow: 4px 4px 0 #000;">EaglercraftZ Launcher</h1>
+
+        <div class="mc-button-container">
+            <button class="mc-button" onclick="showScreen('play-screen')">Play Eaglercraft</button>
+            <button class="mc-button" onclick="showScreen('settings-screen')">Settings</button>
+            <button class="mc-button" onclick="window.open('https://dsc.gg/eaglercraftz', '_blank')">Discord</button>
+        </div>
+        
+        <div class="footer-text">
+            <span>&copy; EaglercraftZ Official | Not affiliated with Mojang or Microsoft</span>
+        </div>
+    </div>
+
+    <!-- PLAY SCREEN -->
+    <div id="play-screen" class="screen">
+        <h2 class="mc-title-small" style="text-shadow: 2px 2px 0 #000;">Choose a runtime</h2>
+        <p style="color:#ffaaaa; text-shadow: 1px 1px 0 #000; font-size:22px; margin-top:-10px;">Using Wasm may not work on some devices</p>
+        
+        <div class="mc-panel" style="margin-top: 10px;">
+            <label class="mc-label">Select Client:</label>
+            <select id="clientSelect" class="mc-select" onchange="updateRuntimes()">
+                <option value="eaglercraftz">EaglercraftZ</option>
+                <!-- Room for more clients -->
+            </select>
+            
+            <label class="mc-label" style="margin-top: 15px;">Select Version:</label>
+            <select id="versionSelect" class="mc-select">
+                <option value="javascript">EaglercraftZ Javascript</option>
+                <option value="wasm">EaglercraftZ Wasm</option>
+            </select>
+        </div>
+
+        <div class="mc-button-container double">
+            <button class="mc-button" onclick="launchGame()">Launch Play</button>
+            <button class="mc-button" onclick="showScreen('main-menu')">Cancel</button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT SCREEN -->
+    <div id="javascript-screen" class="screen">
+        <h1 class="mc-title" style="margin-bottom: 20px; text-shadow: 4px 4px 0 #000;">JavaScript Builds</h1>
+        <div class="mc-panel" style="width: 700px; max-width: 90%;">
+            <p class="mc-warning" style="font-size: 20px; margin-top: 0;">WARNING: Using builds 0.0.8 above no longer supports 0.0.7 or below as 0.0.8 above contains a full rewrite, consider backing-up your single player world as worlds may be corrupted or crash when loading into one</p>
+            <p style="font-size: 20px; color: #444; margin-bottom: 20px; font-weight: bold;">NOTE: I couldn't get the assets.epk files for versions "u1 RC" and lower. So until I get them all thats available for javascript are versions u0.1.0 and u0.2.0.</p>
+            <label class="mc-label">Select Build:</label>
+            <select id="jsBuildSelect" class="mc-select" style="margin-bottom: 30px;">
+                <option value="javascript/builds/0.2.0/index.html">EaglercraftZ Latest</option>
+                <option value="javascript/builds/0.2.0/index.html">EaglercraftZ u2 Release</option>
+                <option value="javascript/builds/0.1.0/index.html">EaglercraftZ u1 Release</option>
+            </select>
+            <div class="mc-button-container double" style="width: 100%;">
+                <button class="mc-button" onclick="launchGameWithSettings('jsBuildSelect')">Play</button>
+                <button class="mc-button" onclick="showScreen('play-screen')">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WASM SCREEN -->
+    <div id="wasm-screen" class="screen">
+        <h1 class="mc-title" style="margin-bottom: 20px; text-shadow: 4px 4px 0 #000;">WASM Builds</h1>
+        <div class="mc-panel" style="width: 700px; max-width: 90%;">
+            <p style="font-size: 22px; color: #444; margin-top: 0; margin-bottom: 30px; font-weight: bold;">NOTE: I couldn't get the assets.epk files for versions "0.0.7" and lower. So until I get them all thats available for wasm is version u0.1.0.</p>
+            <label class="mc-label">Select Build:</label>
+            <select id="wasmBuildSelect" class="mc-select" style="margin-bottom: 30px;">
+                <option value="wasm/builds/0.1.0/index.html">EaglercraftZ Latest</option>
+                <option value="wasm/builds/0.1.0/index.html">EaglercraftZ u1</option>
+            </select>
+            <div class="mc-button-container double" style="width: 100%;">
+                <button class="mc-button" onclick="launchGameWithSettings('wasmBuildSelect')">Play</button>
+                <button class="mc-button" onclick="showScreen('play-screen')">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS SCREEN -->
+    <div id="settings-screen" class="screen">
+        <h2 class="mc-title-small" style="text-shadow: 2px 2px 0 #000;">Options</h2>
+        <div class="mc-panel">
+            <h3 style="margin-top:0; color:#333;">Still under construction</h3>
+            <label class="mc-toggle" style="margin-top: 20px;">
+                <input type="checkbox" id="liquidToggle">
+                <span class="mc-toggle-slider"></span>
+                <span class="mc-toggle-label-text">Enable Magic Liquid Effect</span>
+            </label>
+            <label class="mc-toggle" style="margin-top: 20px;">
+                <input type="checkbox" id="aboutBlankToggle">
+                <span class="mc-toggle-slider"></span>
+                <span class="mc-toggle-label-text">Cloak game in about:blank</span>
+            </label>
+        </div>
+        <div class="mc-button-container">
+            <button class="mc-button" onclick="showScreen('main-menu')">Done</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

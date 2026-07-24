@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EaglercraftZ Launcher - JavaScript</title>
+    <link rel="icon" href="../favicon.ico" sizes="any">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <video autoplay loop muted playsinline class="bg-video" poster="../assets/background/panorama-shaders.png">
+        <source src="../assets/background/panorama.mp4" type="video/mp4">
+    </video>
+    
+    <audio id="bg-music" src="../assets/music/moog_city_2.ogg" loop autoplay hidden></audio>
+
+    <div class="screen active">
+        <h1 class="mc-title" style="margin-bottom: 20px; text-shadow: 4px 4px 0 #000;">JavaScript Builds</h1>
+        
+        <div class="mc-panel" style="width: 700px; max-width: 90%;">
+            <p class="mc-warning" style="font-size: 20px; margin-top: 0;">WARNING: Using builds 0.0.8 above no longer supports 0.0.7 or below as 0.0.8 above contains a full rewrite, consider backing-up your single player world as worlds may be corrupted or crash when loading into one</p>
+            <p style="font-size: 20px; color: #444; margin-bottom: 20px; font-weight: bold;">NOTE: I couldn't get the assets.epk files for versions "u1 RC" and lower. So until I get them all thats available for javascript are versions u0.1.0 and u0.2.0.</p>
+            
+            <label class="mc-label">Select Build:</label>
+            <select id="gameSelect" class="mc-select" style="margin-bottom: 30px;">
+                <option value="builds/0.2.0/index.html">EaglercraftZ Latest</option>
+                <option value="builds/0.2.0/index.html">EaglercraftZ u2 Release</option>
+                <option value="builds/0.1.0/index.html">EaglercraftZ u1 Release</option>
+            </select>
+            
+            <div class="mc-button-container double" style="width: 100%;">
+                <button class="mc-button" onclick="play()">Play</button>
+                <button class="mc-button" onclick="history.back()">Back</button>
+            </div>
+        </div>
+
+        <div class="footer-text">
+            <span>&copy; EaglercraftZ Official | Not affiliated with Mojang or Microsoft</span>
+        </div>
+    </div>
+
+    <script src="../script.js"></script>
+    <script>
+        function play() {
+            const selectElement = document.getElementById('gameSelect');
+            if (selectElement && selectElement.value) {
+                window.location.href = selectElement.value;
+            }
+        }
+        
+        document.addEventListener('click', () => {
+            const audio = document.getElementById('bg-music');
+            if(audio) audio.play().catch(()=>{});
+        }, {once: true});
+    </script>
+</body>
+</html>
