@@ -1135,6 +1135,10 @@ function generateFingerprint() {
             color: var(--md-sys-color-on-primary-container);
             display: flex; align-items: center; justify-content: center;
             font-size: 30px;
+            overflow: hidden;
+        }
+        .games-fs-icon img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
         }
         .games-fs-name { font-weight: 500; text-align: center; font-size: 0.95rem; }
         .games-fs-tag {
@@ -3964,7 +3968,7 @@ function generateFingerprint() {
         { id: 'growagarden',   name: 'Grow a Garden', icon: 'yard',            src: './games/gag.html',     placeholder: false },
         { id: 'infinitycraft',  name: 'Infinity Craft', icon: 'auto_awesome',    src: './games/infinitycraft.html', placeholder: false },
         { id: 'minecraft',      name: 'Minecraft 1.12', icon: 'grass',           src: './games/mc.html', placeholder: false },
-        { id: 'minecraft 1.20',      name: 'Minecraft 1.20 moded', img: './icons/mc-1_20-moded.png',           src: './games/eagler-1.20-main/javascript/builds/0.2.0/index.html', placeholder: false },
+        { id: 'minecraft 1.20',      name: 'Minecraft 1.20 moded', icon: './icons/mc-1_20-moded.png',           src: './games/eagler-1.20-main/javascript/builds/0.2.0/index.html', placeholder: false },
         { id: 'run3',      name: 'Run 3', icon: 'directions_run',           src: './games/run3/index.html', placeholder: false },
         { id: 'pf',      name: 'Papas Freezeria', icon: 'icecream',           src: './games/pf.html', placeholder: false },
         { id: 'tanuki',      name: 'Tanuki Sunset', icon: 'wb_twilight',           src: './games/tanuki/index.html', placeholder: false },
@@ -3998,20 +4002,44 @@ function generateFingerprint() {
         }
     }
 
+    // Recognize an image path/URL vs. a Google Material Symbols ligature name.
+    // Material Symbols names are bare words like "gamepad" or "local_florist" —
+    // no dots, no slashes. Anything with an image extension, a data: URI, or a
+    // path/URL shape is treated as an image instead. Works for every entry in
+    // GAMES_LIST, no matter how the list grows.
+    function isGameIconImage(str) {
+        if (!str) return false;
+        return /\.(png|jpe?g|gif|webp|svg|ico|avif|bmp)(\?.*)?$/i.test(str)
+            || /^data:image\//i.test(str)
+            || /^https?:\/\//i.test(str)
+            || str.startsWith('./') || str.startsWith('../') || str.startsWith('/');
+    }
+
+    // Accepts either g.icon (preferred, auto-detected) or the legacy g.img key
+    // some entries used, and renders an <img> or a <span class="material-symbols-outlined">
+    // as appropriate. Falls back to a generic controller glyph if nothing is set.
+    function gameIconHTML(g) {
+        const value = g.icon || g.img || '';
+        if (isGameIconImage(value)) {
+            return `<img src="${value}" alt="" loading="lazy" onerror="this.outerHTML='<span class=\\'material-symbols-outlined\\'>broken_image</span>'">`;
+        }
+        return `<span class="material-symbols-outlined">${value || 'sports_esports'}</span>`;
+    }
+
     function renderGamesFullscreenGrid() {
         const grid = document.getElementById('gamesFsGrid');
         grid.innerHTML = GAMES_LIST.map(g => {
             if (g.placeholder) {
                 return `
                 <div class="games-fs-card placeholder" title="Add your game source in GAMES_LIST">
-                    <div class="games-fs-icon"><span class="material-symbols-outlined">${g.icon}</span></div>
+                    <div class="games-fs-icon">${gameIconHTML(g)}</div>
                     <div class="games-fs-name">${g.name}</div>
                     <div class="games-fs-tag">Empty slot</div>
                 </div>`;
             }
             return `
                 <div class="games-fs-card" onclick="toggleGamesFullscreen(); openGame('${g.id}', '${g.src}')">
-                    <div class="games-fs-icon"><span class="material-symbols-outlined">${g.icon}</span></div>
+                    <div class="games-fs-icon">${gameIconHTML(g)}</div>
                     <div class="games-fs-name">${g.name}</div>
                 </div>`;
         }).join('');
