@@ -3081,54 +3081,68 @@ function generateFingerprint() {
 </div>
 
 <script>
-    // ===== API KEYS (loaded from files, not hardcoded) =====
-    // Drop each key into its own plain-text file next to this HTML file, e.g.:
-    //   API_KEYS/groq_api.txt
-    //   API_KEYS/youtube_api.txt
-    //   API_KEYS/tmdb_api.txt
-    // Each file should contain nothing but the raw key (whitespace is trimmed).
-    // Add more by extending the KEY_FILES map below — no other code needs to change.
-    const KEY_FILES = {
-        groq: 'groq_api.txt',
-        youtube: 'youtube_api.txt',
-        tmdb: 'tmdb_api.txt'
+    // ===== SECURE API PROXY =====
+    // Real API keys (YouTube, Groq, TMDB) live server-side only — one of two
+    // backends, tried in order. Neither backend ever sends a key to the browser;
+    // they make the third-party call themselves and return just the result.
+    //
+    // 1) Supabase Edge Function (primary) — one function, api-proxy, handles
+    //    all three services (routes on ?service=). Set the real keys with
+    //    `supabase secrets set YOUTUBE_API_KEY=...` etc.
+    // 2) Google Apps Script + Sheet (fallback) — a Web App that reads keys from
+    //    a Sheet only editable by you/admins, and proxies the same 3 services.
+    //
+    // Fill these in once you've deployed each backend:
+    const PROXY_CONFIG = {
+        supabaseUrl: 'https://gmeguzmrmnjerllpdjhp.supabase.co',
+        supabaseAnonKey: 'sb_publishable_uB88-MuVkU7EFPtNYEceiw_xPeI_WOu',
+        appsScriptUrl: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'
     };
-    let GROQ_API_KEY = '';
-    let YT_KEY = '';
-    let TMDB_API_KEY = '';
 
-    async function loadApiKeyFile(filename) {
+    // service: 'youtube' | 'tmdb' | 'groq'
+    // params: plain object of query params (GET) — ignored for groq
+    // body: object to send as JSON (POST) — only used for groq
+    async function proxyFetch(service, params, body) {
+        // ---- try Supabase first ----
         try {
-            const res = await fetch('./API_KEYS/' + filename, { cache: 'no-store' });
-            if (!res.ok) { console.warn('[API_KEYS] missing file: ' + filename); return ''; }
-            return (await res.text()).trim();
+            if (!PROXY_CONFIG.supabaseUrl.includes('YOUR_PROJECT')) {
+                const qs = new URLSearchParams({ service, ...(params || {}) });
+                const url = `${PROXY_CONFIG.supabaseUrl}/functions/v1/api-proxy?${qs}`;
+                const res = await fetch(url, {
+                    method: body ? 'POST' : 'GET',
+                    headers: { apikey: PROXY_CONFIG.supabaseAnonKey, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+                    body: body ? JSON.stringify(body) : undefined
+                });
+                if (res.ok) return await res.json();
+                console.warn('[proxy] Supabase api-proxy returned ' + res.status + ', trying Apps Script fallback');
+            }
         } catch (e) {
-            console.warn('[API_KEYS] failed to load ' + filename, e);
-            return '';
+            console.warn('[proxy] Supabase unreachable, trying Apps Script fallback', e);
         }
+        // ---- fallback: Apps Script ----
+        if (PROXY_CONFIG.appsScriptUrl.includes('https://script.google.com/macros/s/AKfycbwaGnNnyGXArFtC8o5uocdeLwq8-o8Xq_8TCjz90PwXkssmKluP97l73MJbMiTvJrAAVQ/exec')) {
+            return { error: 'No proxy backend configured yet — set PROXY_CONFIG in index.html.' };
+        }
+        const qs = new URLSearchParams({ service, ...(params || {}) });
+        if (body) {
+            // text/plain avoids a CORS preflight that Apps Script can't answer;
+            // doPost still receives the raw JSON string in e.postData.contents.
+            const res = await fetch(`${PROXY_CONFIG.appsScriptUrl}?${qs}`, { method: 'POST', body: JSON.stringify(body) });
+            return await res.json();
+        }
+        const res = await fetch(`${PROXY_CONFIG.appsScriptUrl}?${qs}`);
+        return await res.json();
     }
 
-    // Resolves once every key in KEY_FILES has been fetched (successfully or not).
-    // Any code that needs a key can `await apiKeysReady` first to be safe.
-    const apiKeysReady = (async () => {
-        const names = Object.keys(KEY_FILES);
-        const values = await Promise.all(names.map(n => loadApiKeyFile(KEY_FILES[n])));
-        const loaded = {};
-        names.forEach((n, i) => { loaded[n] = values[i]; });
-        GROQ_API_KEY = loaded.groq;
-        YT_KEY = loaded.youtube;
-        TMDB_API_KEY = loaded.tmdb;
-        window.dispatchEvent(new CustomEvent('apricity-keys-loaded', { detail: loaded }));
-        return loaded;
-    })();
-    window._apiKeysReady = apiKeysReady;
+    // Kept for backward compatibility with existing call sites — the proxy now
+    // handles missing/invalid keys server-side, so this no longer blocks anything.
+    function requireKey() { return true; }
 
     // ===== SIDEBAR TOGGLE =====
     function toggleSidebar() {
         document.querySelector('.yt-sidebar').classList.toggle('collapsed');
     }
 
-    // YT_KEY is populated above by apiKeysReady, from API_KEYS/youtube_api.txt
 
     // ===== MODAL SYSTEM =====
     function openModal(tab) {
@@ -3424,20 +3438,14 @@ function generateFingerprint() {
         if (tab.pageId === 'home-page') { /* nothing extra */ }
         else if (tab.pageId === 'youtube-page') { /* already loaded */ }
         else if (tab.pageId === 'gemini-page') {
-            const key = GROQ_API_KEY;
-            if (key) {
-                document.getElementById('gemini-setup-screen').style.display = 'none';
-                document.getElementById('gemini-chat-screen').style.display = 'flex';
-                groqRenderSidebar();
-                if (tab.extra && tab.extra.chatId) groqLoadChat(tab.extra.chatId);
-                else if (!groqCurrentId) {
-                    const chats = groqLoadChats();
-                    if (chats.length > 0) groqLoadChat(chats[chats.length-1].id);
-                    else groqNewChat();
-                }
-            } else {
-                document.getElementById('gemini-setup-screen').style.display = 'flex';
-                document.getElementById('gemini-chat-screen').style.display = 'none';
+            document.getElementById('gemini-setup-screen').style.display = 'none';
+            document.getElementById('gemini-chat-screen').style.display = 'flex';
+            groqRenderSidebar();
+            if (tab.extra && tab.extra.chatId) groqLoadChat(tab.extra.chatId);
+            else if (!groqCurrentId) {
+                const chats = groqLoadChats();
+                if (chats.length > 0) groqLoadChat(chats[chats.length-1].id);
+                else groqNewChat();
             }
         } else if (tab.pageId === 'sunlit-page') {
             const frame = document.getElementById('sunlit-frame');
@@ -4666,18 +4674,10 @@ function generateFingerprint() {
         document.getElementById('yt-page-' + name).classList.add('active');
     }
 
-    function requireKey() {
-        if (!YT_KEY || YT_KEY === 'YOUR_API_KEY_HERE') {
-            alert('Please set your YouTube API key in the YT_KEY variable.');
-            return false;
-        }
-        return true;
-    }
+    // requireKey() is defined near the top of the page (with the proxy helper)
 
     async function ytFetch(endpoint, params) {
-        const p = new URLSearchParams({ ...params, key: YT_KEY });
-        const r = await fetch(`https://www.googleapis.com/youtube/v3/${endpoint}?${p}`);
-        return r.json();
+        return proxyFetch('youtube', { endpoint, ...params });
     }
 
     async function doSearch() {
@@ -4817,19 +4817,17 @@ function generateFingerprint() {
     }
 
     async function doRaw() {
-        if (!requireKey()) return;
         const ep = document.getElementById('rawEndpoint').value, extra = document.getElementById('rawParams').value.trim();
-        const params = { key: YT_KEY };
+        const params = {};
         if (extra) extra.split('\n').forEach(line => { const eq = line.indexOf('='); if (eq > 0) params[line.slice(0,eq).trim()] = line.slice(eq+1).trim(); });
-        const url = `https://www.googleapis.com/youtube/v3/${ep}&${new URLSearchParams(params)}`;
         const el = document.getElementById('raw-response');
         el.style.display = 'block'; el.className = 'response-box'; el.textContent = 'Fetching…';
-        try { const r = await fetch(url); el.textContent = JSON.stringify(await r.json(), null, 2); } catch(e) { el.textContent = 'Error: ' + e.message; }
+        try { const d = await ytFetch(ep, params); el.textContent = JSON.stringify(d, null, 2); } catch(e) { el.textContent = 'Error: ' + e.message; }
     }
 
     function copyRaw() {
-        const txt = document.getElementById('rawPreview').textContent.replace('GET ', '').replace('YOUR_KEY', YT_KEY);
-        navigator.clipboard.writeText(txt).then(() => alert('URL copied!'));
+        const txt = document.getElementById('rawPreview').textContent.replace('GET ', '').replace(/[?&]key=YOUR_KEY/, '');
+        navigator.clipboard.writeText(txt).then(() => alert('URL copied! (key omitted — requests now go through your secure proxy)'));
     }
 
     function playInline(videoId) {
@@ -4954,28 +4952,21 @@ function generateFingerprint() {
         groqRenderSidebar();
     }
 
-    async function openGemini() {
+    function openGemini() {
         toggleApps();
         // Always open a new Groq tab (allows multiple chat tabs)
-        await apiKeysReady;
-        const key = GROQ_API_KEY;
         const tabId = tabGenId();
         tabs.push({ id: tabId, label: 'Groq AI', icon: '🤖', pageId: 'gemini-page', extra: null });
         activeTabId = tabId;
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById('gemini-page').classList.add('active');
-        if (key) {
-            document.getElementById('gemini-setup-screen').style.display = 'none';
-            document.getElementById('gemini-chat-screen').style.display = 'flex';
-            groqRenderSidebar();
-            groqCurrentId = null;
-            const chats = groqLoadChats();
-            if (chats.length > 0) groqLoadChat(chats[chats.length - 1].id);
-            else groqNewChat();
-        } else {
-            document.getElementById('gemini-setup-screen').style.display = 'flex';
-            document.getElementById('gemini-chat-screen').style.display = 'none';
-        }
+        document.getElementById('gemini-setup-screen').style.display = 'none';
+        document.getElementById('gemini-chat-screen').style.display = 'flex';
+        groqRenderSidebar();
+        groqCurrentId = null;
+        const chats = groqLoadChats();
+        if (chats.length > 0) groqLoadChat(chats[chats.length - 1].id);
+        else groqNewChat();
         tabRender();
     }
 
@@ -5013,9 +5004,6 @@ function generateFingerprint() {
         const input = document.getElementById('geminiInput');
         const text = input.value.trim();
         if (!text) return;
-        await apiKeysReady;
-        const key = GROQ_API_KEY;
-        if (!key) { openGeminiSettings(); return; }
         if (!groqCurrentId) groqNewChat();
 
         input.value = '';
@@ -5037,20 +5025,11 @@ function generateFingerprint() {
         msgs.scrollTop = msgs.scrollHeight;
 
         try {
-            const url = 'https://api.groq.com/openai/v1/chat/completions';
             const messages = geminiHistory.map(m => ({
                 role: m.role === 'model' ? 'assistant' : 'user',
                 content: m.parts[0].text
             }));
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${key}`
-                },
-                body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages })
-            });
-            const data = await res.json();
+            const data = await proxyFetch('groq', null, { model: 'llama-3.3-70b-versatile', messages });
             typing.remove();
             if (data.error) {
                 appendGeminiMsg('model', 'Error: ' + data.error.message);
@@ -5877,7 +5856,7 @@ function generateFingerprint() {
     // ===================================================================
     // WAVELENGTH / SPOTIFY (inlined from spotify.html)
     // ===================================================================
-    // Wavelength reuses the shared YT_KEY (loaded from API_KEYS/youtube_api.txt above)
+    // Wavelength search now goes through proxyFetch too (see wlDoSearch / wlShowHome below)
 
     // ── STATE ──
     let wlPlayer = null;
@@ -6145,10 +6124,8 @@ function generateFingerprint() {
         const area = document.getElementById('wl-content-area');
         area.innerHTML = '<div class="wl-loading-row"><div class="wl-spinner"></div> Searching…</div>';
         try {
-            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=24&q=${encodeURIComponent(q)}&key=${YT_KEY}`;
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.error) throw new Error(data.error.message);
+            const data = await proxyFetch('youtube', { endpoint: 'search', part: 'snippet', type: 'video', videoCategoryId: '10', maxResults: '24', q });
+            if (data.error) throw new Error(data.error.message || data.error);
             const items = (data.items || []).filter(i => i.id?.videoId);
             wlLastResults = items.map(i => ({
                 id: i.id.videoId,
@@ -6199,10 +6176,8 @@ function generateFingerprint() {
           <div id="wl-trending-section"><div class="wl-loading-row"><div class="wl-spinner"></div> Loading trending music…</div></div>`;
 
         try {
-            const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&maxResults=16&regionCode=US&key=${YT_KEY}`;
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.error) throw new Error(data.error.message);
+            const data = await proxyFetch('youtube', { endpoint: 'videos', part: 'snippet', chart: 'mostPopular', videoCategoryId: '10', maxResults: '16', regionCode: 'US' });
+            if (data.error) throw new Error(data.error.message || data.error);
             wlTrending = (data.items || []).map(i => ({
                 id: i.id,
                 title: i.snippet.title,
@@ -6444,7 +6419,6 @@ function generateFingerprint() {
 <!-- ===== MOVIES (TMDB) ===== -->
 <script>
 (function(){
-    // TMDB_API_KEY is loaded from API_KEYS/tmdb_api.txt by the shared loader near the top of the page
     var BASE = 'https://api.themoviedb.org/3';
     var IMG = 'https://image.tmdb.org/t/p/w300';
     var BACKDROP = 'https://image.tmdb.org/t/p/w780';
@@ -6461,17 +6435,12 @@ function generateFingerprint() {
 
     function tmdbGet(path, cb) {
         if (mvCache[path]) { cb(mvCache[path]); return; }
-        apiKeysReady.then(function() {
-            if (mvAbort) mvAbort.abort();
-            mvAbort = window.AbortController ? new AbortController() : null;
-            var sep = path.indexOf('?') === -1 ? '?' : '&';
-            var url = BASE + path + sep + 'api_key=' + TMDB_API_KEY;
-            setStatus('Loading…');
-            fetch(url, { method: 'GET', headers: { Accept: 'application/json' }, mode: 'cors', cache: 'force-cache', signal: mvAbort ? mvAbort.signal : undefined })
-                .then(function(r) { if (!r.ok) throw new Error('Unable to load'); return r.json(); })
-                .then(function(data) { mvCache[path] = data; cb(data); })
-                .catch(function(err) { if (err.name === 'AbortError') return; setStatus('Error: ' + err.message); });
-        });
+        if (mvAbort) mvAbort.abort();
+        mvAbort = window.AbortController ? new AbortController() : null;
+        setStatus('Loading…');
+        proxyFetch('tmdb', { path })
+            .then(function(data) { mvCache[path] = data; cb(data); })
+            .catch(function(err) { if (err.name === 'AbortError') return; setStatus('Error: ' + err.message); });
     }
 
     function setStatus(t) { if (elStatus) elStatus.textContent = t; }
