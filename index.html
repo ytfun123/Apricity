@@ -3081,16 +3081,54 @@ function generateFingerprint() {
 </div>
 
 <script>
-    // ===== GROQ API KEY =====
-    const GROQ_API_KEY = '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';
+    // ===== API KEYS (loaded from files, not hardcoded) =====
+    // Drop each key into its own plain-text file next to this HTML file, e.g.:
+    //   API_KEYS/groq_api.txt
+    //   API_KEYS/youtube_api.txt
+    //   API_KEYS/tmdb_api.txt
+    // Each file should contain nothing but the raw key (whitespace is trimmed).
+    // Add more by extending the KEY_FILES map below — no other code needs to change.
+    const KEY_FILES = {
+        groq: 'groq_api.txt',
+        youtube: 'youtube_api.txt',
+        tmdb: 'tmdb_api.txt'
+    };
+    let GROQ_API_KEY = '';
+    let YT_KEY = '';
+    let TMDB_API_KEY = '';
+
+    async function loadApiKeyFile(filename) {
+        try {
+            const res = await fetch('./API_KEYS/' + filename, { cache: 'no-store' });
+            if (!res.ok) { console.warn('[API_KEYS] missing file: ' + filename); return ''; }
+            return (await res.text()).trim();
+        } catch (e) {
+            console.warn('[API_KEYS] failed to load ' + filename, e);
+            return '';
+        }
+    }
+
+    // Resolves once every key in KEY_FILES has been fetched (successfully or not).
+    // Any code that needs a key can `await apiKeysReady` first to be safe.
+    const apiKeysReady = (async () => {
+        const names = Object.keys(KEY_FILES);
+        const values = await Promise.all(names.map(n => loadApiKeyFile(KEY_FILES[n])));
+        const loaded = {};
+        names.forEach((n, i) => { loaded[n] = values[i]; });
+        GROQ_API_KEY = loaded.groq;
+        YT_KEY = loaded.youtube;
+        TMDB_API_KEY = loaded.tmdb;
+        window.dispatchEvent(new CustomEvent('apricity-keys-loaded', { detail: loaded }));
+        return loaded;
+    })();
+    window._apiKeysReady = apiKeysReady;
 
     // ===== SIDEBAR TOGGLE =====
     function toggleSidebar() {
         document.querySelector('.yt-sidebar').classList.toggle('collapsed');
     }
 
-    // ===== API KEY =====
-    const YT_KEY = 'AIzaSyB7x5zyGdt3_9JnaIWqQYrvNkcB6lef_xA';
+    // YT_KEY is populated above by apiKeysReady, from API_KEYS/youtube_api.txt
 
     // ===== MODAL SYSTEM =====
     function openModal(tab) {
@@ -4916,9 +4954,10 @@ function generateFingerprint() {
         groqRenderSidebar();
     }
 
-    function openGemini() {
+    async function openGemini() {
         toggleApps();
         // Always open a new Groq tab (allows multiple chat tabs)
+        await apiKeysReady;
         const key = GROQ_API_KEY;
         const tabId = tabGenId();
         tabs.push({ id: tabId, label: 'Groq AI', icon: '🤖', pageId: 'gemini-page', extra: null });
@@ -4974,6 +5013,7 @@ function generateFingerprint() {
         const input = document.getElementById('geminiInput');
         const text = input.value.trim();
         if (!text) return;
+        await apiKeysReady;
         const key = GROQ_API_KEY;
         if (!key) { openGeminiSettings(); return; }
         if (!groqCurrentId) groqNewChat();
@@ -5837,7 +5877,7 @@ function generateFingerprint() {
     // ===================================================================
     // WAVELENGTH / SPOTIFY (inlined from spotify.html)
     // ===================================================================
-    const WL_YT_API_KEY = 'AIzaSyB7x5zyGdt3_9JnaIWqQYrvNkcB6lef_xA';
+    // Wavelength reuses the shared YT_KEY (loaded from API_KEYS/youtube_api.txt above)
 
     // ── STATE ──
     let wlPlayer = null;
@@ -6105,7 +6145,7 @@ function generateFingerprint() {
         const area = document.getElementById('wl-content-area');
         area.innerHTML = '<div class="wl-loading-row"><div class="wl-spinner"></div> Searching…</div>';
         try {
-            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=24&q=${encodeURIComponent(q)}&key=${WL_YT_API_KEY}`;
+            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=24&q=${encodeURIComponent(q)}&key=${YT_KEY}`;
             const res = await fetch(url);
             const data = await res.json();
             if (data.error) throw new Error(data.error.message);
@@ -6159,7 +6199,7 @@ function generateFingerprint() {
           <div id="wl-trending-section"><div class="wl-loading-row"><div class="wl-spinner"></div> Loading trending music…</div></div>`;
 
         try {
-            const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&maxResults=16&regionCode=US&key=${WL_YT_API_KEY}`;
+            const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&maxResults=16&regionCode=US&key=${YT_KEY}`;
             const res = await fetch(url);
             const data = await res.json();
             if (data.error) throw new Error(data.error.message);
@@ -6404,7 +6444,7 @@ function generateFingerprint() {
 <!-- ===== MOVIES (TMDB) ===== -->
 <script>
 (function(){
-    var API_KEY = 'TMDB_API_KEY_REMOVED';
+    // TMDB_API_KEY is loaded from API_KEYS/tmdb_api.txt by the shared loader near the top of the page
     var BASE = 'https://api.themoviedb.org/3';
     var IMG = 'https://image.tmdb.org/t/p/w300';
     var BACKDROP = 'https://image.tmdb.org/t/p/w780';
@@ -6421,15 +6461,17 @@ function generateFingerprint() {
 
     function tmdbGet(path, cb) {
         if (mvCache[path]) { cb(mvCache[path]); return; }
-        if (mvAbort) mvAbort.abort();
-        mvAbort = window.AbortController ? new AbortController() : null;
-        var sep = path.indexOf('?') === -1 ? '?' : '&';
-        var url = BASE + path + sep + 'api_key=' + API_KEY;
-        setStatus('Loading…');
-        fetch(url, { method: 'GET', headers: { Accept: 'application/json' }, mode: 'cors', cache: 'force-cache', signal: mvAbort ? mvAbort.signal : undefined })
-            .then(function(r) { if (!r.ok) throw new Error('Unable to load'); return r.json(); })
-            .then(function(data) { mvCache[path] = data; cb(data); })
-            .catch(function(err) { if (err.name === 'AbortError') return; setStatus('Error: ' + err.message); });
+        apiKeysReady.then(function() {
+            if (mvAbort) mvAbort.abort();
+            mvAbort = window.AbortController ? new AbortController() : null;
+            var sep = path.indexOf('?') === -1 ? '?' : '&';
+            var url = BASE + path + sep + 'api_key=' + TMDB_API_KEY;
+            setStatus('Loading…');
+            fetch(url, { method: 'GET', headers: { Accept: 'application/json' }, mode: 'cors', cache: 'force-cache', signal: mvAbort ? mvAbort.signal : undefined })
+                .then(function(r) { if (!r.ok) throw new Error('Unable to load'); return r.json(); })
+                .then(function(data) { mvCache[path] = data; cb(data); })
+                .catch(function(err) { if (err.name === 'AbortError') return; setStatus('Error: ' + err.message); });
+        });
     }
 
     function setStatus(t) { if (elStatus) elStatus.textContent = t; }
@@ -6538,8 +6580,8 @@ function generateFingerprint() {
 
     var mvCurrentId = null, mvCurrentType = null, mvCurrentSrc = 0;
     var mvSources = [
-        { label: 'Source 1', url: function(id, type) { return 'https://vidsrc.cc/v2/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
-        { label: 'Source 2', url: function(id, type) { return 'https://vidlink.pro/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
+        { label: 'CineSrc', url: function(id, type) { return 'https://cinesrc.st/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
+        { label: 'VidLink', url: function(id, type) { return 'https://vidlink.pro/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
         { label: 'Source 3', url: function(id, type) { return 'https://embed.su/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
         { label: 'Source 4', url: function(id, type) { return 'https://vidsrc.me/embed/' + (type === 'movie' ? 'movie' : 'tv') + '?tmdb=' + id; } },
     ];
