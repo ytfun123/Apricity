@@ -6522,7 +6522,7 @@ function generateFingerprint() {
     var mvCurrentId = null, mvCurrentType = null, mvCurrentSrc = 0;
     var mvSources = [
         { label: 'MyCineBy', url: function(id, type) { return 'https://mycineby.cc/embed/' + (type === 'movie' ? 'movie/' + id : 'tv/' + id + '/1/1'); } },
-        { label: '1Embed', url: function(id, type) { return 'https://1embed.cc/embed/' + (type === 'movie' ? 'movie/' + id : 'tv/' + id + '/1/1'); } },
+        { label: 'VidLink', url: function(id, type) { return 'https://vidlink.pro/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
         { label: 'Source 3', url: function(id, type) { return 'https://embed.su/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
         { label: 'Source 4', url: function(id, type) { return 'https://vidsrc-embed.su/embed/' + (type === 'movie' ? 'movie' : 'tv') + '?tmdb=' + id; } },
     ];
