@@ -3082,55 +3082,27 @@ function generateFingerprint() {
 
 <script>
     // ===== SECURE API PROXY =====
-    // Real API keys (YouTube, Groq, TMDB) live server-side only — one of two
-    // backends, tried in order. Neither backend ever sends a key to the browser;
-    // they make the third-party call themselves and return just the result.
+    // Real API keys (YouTube, Groq, TMDB) live only in Vercel's Environment
+    // Variables, read server-side inside api/proxy.js. The browser never
+    // sees them — it just calls this site's own /api/proxy endpoint.
     //
-    // 1) Supabase Edge Function (primary) — one function, api-proxy, handles
-    //    all three services (routes on ?service=). Set the real keys with
-    //    `supabase secrets set YOUTUBE_API_KEY=...` etc.
-    // 2) Google Apps Script + Sheet (fallback) — a Web App that reads keys from
-    //    a Sheet only editable by you/admins, and proxies the same 3 services.
-    //
-    // Fill these in once you've deployed each backend:
-    const PROXY_CONFIG = {
-        supabaseUrl: 'https://gmeguzmrmnjerllpdjhp.supabase.co',
-        supabaseAnonKey: 'sb_publishable_uB88-MuVkU7EFPtNYEceiw_xPeI_WOu',
-        appsScriptUrl: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'
-    };
-
-    // service: 'youtube' | 'tmdb' | 'groq'
     // params: plain object of query params (GET) — ignored for groq
     // body: object to send as JSON (POST) — only used for groq
+    //
+    // Calls this same site's own /api/proxy (Vercel serverless function).
+    // No URL or key to configure here — same-origin, so a relative path is
+    // all that's needed. The real keys live only in Vercel's Environment
+    // Variables, read inside api/proxy.js on Vercel's server.
     async function proxyFetch(service, params, body) {
-        // ---- try Supabase first ----
-        try {
-            if (!PROXY_CONFIG.supabaseUrl.includes('YOUR_PROJECT')) {
-                const qs = new URLSearchParams({ service, ...(params || {}) });
-                const url = `${PROXY_CONFIG.supabaseUrl}/functions/v1/api-proxy?${qs}`;
-                const res = await fetch(url, {
-                    method: body ? 'POST' : 'GET',
-                    headers: { apikey: PROXY_CONFIG.supabaseAnonKey, ...(body ? { 'Content-Type': 'application/json' } : {}) },
-                    body: body ? JSON.stringify(body) : undefined
-                });
-                if (res.ok) return await res.json();
-                console.warn('[proxy] Supabase api-proxy returned ' + res.status + ', trying Apps Script fallback');
-            }
-        } catch (e) {
-            console.warn('[proxy] Supabase unreachable, trying Apps Script fallback', e);
-        }
-        // ---- fallback: Apps Script ----
-        if (PROXY_CONFIG.appsScriptUrl.includes('https://script.google.com/macros/s/AKfycbwaGnNnyGXArFtC8o5uocdeLwq8-o8Xq_8TCjz90PwXkssmKluP97l73MJbMiTvJrAAVQ/exec')) {
-            return { error: 'No proxy backend configured yet — set PROXY_CONFIG in index.html.' };
-        }
         const qs = new URLSearchParams({ service, ...(params || {}) });
-        if (body) {
-            // text/plain avoids a CORS preflight that Apps Script can't answer;
-            // doPost still receives the raw JSON string in e.postData.contents.
-            const res = await fetch(`${PROXY_CONFIG.appsScriptUrl}?${qs}`, { method: 'POST', body: JSON.stringify(body) });
-            return await res.json();
+        const res = await fetch(`/api/proxy?${qs}`, {
+            method: body ? 'POST' : 'GET',
+            headers: body ? { 'Content-Type': 'application/json' } : undefined,
+            body: body ? JSON.stringify(body) : undefined
+        });
+        if (!res.ok) {
+            console.warn('[proxy] /api/proxy returned ' + res.status);
         }
-        const res = await fetch(`${PROXY_CONFIG.appsScriptUrl}?${qs}`);
         return await res.json();
     }
 
