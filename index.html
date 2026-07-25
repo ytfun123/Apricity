@@ -6523,8 +6523,8 @@ function generateFingerprint() {
     var mvSources = [
         { label: 'MyCineBy', url: function(id, type) { return 'https://mycineby.cc/embed/' + (type === 'movie' ? 'movie/' + id : 'tv/' + id + '/1/1'); } },
         { label: 'VidLink', url: function(id, type) { return 'https://vidlink.pro/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
-        { label: 'Source 3', url: function(id, type) { return 'https://embed.su/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
-        { label: 'Source 4', url: function(id, type) { return 'https://vidsrc-embed.su/embed/' + (type === 'movie' ? 'movie' : 'tv') + '?tmdb=' + id; } },
+        { label: 'VidCore', url: function(id, type) { return 'https://vidcore.org/embed/' + (type === 'movie' ? 'movie/' + id : 'tv/' + id + '/1/1'); } },
+        { label: 'VidSrc.fyi', url: function(id, type) { return 'https://vidsrc.fyi/embed/' + (type === 'movie' ? 'movie/' + id : 'tv/' + id + '/1/1'); } },
     ];
 
     function mvLoadSource(idx) {
