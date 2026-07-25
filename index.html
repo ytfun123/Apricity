@@ -6521,10 +6521,10 @@ function generateFingerprint() {
 
     var mvCurrentId = null, mvCurrentType = null, mvCurrentSrc = 0;
     var mvSources = [
-        { label: 'CineSrc', url: function(id, type) { return 'https://cinesrc.st/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
-        { label: 'VidLink', url: function(id, type) { return 'https://vidlink.pro/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
+        { label: 'MyCineBy', url: function(id, type) { return 'https://mycineby.cc/embed/' + (type === 'movie' ? 'movie/' + id : 'tv/' + id + '/1/1'); } },
+        { label: '1Embed', url: function(id, type) { return 'https://1embed.cc/embed/' + (type === 'movie' ? 'movie/' + id : 'tv/' + id + '/1/1'); } },
         { label: 'Source 3', url: function(id, type) { return 'https://embed.su/embed/' + (type === 'movie' ? 'movie' : 'tv') + '/' + id; } },
-        { label: 'Source 4', url: function(id, type) { return 'https://vidsrc.me/embed/' + (type === 'movie' ? 'movie' : 'tv') + '?tmdb=' + id; } },
+        { label: 'Source 4', url: function(id, type) { return 'https://vidsrc-embed.su/embed/' + (type === 'movie' ? 'movie' : 'tv') + '?tmdb=' + id; } },
     ];
 
     function mvLoadSource(idx) {
@@ -6551,7 +6551,7 @@ function generateFingerprint() {
             b.onclick = function() { mvLoadSource(i); };
             btns.appendChild(b);
         });
-        mvLoadSource(0);
+        mvLoadSource(0, false);
         document.getElementById('mv-player-overlay').classList.add('active');
     };
 
