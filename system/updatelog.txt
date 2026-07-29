@@ -11,3 +11,7 @@
 07/18/2026: updated chillcord logo, now its better.
 
 07/23/2026: Fixed minecrfat 1.20, started adding actual games icons insted of old icons.
+
+07/26/2026: !!!Chillcord was hacked so we removed it fro mapricity for fixing!!!
+
+07/29/2026: Chillcord was fully fixed, was added capctha, but still chillcord doesnt collect emails and phone numbers.
