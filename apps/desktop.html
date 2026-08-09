@@ -115,6 +115,7 @@
     body {
       margin: 0;
       overflow: hidden;
+      overscroll-behavior: contain;
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       height: 100vh;
       width: 100vw;
@@ -439,10 +440,12 @@
     .btn { width: 13px; height: 13px; border-radius: 50%; border: none; cursor: pointer; }
     .btn-min { background-color: #febc2e; }
     .btn-close { background-color: #ff5f56; }
+    .btn-max { background-color: #27c93f; }
     [data-system-style="classic"] .btn { border-radius: 0; width: 16px; height: 14px; background: #d4d0c8; font-size: 9px; font-weight: bold; border-top: 1px solid #fff; border-left: 1px solid #fff; border-right: 1px solid #808080; border-bottom: 1px solid #808080; color: black; display: flex; align-items: center; justify-content: center; }
     [data-system-style="luna"] .btn { border-radius: 3px; width: 21px; height: 21px; border: 1px solid #ffffff; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5); color: white; font-weight: bold; font-size: 11px; display: flex; align-items: center; justify-content: center; }
     [data-system-style="luna"] .btn-close { background: linear-gradient(to bottom, #e76446 0%, #b83314 100%); }
     [data-system-style="luna"] .btn-min { background: linear-gradient(to bottom, #3a83fc 0%, #0046d5 100%); }
+    [data-system-style="luna"] .btn-max { background: linear-gradient(to bottom, #6bcf3a 0%, #1f8f00 100%); }
 
     .content { flex-grow: 1; background: #fff; position: relative; display: flex; flex-direction: column; overflow: hidden;}
     [data-system-style="classic"] .content {
@@ -1621,10 +1624,11 @@
       const titleText = document.createElement('span'); titleText.className = 'title-text'; titleText.innerText = title;
 
       const windowControls = document.createElement('div'); windowControls.className = 'controls';
-      const minBtn = document.createElement('button'); minBtn.className = 'btn btn-min'; minBtn.innerHTML = systemStyleDesign==='classic'?'_':(systemStyleDesign==='luna'?'0':''); minBtn.onclick = (e) => { e.stopPropagation(); toggleMinimize(winId); };
       const closeBtn = document.createElement('button'); closeBtn.className = 'btn btn-close'; closeBtn.innerHTML = systemStyleDesign==='classic'?'X':(systemStyleDesign==='luna'?'X':''); closeBtn.onclick = (e) => { e.stopPropagation(); closeWindow(winId); };
+      const minBtn = document.createElement('button'); minBtn.className = 'btn btn-min'; minBtn.innerHTML = systemStyleDesign==='classic'?'_':(systemStyleDesign==='luna'?'0':''); minBtn.onclick = (e) => { e.stopPropagation(); toggleMinimize(winId); };
+      const maxBtn = document.createElement('button'); maxBtn.className = 'btn btn-max'; maxBtn.title = 'Fullscreen'; maxBtn.innerHTML = systemStyleDesign==='classic'?'□':(systemStyleDesign==='luna'?'1':''); maxBtn.onclick = (e) => { e.stopPropagation(); toggleMaximize(winId); };
 
-      windowControls.appendChild(minBtn); windowControls.appendChild(closeBtn);
+      windowControls.appendChild(closeBtn); windowControls.appendChild(minBtn); windowControls.appendChild(maxBtn);
       titleBar.appendChild(titleText); titleBar.appendChild(windowControls);
 
       const content = document.createElement('div'); content.className = 'content'; content.appendChild(customContent);
@@ -1652,6 +1656,22 @@
 
     function closeWindow(id) { if(document.getElementById(id)) document.getElementById(id).remove(); if(document.getElementById('task-' + id)) document.getElementById('task-' + id).remove(); }
     function toggleMinimize(id) { const win = document.getElementById(id); const taskItem = document.getElementById('task-' + id); if (win.style.display === 'none') { win.style.display = 'flex'; focusWindow(id); } else { win.style.display = 'none'; taskItem.classList.remove('active'); } }
+    function toggleMaximize(id) {
+      const win = document.getElementById(id); if (!win) return;
+      if (win.classList.contains('maximized')) {
+        win.classList.remove('maximized');
+        win.style.top = win.dataset.prevTop; win.style.left = win.dataset.prevLeft;
+        win.style.width = win.dataset.prevWidth; win.style.height = win.dataset.prevHeight;
+        win.style.resize = 'both';
+      } else {
+        win.dataset.prevTop = win.style.top; win.dataset.prevLeft = win.style.left;
+        win.dataset.prevWidth = win.style.width; win.dataset.prevHeight = win.style.height;
+        win.classList.add('maximized');
+        win.style.top = '0'; win.style.left = '0'; win.style.width = '100%'; win.style.height = '100%';
+        win.style.resize = 'none';
+      }
+      focusWindow(id);
+    }
     function focusWindow(id) { const win = document.getElementById(id); if(win) win.style.zIndex = zIndexCounter++; document.querySelectorAll('.taskbar-item').forEach(el => el.classList.remove('active')); const taskItem = document.getElementById('task-' + id); if(taskItem) taskItem.classList.add('active'); }
 
     function makeDraggable(win, handle) {
