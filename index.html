@@ -3303,6 +3303,7 @@ function generateFingerprint() {
     }
 
     function showYouTube() {
+        closeAppsPanel();
         const currentPageId = getActivePageId();
         rememberYoutubeBackPage(currentPageId);
 
@@ -4165,6 +4166,7 @@ function generateFingerprint() {
         { id: 'meet',      name: 'Meet Stable', icon: 'video_call',   open: 'openMeetStable' },
         { id: 'spotify',   name: 'Spotify',     icon: 'graphic_eq',   open: 'openSpotify' },
         { id: 'desktop',   name: 'Desktop',     icon: 'computer',     open: 'openDesktop' },
+        { id: 'youtube',   name: 'YouTube',     icon: 'play_circle',  open: 'showYouTube' },
         { id: 'discord',   name: 'Discord',     icon: 'forum',        open: 'openDiscordApp' },
     ];
 
