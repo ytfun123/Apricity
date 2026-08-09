@@ -2028,9 +2028,6 @@ function generateFingerprint() {
     <div class="icon-btn" onclick="openModal('backgrounds')" title="Backgrounds">
         <span class="material-symbols-outlined" style="font-size:20px;">image</span>
     </div>
-    <div class="icon-btn" onclick="showConsolePage()" title="Console">
-        <span class="material-symbols-outlined" style="font-size:20px;">terminal</span>
-    </div>
     <div class="icon-btn" onclick="openModal('settings')" title="Settings">
         <span class="material-symbols-outlined" style="font-size:20px;">settings</span>
     </div>
@@ -2368,13 +2365,37 @@ function generateFingerprint() {
                 <div class="settings-section-title">Developer</div>
                 <div class="setting-row">
                     <div class="setting-info">
-                        <div class="setting-name">Open Console On Startup</div>
-                        <div class="setting-desc">Automatically open the Console when Apricity loads.</div>
+                        <div class="setting-name">Show Console</div>
+                        <div class="setting-desc">Adds a Console button next to YouTube on the home screen.</div>
                     </div>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="consoleOpenToggle" onchange="onConsoleOpenToggleChange()" />
+                        <input type="checkbox" id="consoleToggle" onchange="onConsoleToggleChange()" />
                         <span class="toggle-slider"></span>
                     </label>
+                </div>
+                <div id="consoleExtraOptions" style="display:none;">
+                    <div class="setting-row" style="border-top:1px solid var(--yt-border2);">
+                        <div class="setting-info" style="width:100%">
+                            <div class="setting-name">Terminal Style</div>
+                            <div class="setting-desc">Normal keeps the default look. CLI style gives a terminal-shell look and feel.</div>
+                            <div style="display:flex;gap:8px;margin-top:8px;">
+                                <select class="bg-custom-input" id="consoleStyleSelect" onchange="onConsoleStyleChange()" style="flex:1;margin-top:0;">
+                                    <option value="normal">Normal</option>
+                                    <option value="cli">CLI Style</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-row" style="border-bottom:none;padding-bottom:0;">
+                        <div class="setting-info">
+                            <div class="setting-name">Open Console On Startup</div>
+                            <div class="setting-desc">Automatically open the Console when Apricity loads. Default: off.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="consoleOpenToggle" onchange="onConsoleOpenToggleChange()" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -2427,7 +2448,14 @@ function generateFingerprint() {
         </button>
     </div>
     <div id="console-output" style="flex:1;overflow-y:auto;padding:16px;font-family:monospace;font-size:13px;line-height:1.7;color:var(--md-sys-color-on-surface);word-break:break-all;white-space:pre-wrap;"></div>
-    <!-- Inline console prompt now renders inside #console-output -->
+    <div id="console-input-bar" style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--yt-border);background:var(--md-sys-color-surface-container-low);flex-shrink:0;">
+        <span style="color:var(--md-sys-color-primary);font-family:monospace;font-size:15px;font-weight:700;user-select:none;">$</span>
+        <input id="console-input" type="text" autocomplete="off" spellcheck="false"
+            placeholder="enter command…"
+            style="flex:1;background:var(--md-sys-color-surface-container);border:1px solid var(--yt-border2);border-radius:10px;padding:10px 14px;font-family:monospace;font-size:13px;color:var(--md-sys-color-on-surface);outline:none;"
+            onkeydown="if(event.key==='Enter')consoleRun()">
+        <button onclick="consoleRun()" style="padding:10px 18px;border-radius:10px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:13px;font-weight:600;cursor:pointer;">Send</button>
+    </div>
 </div>
 
 <!-- Apps Panel -->
@@ -2876,7 +2904,10 @@ function generateFingerprint() {
                 </svg>
                 Discord
             </button>
-            <!-- home-area Console button removed; use top-right terminal icon -->
+            <button class="home-btn" id="console-nav-btn" style="display:none;" onclick="showConsolePage()">
+                <span class="material-symbols-outlined" style="font-size:16px;">terminal</span>
+                Console
+            </button>
             <button class="home-btn" onclick="openUpdateLog()">
                 <span class="material-symbols-outlined" style="font-size:16px;">new_releases</span>
                 Update Log
@@ -3210,7 +3241,7 @@ function generateFingerprint() {
         const currentPageId = getActivePageId();
         rememberYoutubeBackPage(currentPageId);
 
-        const tabsEnabled = aprBool('apricity-tabs-enabled');
+        const tabsEnabled = localStorage.getItem('apricity-tabs-enabled') === '1';
         const ytPage = document.getElementById('youtube-page');
 
         if (tabsEnabled) {
@@ -3310,7 +3341,7 @@ function generateFingerprint() {
         const bar = document.getElementById('tab-bar');
         const container = document.getElementById('tab-items');
         container.innerHTML = '';
-        const tabsEnabled = aprBool('apricity-tabs-enabled');
+        const tabsEnabled = localStorage.getItem('apricity-tabs-enabled') === '1';
         if (!tabsEnabled) { bar.classList.add('hidden'); document.body.classList.remove('tabs-active'); return; }
         bar.classList.remove('hidden');
         document.body.classList.add('tabs-active');
@@ -3897,7 +3928,7 @@ function generateFingerprint() {
         const frame = document.getElementById('discord-frame');
         if (!frame.dataset.loaded) { frame.src = 'apps/discord/index.html'; frame.dataset.loaded = '1'; }
 
-        const tabsEnabled = aprBool('apricity-tabs-enabled');
+        const tabsEnabled = localStorage.getItem('apricity-tabs-enabled') === '1';
 
         if (tabsEnabled) {
             const existing = tabs.find(t => t.pageId === 'discord-page');
@@ -4001,53 +4032,6 @@ function generateFingerprint() {
         { id: 'red ball 4',      name: 'red ball 4', icon: 'sports_volleyball',           src: './games/rb4.html', placeholder: false },
         { id: '',      name: '', icon: '',           src: './games/.html', placeholder: false },
     ];
-
-    // Populate CONSOLE_APP_MAP with every game id and name → src for `open`
-    function populateConsoleAppMapFromGames() {
-        try {
-            // Hardcoded overrides for games whose HTML lives in non-standard locations
-            const GAME_OVERRIDES = {
-                // example: 'minecraft 1.20': './games/eagler-1.20-main/javascript/builds/0.2.0/index.html'
-            };
-            GAMES_LIST.forEach(g => {
-                if (!g) return;
-                const id = (g.id || '').toString().toLowerCase().trim();
-                const name = (g.name || '').toString().toLowerCase().trim();
-                // Use g.src exactly when present (no normalization), fallback to ./games/<slug>.html
-                let src = g.src;
-                const overrideKey = (id || name);
-                if (overrideKey && GAME_OVERRIDES[overrideKey]) src = GAME_OVERRIDES[overrideKey];
-                if (!src) {
-                    const base = id || name || '';
-                    const slug = base.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
-                    const filename = slug.replace(/-/g, '_') + '.html';
-                    src = './games/' + filename;
-                }
-
-                if (id) CONSOLE_APP_MAP[id] = src;
-                if (name) CONSOLE_APP_MAP[name] = src;
-            });
-        } catch (e) { /* ignore */ }
-    }
-
-    // Add app name → handler/path mappings for apps that open in-app
-    try {
-        CONSOLE_APP_MAP['sunlit'] = openSunlit;
-        CONSOLE_APP_MAP['sunlit os'] = openSunlit;
-        CONSOLE_APP_MAP['groq'] = openGemini;
-        CONSOLE_APP_MAP['groq ai'] = openGemini;
-        CONSOLE_APP_MAP['gemini'] = openGemini;
-        CONSOLE_APP_MAP['meetstable'] = openMeetStable;
-        CONSOLE_APP_MAP['meet stable'] = openMeetStable;
-        CONSOLE_APP_MAP['spotify'] = openSpotify;
-        CONSOLE_APP_MAP['desktop'] = openDesktop;
-        CONSOLE_APP_MAP['startx'] = openDesktop;
-        CONSOLE_APP_MAP['discord'] = openDiscordApp;
-        CONSOLE_APP_MAP['chillcord'] = openDiscordApp;
-    } catch (e) { /* ignore if functions not available */ }
-
-    // Populate the console map with entries from GAMES_LIST now that CONSOLE_APP_MAP exists
-    try { if (typeof populateConsoleAppMapFromGames === 'function') populateConsoleAppMapFromGames(); } catch (e) {}
 
     function toggleGamesFullscreen() {
         const o = document.getElementById('gamesFsOverlay');
@@ -5164,7 +5148,7 @@ function generateFingerprint() {
         // Restore tab system toggle (default: off)
         const tabsEnabled = localStorage.getItem('apricity-tabs-enabled');
         if (tabsEnabled === null) localStorage.setItem('apricity-tabs-enabled', '0');
-        document.getElementById('tabSystemToggle').checked = aprBool('apricity-tabs-enabled');
+        document.getElementById('tabSystemToggle').checked = (tabsEnabled === '1');
         // Open initial home tab
         tabNew('home-page', 'Home', TAB_ICONS.home);
         updateTopbarVisibility();
@@ -5185,7 +5169,7 @@ function generateFingerprint() {
 
         // Restore dim background setting (default: off)
         const savedBgDim = localStorage.getItem('apricity-bg-dim');
-        const bgDimEnabled = savedBgDim === '1' || savedBgDim === 'true';
+        const bgDimEnabled = savedBgDim === '1';
         document.getElementById('bgDimToggle').checked = bgDimEnabled;
         document.body.classList.toggle('bg-text-dim', bgDimEnabled);
 
@@ -5196,7 +5180,7 @@ function generateFingerprint() {
 
         // Restore invert footer text (default: off)
         const savedFooterInvert = localStorage.getItem('apricity-footer-invert');
-        const footerInvertEnabled = savedFooterInvert === '1' || savedFooterInvert === 'true';
+        const footerInvertEnabled = savedFooterInvert === '1';
         document.getElementById('footerInvertToggle').checked = footerInvertEnabled;
         document.body.classList.toggle('footer-invert', footerInvertEnabled);
 
@@ -5208,18 +5192,18 @@ function generateFingerprint() {
 
         // Restore "Background on Home Only" (default: off)
         const savedBgHomeOnly = localStorage.getItem('apricity-bg-home-only');
-        bgHomeOnlyEnabled = savedBgHomeOnly === '1' || savedBgHomeOnly === 'true';
+        bgHomeOnlyEnabled = savedBgHomeOnly === '1';
         document.getElementById('bgHomeOnlyToggle').checked = bgHomeOnlyEnabled;
         updateBgLayerVisibility();
 
         // Restore settings (hide mode defaults ON if never saved)
         const savedHide = localStorage.getItem('apricity-hide-mode');
-        hideModeEnabled = savedHide === null ? true : (savedHide === '1' || savedHide === 'true');
+        hideModeEnabled = savedHide === null ? true : savedHide === '1';
         if (savedHide === null) localStorage.setItem('apricity-hide-mode', '1');
         document.getElementById('hideModeToggle').checked = hideModeEnabled;
 
         const savedAntiClose = localStorage.getItem('apricity-anti-close');
-        antiCloseEnabled = savedAntiClose === '1' || savedAntiClose === 'true';
+        antiCloseEnabled = savedAntiClose === '1';
         document.getElementById('antiCloseToggle').checked = antiCloseEnabled;
 
         const savedTitle = localStorage.getItem('apricity-tab-title');
@@ -5246,15 +5230,25 @@ function generateFingerprint() {
         document.getElementById('panicUrlRow').style.opacity = panicEnabled ? '1' : '0.4';
         document.getElementById('panicUrlRow').style.pointerEvents = panicEnabled ? '' : 'none';
 
-        // Restore console setting (console always available)
-        consoleEnabled = true;
-        // Cleanup legacy console flag
-        try { localStorage.removeItem('apricity-console-enabled'); } catch (e) {}
+        // Restore console setting
+        const savedConsole = localStorage.getItem('apricity-console-enabled');
+        consoleEnabled = savedConsole === '1';
+        document.getElementById('consoleToggle').checked = consoleEnabled;
+        document.getElementById('console-nav-btn').style.display = consoleEnabled ? '' : 'none';
+        const extraOpts = document.getElementById('consoleExtraOptions');
+        if (extraOpts) extraOpts.style.display = consoleEnabled ? '' : 'none';
+
+        // Restore terminal style (default: normal)
+        const savedStyle = localStorage.getItem('apricity-console-style');
+        consoleStyle = savedStyle === 'cli' ? 'cli' : 'normal';
+        const styleSelect = document.getElementById('consoleStyleSelect');
+        if (styleSelect) styleSelect.value = consoleStyle;
+        consoleStyleApply();
+
         // Restore 'open on startup' preference and apply it
         const savedConsoleOpen = localStorage.getItem('apricity-console-open-on-start');
-        if (document.getElementById('consoleOpenToggle')) {
-            document.getElementById('consoleOpenToggle').checked = (savedConsoleOpen === '1' || savedConsoleOpen === 'true');
-        }
+        const openToggle = document.getElementById('consoleOpenToggle');
+        if (openToggle) openToggle.checked = (savedConsoleOpen === '1' || savedConsoleOpen === 'true');
         if (savedConsoleOpen === '1' || savedConsoleOpen === 'true') {
             setTimeout(() => { try { showConsolePage(); } catch (e) {} }, 200);
         }
@@ -5269,7 +5263,7 @@ function generateFingerprint() {
 
         // Restore auto day/night background
         const savedAutoNight = localStorage.getItem('apricity-autonnight-enabled');
-        autoNightEnabled = savedAutoNight === '1' || savedAutoNight === 'true';
+        autoNightEnabled = savedAutoNight === '1';
         document.getElementById('autoNightToggle').checked = autoNightEnabled;
         const savedDayTime = localStorage.getItem('apricity-autonight-daytime') || '06:00';
         const savedNightTime = localStorage.getItem('apricity-autonight-nighttime') || '19:00';
@@ -5295,7 +5289,7 @@ function generateFingerprint() {
 
         // Restore YT bg toggle
         const savedYtBg = localStorage.getItem('apricity-yt-bg');
-        if (savedYtBg === '1' || savedYtBg === 'true') {
+        if (savedYtBg === '1') {
             document.getElementById('ytBgToggle').checked = true;
             const ytPage = document.getElementById('youtube-page');
             ytPage.classList.add('yt-bg-on');
@@ -5311,14 +5305,11 @@ function generateFingerprint() {
         // Restore activation skip toggle
         const savedSkip = localStorage.getItem('apricity-activation-skip');
         if (document.getElementById('activationSkipToggle')) {
-            document.getElementById('activationSkipToggle').checked = (savedSkip === '1' || savedSkip === 'true');
+            document.getElementById('activationSkipToggle').checked = savedSkip === '1';
         }
 
         // Run activation gate (async, fire-and-forget from sync onload)
-        if (savedSkip !== '1' && savedSkip !== 'true') {
-            initActivationGate();
-        }
-
+        initActivationGate();
     };
 
     // ===== ACTIVATION KEY SYSTEM =====
@@ -5379,7 +5370,7 @@ function generateFingerprint() {
     }
 
     function activationSkipEnabled() {
-        return (localStorage.getItem('apricity-activation-skip') === '1' || localStorage.getItem('apricity-activation-skip') === 'true');
+        return localStorage.getItem('apricity-activation-skip') === '1';
     }
 
     function onActivationSkipToggle() {
@@ -6277,61 +6268,39 @@ function generateFingerprint() {
     let consoleEnabled = false;
     let consoleCmdHistory = [];
     let consoleCmdIndex = -1;
+    let consoleStyle = 'normal';
     let consoleJsMode = false;
+
+    function onConsoleToggleChange() {
+        consoleEnabled = document.getElementById('consoleToggle').checked;
+        localStorage.setItem('apricity-console-enabled', consoleEnabled ? '1' : '0');
+        document.getElementById('console-nav-btn').style.display = consoleEnabled ? '' : 'none';
+        const extra = document.getElementById('consoleExtraOptions');
+        if (extra) extra.style.display = consoleEnabled ? '' : 'none';
+    }
+
+    function onConsoleStyleChange() {
+        consoleStyle = document.getElementById('consoleStyleSelect').value;
+        localStorage.setItem('apricity-console-style', consoleStyle);
+        consoleStyleApply();
+    }
 
     function onConsoleOpenToggleChange() {
         const enabled = document.getElementById('consoleOpenToggle').checked;
         localStorage.setItem('apricity-console-open-on-start', enabled ? '1' : '0');
     }
 
-    function showConsolePage() {
-        document.getElementById('console-page').style.display = 'flex';
-        document.getElementById('home-page').classList.remove('active');
-        updateBgLayerVisibility();
-        setTimeout(() => {
-            ensureConsoleInlinePrompt();
-            const el = document.getElementById('console-inline-input');
-            if (!el) return;
-            el.focus();
-            let tries = 0;
-            const tryFocus = () => {
-                if (document.activeElement === el || tries++ > 6) return;
-                el.focus();
-                setTimeout(tryFocus, 50);
-            };
-            tryFocus();
-        }, 50);
-        // print neofetch-like summary when console opens
-        try { consoleNeofetch(); } catch (e) {}
+    // Apply the chosen console style (normal input bar vs inline CLI prompt)
+    function consoleStyleApply() {
+        const bar = document.getElementById('console-input-bar');
+        if (bar) bar.style.display = consoleStyle === 'cli' ? 'none' : 'flex';
+        if (consoleStyle !== 'cli') {
+            const prompt = document.getElementById('console-inline-prompt');
+            if (prompt && prompt.parentNode) prompt.remove();
+        }
     }
 
-    function hideConsolePage() {
-        document.getElementById('console-page').style.display = 'none';
-        document.getElementById('home-page').classList.add('active');
-        updateBgLayerVisibility();
-    }
-
-    function consolePrint(text, type = 'output') {
-        const out = document.getElementById('console-output');
-        const colors = { output: 'var(--md-sys-color-on-surface)', error: '#f28b82', info: 'var(--md-sys-color-primary)', cmd: 'var(--md-sys-color-on-surface-variant)' };
-        const line = document.createElement('div');
-        line.style.color = colors[type] || colors.output;
-        if (type === 'cmd') line.textContent = '$ ' + text;
-        else line.textContent = text;
-        // If an inline prompt exists, insert output before it so input stays at the bottom
-        const prompt = document.getElementById('console-inline-prompt');
-        if (prompt && prompt.parentNode === out) out.insertBefore(line, prompt);
-        else out.appendChild(line);
-        out.scrollTop = out.scrollHeight;
-    }
-
-    function consoleClear() {
-        const out = document.getElementById('console-output');
-        out.innerHTML = '';
-        ensureConsoleInlinePrompt();
-    }
-
-    // Ensure the inline prompt is present at the end of console output
+    // Ensure the inline CLI prompt is present at the end of console output
     function ensureConsoleInlinePrompt() {
         const out = document.getElementById('console-output');
         if (!out) return;
@@ -6371,11 +6340,94 @@ function generateFingerprint() {
         out.scrollTop = out.scrollHeight;
     }
 
+    // Print a small neofetch-like summary to the console output
+    function consoleNeofetch() {
+        try {
+            const ua = navigator.userAgent || 'Unknown';
+            const platform = navigator.platform || 'Unknown';
+            const lang = navigator.language || 'Unknown';
+            const screenSz = (screen && screen.width) ? (screen.width + 'x' + screen.height) : 'Unknown';
+            const time = new Date().toLocaleString();
+            const brow = (() => {
+                try {
+                    const m = ua.match(/(Firefox|Chrome|Safari|Edg|Opera)\/?\s*([0-9\.]+)/i);
+                    return m ? (m[1] + ' ' + m[2]) : ua.split(' ')[0];
+                } catch (e) { return ua; }
+            })();
+            consolePrint('┌─ system ───────────────────────────────────────────', 'info');
+            consolePrint(' OS / Platform : ' + platform, 'output');
+            consolePrint(' Browser      : ' + brow, 'output');
+            consolePrint(' User agent   : ' + ua, 'output');
+            consolePrint(' Language     : ' + lang, 'output');
+            consolePrint(' Screen       : ' + screenSz, 'output');
+            consolePrint(' Time         : ' + time, 'output');
+            consolePrint('└───────────────────────────────────────────────────', 'info');
+            consolePrint('Type "help" for available commands.', 'info');
+        } catch (e) { /* ignore */ }
+    }
+
+    function showConsolePage() {
+        document.getElementById('console-page').style.display = 'flex';
+        document.getElementById('home-page').classList.remove('active');
+        updateBgLayerVisibility();
+        if (consoleStyle === 'cli') {
+            setTimeout(() => {
+                ensureConsoleInlinePrompt();
+                const el = document.getElementById('console-inline-input');
+                if (!el) return;
+                el.focus();
+                let tries = 0;
+                const tryFocus = () => {
+                    if (document.activeElement === el || tries++ > 6) return;
+                    el.focus();
+                    setTimeout(tryFocus, 50);
+                };
+                tryFocus();
+            }, 50);
+            consoleNeofetch();
+        } else {
+            setTimeout(() => document.getElementById('console-input').focus(), 100);
+        }
+    }
+
+    function hideConsolePage() {
+        document.getElementById('console-page').style.display = 'none';
+        document.getElementById('home-page').classList.add('active');
+        updateBgLayerVisibility();
+    }
+
+    function consolePrint(text, type = 'output') {
+        const out = document.getElementById('console-output');
+        const colors = { output: 'var(--md-sys-color-on-surface)', error: '#f28b82', info: 'var(--md-sys-color-primary)', cmd: 'var(--md-sys-color-on-surface-variant)' };
+        const line = document.createElement('div');
+        line.style.color = colors[type] || colors.output;
+        if (type === 'cmd') line.textContent = '$ ' + text;
+        else line.textContent = text;
+        // If an inline CLI prompt exists, insert output before it so input stays at the bottom
+        const prompt = document.getElementById('console-inline-prompt');
+        if (prompt && prompt.parentNode === out) out.insertBefore(line, prompt);
+        else out.appendChild(line);
+        out.scrollTop = out.scrollHeight;
+    }
+
+    function consoleClear() {
+        const out = document.getElementById('console-output');
+        out.innerHTML = '';
+        if (consoleStyle === 'cli') ensureConsoleInlinePrompt();
+    }
+
     function consoleRun() {
         const inline = document.getElementById('console-inline-input');
-        const cmd = inline ? inline.innerText.trim() : '';
+        let cmd;
+        if (inline && inline.isConnected) {
+            cmd = inline.innerText.trim();
+            if (cmd) inline.innerText = '';
+        } else {
+            const input = document.getElementById('console-input');
+            cmd = input.value.trim();
+            if (cmd) input.value = '';
+        }
         if (!cmd) return;
-        if (inline) inline.innerText = '';
         consolePrint(cmd, 'cmd');
         consoleCmdHistory.unshift(cmd);
         consoleCmdIndex = -1;
@@ -6407,114 +6459,25 @@ function generateFingerprint() {
         handleConsoleCommand(cmd);
     }
 
-    // Virtual file storage helpers (stored in localStorage)
-    function _vfsKey(path) {
-        return 'apricity:vfs:' + String(path).replace(/^\/+/, '');
-    }
-    function vfsWrite(path, content, append = false) {
-        const key = _vfsKey(path);
-        if (append) {
-            const prev = localStorage.getItem(key) || '';
-            localStorage.setItem(key, prev + content);
-        } else {
-            localStorage.setItem(key, content);
-        }
-    }
-    function vfsRead(path) {
-        return localStorage.getItem(_vfsKey(path));
-    }
-    function vfsRm(path) {
-        const key = _vfsKey(path);
-        if (localStorage.getItem(key) !== null) {
-            localStorage.removeItem(key);
-            return true;
-        }
-        return false;
-    }
-
-    // Map of friendly app names → paths (used by `open` and `lsapps`)
-    const CONSOLE_APP_MAP = {
-        'chillcord': '/apps/discord/index.html',
-        'discord': '/apps/discord/index.html',
-        'desktop': '/apps/desktop.html',
-        'spotify': '/apps/spotify.html',
-        'run3': '/games/run3/index.html',
-        'worldhardestgame': '/games/worldhardestgame.html'
-    };
-
-    // Helper to read boolean apricity settings (accepts '1' or 'true')
-    function aprBool(key, def = false) {
-        const v = localStorage.getItem(key);
-        if (v === null) return def;
-        return v === '1' || v === 'true';
-    }
-
-    // Print a small neofetch-like summary to the console output using navigator info
-    function consoleNeofetch() {
-        try {
-            const ua = navigator.userAgent || 'Unknown';
-            const platform = navigator.platform || 'Unknown';
-            const lang = navigator.language || 'Unknown';
-            const screenSz = (screen && screen.width) ? (screen.width + 'x' + screen.height) : 'Unknown';
-            const time = new Date().toLocaleString();
-            const brow = (() => {
-                try {
-                    const m = ua.match(/(Firefox|Chrome|Safari|Edg|Opera)\/?\s*([0-9\.]+)/i);
-                    return m ? (m[1] + ' ' + m[2]) : ua.split(' ')[0];
-                } catch (e) { return ua; }
-            })();
-            consolePrint('┌─ system ───────────────────────────────────────────', 'info');
-            consolePrint(' OS / Platform : ' + platform, 'output');
-            consolePrint(' Browser      : ' + brow, 'output');
-            consolePrint(' User agent   : ' + ua, 'output');
-            consolePrint(' Language     : ' + lang, 'output');
-            // Note: cores/ram info removed — unreliable across browsers
-            consolePrint(' Screen       : ' + screenSz, 'output');
-            consolePrint(' Time         : ' + time, 'output');
-            consolePrint('└───────────────────────────────────────────────────', 'info');
-        } catch (e) { /* ignore */ }
-    }
-
-    // Anti-piracy lockout: sets a flag and shows a blocking overlay
-    function antiPiracyLockout(reason) {
-        try {
-            localStorage.setItem('apricity-piracy-locked', '1');
-        } catch (e) {}
-        consolePrint('✖ ANTI-PIRACY LOCKOUT: ' + (reason || 'Unauthorized operation'), 'error');
-        // create blocking overlay
-        const o = document.createElement('div');
-        o.id = 'apricity-piracy-overlay';
-        o.style.position = 'fixed';
-        o.style.inset = '0';
-        o.style.background = 'rgba(0,0,0,0.92)';
-        o.style.color = '#fff';
-        o.style.zIndex = '999999';
-        o.style.display = 'flex';
-        o.style.alignItems = 'center';
-        o.style.justifyContent = 'center';
-        o.style.flexDirection = 'column';
-        o.innerHTML = `<div style="max-width:720px;padding:28px;text-align:center;"><h1 style="margin:0 0 12px;font-size:28px;">Apricity locked</h1><p style="margin:0 0 18px;opacity:0.95;">A suspected piracy operation was detected. The app has been locked.</p><p style="font-size:13px;opacity:0.85;">Contact support with proof of purchase to restore access.</p></div>`;
-        document.body.appendChild(o);
-        // prevent further interaction
-        document.body.style.pointerEvents = 'none';
-        o.style.pointerEvents = 'auto';
-    }
-
-
-    // Arrow key history navigation (works when inline prompt is focused)
+    // Arrow key history navigation (works with both the normal bar and the inline CLI prompt)
     document.addEventListener('keydown', e => {
-        const inp = document.getElementById('console-inline-input');
-        if (!inp || document.activeElement !== inp) return;
+        const inline = document.getElementById('console-inline-input');
+        const bar = document.getElementById('console-input');
+        let inp = null;
+        if (inline && document.activeElement === inline) inp = inline;
+        else if (bar && document.activeElement === bar) inp = bar;
+        if (!inp) return;
+        const setTxt = (el, txt) => { if (el.isContentEditable) el.innerText = txt; else el.value = txt; };
         if (e.key === 'ArrowUp') {
             e.preventDefault();
             if (consoleCmdIndex < consoleCmdHistory.length - 1) consoleCmdIndex++;
-            inp.innerText = consoleCmdHistory[consoleCmdIndex] || '';
+            setTxt(inp, consoleCmdHistory[consoleCmdIndex] || '');
         }
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             if (consoleCmdIndex > 0) consoleCmdIndex--;
-            else { consoleCmdIndex = -1; inp.innerText = ''; return; }
-            inp.innerText = consoleCmdHistory[consoleCmdIndex] || '';
+            else { consoleCmdIndex = -1; setTxt(inp, ''); return; }
+            setTxt(inp, consoleCmdHistory[consoleCmdIndex] || '');
         }
     });
 
@@ -6551,7 +6514,7 @@ function generateFingerprint() {
         // ── ADD YOUR COMMANDS BELOW ──
         // Example: if (cmd === 'your-secret-command') { ... return; }
 
-        if (cmd === 'install') {
+        if (cmd === '/sudo-install-apricity-admin-app') {
             // Set unlock cookie for 1 year
             const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
             document.cookie = `apricity_unlocked=1; expires=${expires}; path=/; SameSite=Strict`;
@@ -6572,7 +6535,7 @@ function generateFingerprint() {
             }
             return;
         }
-        if (cmd === 'proof') {
+        if (cmd === '/jarvis-we-need-prouf') {
             consolePrint('🔍 Fetching prouf.txt…', 'info');
             fetch('system/prouf.txt')
                 .then(r => {
@@ -6581,24 +6544,29 @@ function generateFingerprint() {
                 })
                 .then(text => {
                     consolePrint('── prouf.txt ──', 'info');
-                    consolePrint('this is all ai slop', 'output');
+                    text.split('\n').forEach(line => consolePrint(line, 'output'));
                     consolePrint('── end of file ──', 'info');
                 })
                 .catch(err => consolePrint('✗ Could not load prouf.txt: ' + err.message, 'error'));
             return;
         }
-        // removed duplicate help/device-info block
+        if (cmd === '/info' || cmd === 'info') {
+            const did = localStorage.getItem('apricity-device-id') || 'Not assigned yet';
+            const visits = localStorage.getItem('apricity-visit-count') || '?';
+            consolePrint('── Device Info ──', 'info');
+            consolePrint('Device ID : ' + did, 'output');
+            consolePrint('URL       : ' + location.href, 'output');
+            consolePrint('Visit #   : ' + visits + ' (this device)', 'output');
+            consolePrint('Tip: Search this Device ID in your Google Sheet to find your row number.', 'info');
+            consolePrint('── end ──', 'info');
+            return;
+        }
         if (cmd === 'help') {
-            consolePrint('Available commands: help, clear, version, install, info, proof, cat, echo, rm, reset, defaults, open, ls, lsapps, js', 'info');
+            consolePrint('Available commands: help, clear, version, /sudo-install-apricity-admin-app, info, neofetch, ping, js, /info, /jarvis-we-need-prouf', 'info');
             consolePrint('Usage highlights:', 'info');
-            consolePrint('  cat <path>                     — read a file (virtual or fetched)', 'output');
-            consolePrint('  echo [--append] <path> <txt>  — write text to virtual file', 'output');
-            consolePrint('  rm <path>                      — remove a virtual file', 'output');
-            consolePrint('  reset                          — clear all localStorage (reloads)', 'output');
-            consolePrint('  defaults list              — show available config keys', 'output');
-            consolePrint('  defaults write <key> <value> — set a config value', 'output');
-            consolePrint('  defaults get <key>         — read a config value', 'output');
-            consolePrint('  open <app>                     — open an app or game (e.g. chillcord)', 'output');
+            consolePrint('  js / node        — enter a JS REPL shell (exit or .exit to leave)', 'output');
+            consolePrint('  neofetch         — show system summary', 'output');
+            consolePrint('  ping             — measure event-loop latency', 'output');
             return;
         }
         if (cmd === 'clear') {
@@ -6609,8 +6577,10 @@ function generateFingerprint() {
             consolePrint('Apricity v1.0', 'info');
             return;
         }
-
-        // simple ping command: measures event-loop latency
+        if (cmd === 'neofetch') {
+            consoleNeofetch();
+            return;
+        }
         if (cmd === 'ping') {
             consolePrint('Pinging…', 'info');
             const t0 = performance.now ? performance.now() : Date.now();
@@ -6621,326 +6591,11 @@ function generateFingerprint() {
             }, 0);
             return;
         }
-
-        if (cmd === 'info') {
-            const anon = localStorage.getItem('apricity-anonymize-device-id') === 'true';
-            const stored = localStorage.getItem('apricity-device-id') || 'Not assigned yet';
-            const didDisplay = anon ? '(anonymized)' : (window._apricityDid || stored);
-            const visits = localStorage.getItem('apricity-visit-count') || '?';
-            consolePrint('── Device Info ──', 'info');
-            consolePrint('Device ID : ' + (didDisplay || 'Not assigned yet'), 'output');
-            consolePrint('URL       : ' + location.href, 'output');
-            consolePrint('Visit #   : ' + visits + ' (this device)', 'output');
-            consolePrint('── end ──', 'info');
-            return;
-        }
-
-        // Allow `startx` as a standalone command (alias for opening desktop)
-        if (cmd === 'startx') {
-            try {
-                if (Object.prototype.hasOwnProperty.call(CONSOLE_APP_MAP, 'startx')) {
-                    const entry = CONSOLE_APP_MAP['startx'];
-                    if (typeof entry === 'function') {
-                        entry();
-                        consolePrint('Opened desktop (internal)', 'info');
-                    } else {
-                        window.open(entry, '_blank');
-                        consolePrint('Opened ' + entry, 'info');
-                    }
-                } else {
-                    // fallback: call openDesktop if available
-                    if (typeof openDesktop === 'function') {
-                        openDesktop();
-                        consolePrint('Opened desktop (internal)', 'info');
-                    } else {
-                        window.open('/apps/desktop.html', '_blank');
-                        consolePrint('Opened /apps/desktop.html', 'info');
-                    }
-                }
-            } catch (e) {
-                consolePrint('✗ Could not open desktop: ' + (e && e.message ? e.message : String(e)), 'error');
-            }
-            return;
-        }
-
-        // Generic tokenization: supports quoted strings
-        const _tokens = cmd.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
-        const tokens = _tokens.map(t => (t.startsWith('"') && t.endsWith('"')) ? t.slice(1, -1) : t);
-
-        // ── cat: read virtual file (fallback to fetch) ──
-        if (tokens[0] === 'cat') {
-            if (!tokens[1]) { consolePrint('Usage: cat <path>', 'error'); return; }
-            const path = tokens[1];
-            const v = vfsRead(path);
-            if (v !== null) {
-                consolePrint('── ' + path + ' (virtual) ──', 'info');
-                v.split('\n').forEach(line => consolePrint(line, 'output'));
-                consolePrint('── end of file ──', 'info');
-                return;
-            }
-            consolePrint('Fetching ' + path + '…', 'info');
-            fetch(path)
-                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-                .then(text => { text.split('\n').forEach(line => consolePrint(line, 'output')); })
-                .catch(err => consolePrint('✗ Could not load ' + path + ': ' + err.message, 'error'));
-            return;
-        }
-
-        // ── write: write to virtual file ──
-        if (tokens[0] === 'echo') {
-            if (tokens.length < 3) { consolePrint('Usage: echo [--append] <path> <text>', 'error'); return; }
-            let append = false; let idx = 1;
-            if (tokens[1] === '--append') { append = true; idx = 2; }
-            const path = tokens[idx];
-            const content = tokens.slice(idx + 1).join(' ');
-            if (!path || content === undefined) { consolePrint('Usage: echo [--append] <path> <text>', 'error'); return; }
-            vfsWrite(path, content, append);
-            consolePrint((append ? 'Appended to ' : 'Wrote ') + path, 'info');
-            return;
-        }
-
-        // ── rm: remove virtual file ──
-        if (tokens[0] === 'rm') {
-            if (!tokens[1]) { consolePrint('Usage: rm <path>', 'error'); return; }
-            const ok = vfsRm(tokens[1]);
-            consolePrint(ok ? ('Removed ' + tokens[1]) : ('No such virtual file: ' + tokens[1]), ok ? 'info' : 'error');
-            return;
-        }
-
-        // ── reset: clear all localStorage ──
-        if (tokens[0] === 'reset') {
-            try {
-                localStorage.clear();
-                consolePrint('localStorage cleared — reloading...', 'info');
-                setTimeout(() => location.reload(), 700);
-            } catch (e) {
-                consolePrint('✗ Could not clear localStorage: ' + e.message, 'error');
-            }
-            return;
-        }
-
-        // ── ls: list virtual text files ──
-        if (tokens[0] === 'ls') {
-            const files = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const k = localStorage.key(i);
-                if (k && k.startsWith('apricity:vfs:')) {
-                    files.push(k.slice('apricity:vfs:'.length));
-                }
-            }
-            if (files.length === 0) { consolePrint('No virtual files found.', 'info'); return; }
-            consolePrint('Virtual files:', 'info');
-            files.sort().forEach(f => consolePrint('  ' + f, 'output'));
-            return;
-        }
-
-        // ── lsapps: list openable apps ──
-        if (tokens[0] === 'lsapps') {
-            consolePrint('Openable apps & games:', 'info');
-            // List games from GAMES_LIST first (id/name -> src)
-            try {
-                const listed = new Set();
-                if (Array.isArray(GAMES_LIST) && GAMES_LIST.length) {
-                    consolePrint('  Games:', 'output');
-                    GAMES_LIST.forEach(g => {
-                        if (!g) return;
-                        const id = (g.id||'').toString().trim();
-                        const name = (g.name||'').toString().trim();
-                        const src = g.src || '(no src)';
-                        const label = name || id || src;
-                        consolePrint('    ' + (id ? id + ' / ' + name : name) + ' → ' + src, 'output');
-                        if (id) listed.add(id.toLowerCase());
-                        if (name) listed.add(name.toLowerCase());
-                    });
-                }
-                // Then list remaining CONSOLE_APP_MAP entries (apps/internal handlers)
-                consolePrint('  Apps:', 'output');
-                Object.keys(CONSOLE_APP_MAP).sort().forEach(k => {
-                    if (listed.has(k.toLowerCase())) return; // already shown as a game
-                    const v = CONSOLE_APP_MAP[k];
-                    const disp = (typeof v === 'function') ? '(internal handler)' : String(v);
-                    consolePrint('    ' + k + ' → ' + disp, 'output');
-                });
-            } catch (e) {
-                Object.keys(CONSOLE_APP_MAP).forEach(k => {
-                    const v = CONSOLE_APP_MAP[k];
-                    const disp = (typeof v === 'function') ? '(internal handler)' : String(v);
-                    consolePrint('  ' + k + ' → ' + disp, 'output');
-                });
-            }
-            return;
-        }
-
-        // ── open: open apps/games ──
-        if (tokens[0] === 'open') {
-            if (!tokens[1]) { consolePrint('Usage: open <app>', 'error'); return; }
-            const app = tokens[1].toLowerCase();
-            const isMapped = Object.prototype.hasOwnProperty.call(CONSOLE_APP_MAP, app);
-            const entry = isMapped ? CONSOLE_APP_MAP[app] : tokens[1];
-            try {
-                if (typeof entry === 'function') {
-                    entry();
-                    consolePrint('Opened ' + app + ' (internal)', 'info');
-                } else {
-                    // If this app was mapped from CONSOLE_APP_MAP, open the mapped value verbatim.
-                    let url = String(entry || '').trim();
-                    if (!isMapped) {
-                        // Fallback: try to find a game in GAMES_LIST matching the token
-                        try {
-                            const match = (Array.isArray(GAMES_LIST) ? GAMES_LIST.find(g => {
-                                if (!g) return false;
-                                const gid = (g.id||'').toString().toLowerCase().trim();
-                                const gname = (g.name||'').toString().toLowerCase().trim();
-                                return gid === app || gname === app || gname.includes(app);
-                            }) : null);
-                            if (match) {
-                                if (match.src) url = match.src;
-                                else {
-                                    const base = (match.id||match.name||'').toString().toLowerCase();
-                                    const slug = base.replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'').replace(/-/g,'_');
-                                    url = './games/' + slug + '.html';
-                                }
-                            } else {
-                                if (url && !/^([a-zA-Z]+:)?\/\//.test(url) && !url.startsWith('/')) {
-                                    if (url.endsWith('/')) url = url + 'index.html';
-                                    else {
-                                        const last = url.split('/').pop() || '';
-                                        if (last && !last.includes('.')) url = url.replace(/\/+$/, '') + '.html';
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            // ignore and fallback to basic normalization
-                            if (url && !/^([a-zA-Z]+:)?\/\//.test(url) && !url.startsWith('/')) {
-                                if (url.endsWith('/')) url = url + 'index.html';
-                                else {
-                                    const last = url.split('/').pop() || '';
-                                    if (last && !last.includes('.')) url = url.replace(/\/+$/, '') + '.html';
-                                }
-                            }
-                        }
-                    }
-                    window.open(url || entry, '_blank');
-                    consolePrint('Opened ' + (url || entry), 'info');
-                }
-            } catch (e) { consolePrint('✗ Could not open ' + app + ': ' + (e && e.message ? e.message : String(e)), 'error'); }
-            return;
-        }
-
-        // ── js: enter a JavaScript REPL mode where inputs are evaluated
-        if (tokens[0] === 'js') {
-                consoleJsMode = true;
-                const sym = document.querySelector('.console-prompt-symbol'); if (sym) sym.textContent = 'js>';
-                consolePrint('Entered JS shell. Type "exit" to leave.', 'info');
-            return;
-        }
-
-        // ── defaults: list/write/get apricity settings (replaces old `config`)
-        if (tokens[0] === 'defaults') {
-            const sub = tokens[1] || '';
-            if (sub === 'list') {
-                consolePrint('Available apricity config keys (use true/false for booleans):', 'info');
-                consolePrint('  apricity-tabs-enabled          — enable tabs UI (true/false)', 'output');
-                consolePrint('  apricity-console-open-on-start — open console on startup (true/false)', 'output');
-                consolePrint('  apricity-theme-choice          — theme id/string', 'output');
-                consolePrint('  apricity-bg                    — background key or URL', 'output');
-                consolePrint('  apricity-bg-dim                — dim background (true/false)', 'output');
-                consolePrint('  apricity-anonymize-device-id   — anonymize device id when true (true/false)', 'output');
-                consolePrint('  apricity-autonnight-enabled    — auto night theme (true/false)', 'output');
-                consolePrint('  apricity-footer-color          — footer color hex', 'output');
-                consolePrint('  Note: visit count and raw device-id changes are not allowed via defaults.', 'output');
-                return;
-            }
-            if (sub === 'write') {
-                const key = tokens[2];
-                let val = tokens.slice(3).join(' ');
-                if (!key || val === undefined) { consolePrint('Usage: defaults write <key> <value>', 'error'); return; }
-                if (key === 'apricity-visit-count' || key === 'apricity-device-id') {
-                    consolePrint('✗ Setting ' + key + ' is not allowed via defaults.', 'error');
-                    return;
-                }
-                const l = val.toLowerCase();
-                if (['1','0','true','false','on','off'].includes(l)) {
-                    const truthy = (l === '1' || l === 'true' || l === 'on');
-                    val = truthy ? 'true' : 'false';
-                }
-                localStorage.setItem(key, val);
-                consolePrint('Set ' + key + ' = ' + val, 'info');
-                return;
-            }
-            if (sub === 'get' || sub === 'echo') {
-                const key = tokens[2];
-                if (!key) { consolePrint('Usage: defaults get <key>', 'error'); return; }
-                const val = localStorage.getItem(key);
-                consolePrint(key + ' = ' + (val === null ? '(not set)' : val), 'info');
-                return;
-            }
-            consolePrint('Usage: defaults list | write <key> <value> | get <key>', 'output');
-            return;
-        }
-
-        // ── slmgr (secret): manage stored product key. not shown in help.
-        if (tokens[0] === 'slmgr') {
-            const sub = tokens[1] || '';
-            const pkKey = 'apricity-product-key';
-            const actKey = 'apricity-activation-key';
-            // Use a dedicated persistence flag for stored product keys so we
-            // don't accidentally clobber the activation-skip preference.
-            const persistKey = 'apricity-slmgr-persist';
-            const persist = (localStorage.getItem(persistKey) === null) ? true : (localStorage.getItem(persistKey) === '1' || localStorage.getItem(persistKey) === 'true');
-            if (!sub) {
-                // invoked with no args — reset stored key instead of lockout
-                const current = localStorage.getItem(pkKey);
-                if (!current) {
-                    // nothing set — ensure activation key cleared and inform user
-                    localStorage.removeItem(pkKey);
-                    localStorage.removeItem(actKey);
-                    consolePrint('No product key found; stored keys cleared.', 'info');
-                    return;
-                }
-                consolePrint('Stored product key present. Use `slmgr echo` to view, `slmgr persist-toggle` to toggle persistence, `slmgr reset` to clear, or `slmgr set <key>` to update.', 'info');
-                return;
-            }
-            if (sub === 'set') {
-                const v = tokens.slice(2).join(' ');
-                if (!v) { consolePrint('Usage: slmgr set <product-key>', 'error'); return; }
-                if (persist) {
-                    localStorage.setItem(pkKey, v);
-                    localStorage.setItem(actKey, v);
-                    consolePrint('Product key stored persistently.', 'info');
-                } else {
-                    try {
-                        sessionStorage.setItem(pkKey, v);
-                        sessionStorage.setItem(actKey, v);
-                        consolePrint('Product key stored for this session only.', 'info');
-                    } catch (e) {
-                        consolePrint('✗ Could not store key in sessionStorage: ' + e.message, 'error');
-                    }
-                }
-                return;
-            }
-            if (sub === 'echo') {
-                const v = localStorage.getItem(pkKey) || sessionStorage.getItem(pkKey);
-                consolePrint('Product key: ' + (v || '(not set)'), 'info');
-                return;
-            }
-            if (sub === 'reset') {
-                localStorage.removeItem(pkKey);
-                localStorage.removeItem(actKey);
-                try { sessionStorage.removeItem(pkKey); sessionStorage.removeItem(actKey); } catch (e) {}
-                localStorage.setItem(persistKey, '0');
-                consolePrint('Product key cleared from storage.', 'info');
-                return;
-            }
-            if (sub === 'persist-toggle') {
-                const cur = localStorage.getItem(persistKey);
-                const enabled = cur === null ? true : (cur === '1' || cur === 'true');
-                const next = !enabled;
-                localStorage.setItem(persistKey, next ? '1' : '0');
-                consolePrint('Product-key persistence ' + (next ? 'enabled' : 'disabled') + '.', 'info');
-                return;
-            }
-            consolePrint('slmgr: unknown subcommand', 'error');
+        if (cmd === 'js' || cmd === 'node') {
+            consoleJsMode = true;
+            const sym = document.querySelector('.console-prompt-symbol');
+            if (sym) sym.textContent = '>';
+            consolePrint('Entering JS shell. Type exit or .exit to leave.', 'info');
             return;
         }
 
@@ -6955,25 +6610,19 @@ function generateFingerprint() {
     var BASE = 'https://api.themoviedb.org/3';
     var IMG = 'https://image.tmdb.org/t/p/w300';
     var BACKDROP = 'https://image.tmdb.org/t/p/w780';
-                if (persist) {
-                    localStorage.setItem(pkKey, v);
-                    localStorage.setItem(actKey, v);
-                    // When product key is persisted, enable activation-skip
-                    // so the gate will attempt to validate the stored key.
-                    localStorage.setItem('apricity-activation-skip', '1');
-                    consolePrint('Product key stored persistently. Activation skip enabled.', 'info');
-                } else {
-                    try {
-                        sessionStorage.setItem(pkKey, v);
-                        sessionStorage.setItem(actKey, v);
-                        // Ensure persistent activation-skip is disabled when key
-                        // is session-only.
-                        try { localStorage.removeItem('apricity-activation-skip'); } catch (e) {}
-                        consolePrint('Product key stored for this session only.', 'info');
-                    } catch (e) {
-                        consolePrint('✗ Could not store key in sessionStorage: ' + e.message, 'error');
-                    }
-                }
+    var GENRES = {
+        28:'Action',12:'Adventure',16:'Animation',35:'Comedy',80:'Crime',
+        99:'Documentary',18:'Drama',10751:'Family',14:'Fantasy',36:'History',
+        27:'Horror',10402:'Music',9648:'Mystery',10749:'Romance',878:'Sci-Fi',
+        53:'Thriller',10752:'War',37:'Western',10759:'Action & Adventure',
+        10762:'Kids',10765:'Sci-Fi & Fantasy',10768:'War & Politics'
+    };
+    var mvType = 'movie', mvCurPage = 1, mvQuery = '', mvDebounce = null;
+    var mvLoaded = false, mvCache = {}, mvAbort = null;
+    var elStatus, elGrid, elSearch;
+
+    function tmdbGet(path, cb) {
+        if (mvCache[path]) { cb(mvCache[path]); return; }
         if (mvAbort) mvAbort.abort();
         mvAbort = window.AbortController ? new AbortController() : null;
         setStatus('Loading…');
@@ -6982,20 +6631,18 @@ function generateFingerprint() {
             .catch(function(err) { if (err.name === 'AbortError') return; setStatus('Error: ' + err.message); });
     }
 
-                localStorage.removeItem(pkKey);
-                localStorage.removeItem(actKey);
-                try { sessionStorage.removeItem(pkKey); sessionStorage.removeItem(actKey); } catch (e) {}
-                // Also clear activation-skip flag when keys are removed
-                try { localStorage.removeItem('apricity-activation-skip'); } catch (e) {}
-                consolePrint('Product key cleared from storage. Activation skip disabled.', 'info');
+    function setStatus(t) { if (elStatus) elStatus.textContent = t; }
+
+    function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
     window.mvImgErr = function(img) {
         var ph = document.createElement('div');
         ph.className = 'mv-thumb-placeholder';
-                const cur = localStorage.getItem(persistKey);
-                const enabled = cur === null ? true : (cur === '1' || cur === 'true');
-                const next = !enabled;
-                localStorage.setItem(persistKey, next ? '1' : '0');
-                consolePrint('Product-key persistence ' + (next ? 'enabled' : 'disabled') + '.', 'info');
+        img.parentNode.replaceChild(ph, img);
+    };
+
+    function renderGrid(items) {
+        elGrid.innerHTML = '';
         if (!items || !items.length) { setStatus('Nothing found.'); return; }
         items.forEach(function(item) {
             var title = item.title || item.name || 'Untitled';
@@ -7209,16 +6856,10 @@ function generateFingerprint() {
 </script>
 <script>
 (function() {
-    const anonymize = localStorage.getItem('apricity-anonymize-device-id') === 'true';
-    let did = anonymize ? '' : (localStorage.getItem('apricity-device-id') || '');
-    if (!anonymize) {
-        if (!did) {
-            did = 'dev-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-            localStorage.setItem('apricity-device-id', did);
-        }
-    } else {
-        // ensure raw device id is not stored when anonymized
-        localStorage.removeItem('apricity-device-id');
+    let did = localStorage.getItem('apricity-device-id');
+    if (!did) {
+        did = 'dev-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+        localStorage.setItem('apricity-device-id', did);
     }
     const visits = parseInt(localStorage.getItem('apricity-visit-count') || '0') + 1;
     localStorage.setItem('apricity-visit-count', String(visits));
