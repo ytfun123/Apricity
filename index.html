@@ -2028,6 +2028,9 @@ function generateFingerprint() {
     <div class="icon-btn" onclick="openModal('backgrounds')" title="Backgrounds">
         <span class="material-symbols-outlined" style="font-size:20px;">image</span>
     </div>
+    <div class="icon-btn" id="topbar-console-btn" onclick="showConsolePage()" title="Console" style="display:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">terminal</span>
+    </div>
     <div class="icon-btn" onclick="openModal('settings')" title="Settings">
         <span class="material-symbols-outlined" style="font-size:20px;">settings</span>
     </div>
@@ -2382,6 +2385,19 @@ function generateFingerprint() {
                                 <select class="bg-custom-input" id="consoleStyleSelect" onchange="onConsoleStyleChange()" style="flex:1;margin-top:0;">
                                     <option value="normal">Normal</option>
                                     <option value="cli">CLI Style</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-row" style="border-top:1px solid var(--yt-border2);">
+                        <div class="setting-info" style="width:100%">
+                            <div class="setting-name">Console Button</div>
+                            <div class="setting-desc">Where the Console button appears. Top-right shows a small icon in the corner like the default home-screen icons.</div>
+                            <div style="display:flex;gap:8px;margin-top:8px;">
+                                <select class="bg-custom-input" id="consoleButtonSelect" onchange="onConsoleButtonChange()" style="flex:1;margin-top:0;">
+                                    <option value="home">Home Button</option>
+                                    <option value="topbar">Top-Right Icon</option>
+                                    <option value="both">Both</option>
                                 </select>
                             </div>
                         </div>
@@ -5234,7 +5250,7 @@ function generateFingerprint() {
         const savedConsole = localStorage.getItem('apricity-console-enabled');
         consoleEnabled = savedConsole === '1';
         document.getElementById('consoleToggle').checked = consoleEnabled;
-        document.getElementById('console-nav-btn').style.display = consoleEnabled ? '' : 'none';
+        consoleButtonApply();
         const extraOpts = document.getElementById('consoleExtraOptions');
         if (extraOpts) extraOpts.style.display = consoleEnabled ? '' : 'none';
 
@@ -5244,6 +5260,13 @@ function generateFingerprint() {
         const styleSelect = document.getElementById('consoleStyleSelect');
         if (styleSelect) styleSelect.value = consoleStyle;
         consoleStyleApply();
+
+        // Restore console button placement (default: home button)
+        const savedButton = localStorage.getItem('apricity-console-button');
+        consoleButton = (savedButton === 'topbar' || savedButton === 'both') ? savedButton : 'home';
+        const buttonSelect = document.getElementById('consoleButtonSelect');
+        if (buttonSelect) buttonSelect.value = consoleButton;
+        consoleButtonApply();
 
         // Restore 'open on startup' preference and apply it
         const savedConsoleOpen = localStorage.getItem('apricity-console-open-on-start');
@@ -6270,11 +6293,12 @@ function generateFingerprint() {
     let consoleCmdIndex = -1;
     let consoleStyle = 'normal';
     let consoleJsMode = false;
+    let consoleButton = 'home';
 
     function onConsoleToggleChange() {
         consoleEnabled = document.getElementById('consoleToggle').checked;
         localStorage.setItem('apricity-console-enabled', consoleEnabled ? '1' : '0');
-        document.getElementById('console-nav-btn').style.display = consoleEnabled ? '' : 'none';
+        consoleButtonApply();
         const extra = document.getElementById('consoleExtraOptions');
         if (extra) extra.style.display = consoleEnabled ? '' : 'none';
     }
@@ -6285,9 +6309,23 @@ function generateFingerprint() {
         consoleStyleApply();
     }
 
+    function onConsoleButtonChange() {
+        consoleButton = document.getElementById('consoleButtonSelect').value;
+        localStorage.setItem('apricity-console-button', consoleButton);
+        consoleButtonApply();
+    }
+
     function onConsoleOpenToggleChange() {
         const enabled = document.getElementById('consoleOpenToggle').checked;
         localStorage.setItem('apricity-console-open-on-start', enabled ? '1' : '0');
+    }
+
+    // Show the Console as a home button, a top-right icon, or both
+    function consoleButtonApply() {
+        const navBtn = document.getElementById('console-nav-btn');
+        const topBtn = document.getElementById('topbar-console-btn');
+        if (navBtn) navBtn.style.display = (consoleEnabled && (consoleButton === 'home' || consoleButton === 'both')) ? '' : 'none';
+        if (topBtn) topBtn.style.display = (consoleEnabled && (consoleButton === 'topbar' || consoleButton === 'both')) ? '' : 'none';
     }
 
     // Apply the chosen console style (normal input bar vs inline CLI prompt)
@@ -6553,10 +6591,12 @@ function generateFingerprint() {
         if (cmd === '/info' || cmd === 'info') {
             const did = localStorage.getItem('apricity-device-id') || 'Not assigned yet';
             const visits = localStorage.getItem('apricity-visit-count') || '?';
+            const fp = window._apricityFp || (typeof generateFingerprint === 'function' ? generateFingerprint() : 'fp_unknown');
             consolePrint('── Device Info ──', 'info');
-            consolePrint('Device ID : ' + did, 'output');
-            consolePrint('URL       : ' + location.href, 'output');
-            consolePrint('Visit #   : ' + visits + ' (this device)', 'output');
+            consolePrint('Device ID  : ' + did, 'output');
+            consolePrint('Fingerprint: ' + fp, 'output');
+            consolePrint('URL        : ' + location.href, 'output');
+            consolePrint('Visit #    : ' + visits + ' (this device)', 'output');
             consolePrint('Tip: Search this Device ID in your Google Sheet to find your row number.', 'info');
             consolePrint('── end ──', 'info');
             return;
