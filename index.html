@@ -1423,6 +1423,18 @@ function generateFingerprint() {
             background: var(--md-sys-color-surface);
             overflow: hidden;
         }
+        /* While any full-screen app page or overlay is showing, the parent
+           document must not scroll — otherwise scrolling inside the app
+           reaches the home page behind it. Covers tabs and overlay apps. */
+        body:has(#sunlit-page.active, #desktop-page.active, #discord-page.active,
+                 #hollow-knight-page.active, #snow-rider-page.active,
+                 #search-page.active, #gemini-page.active,
+                 #meet-stable-page.active, #spotify-page.active,
+                 #youtube-page.yt-overlay-mode, #movies-page.mv-overlay-mode,
+                 #discord-page.discord-overlay-mode, #game-fullscreen-overlay.active,
+                 #gamesFsOverlay.active, #mv-player-overlay.active) {
+            overflow: hidden;
+        }
         .sunlit-back {
             position: fixed; top: 12px; left: 12px; z-index: 9999;
             background: rgba(0,0,0,0.65); color: #fff;
