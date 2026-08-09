@@ -1432,7 +1432,7 @@ function generateFingerprint() {
                  #meet-stable-page.active, #spotify-page.active,
                  #youtube-page.yt-overlay-mode, #movies-page.mv-overlay-mode,
                  #discord-page.discord-overlay-mode, #game-fullscreen-overlay.active,
-                 #gamesFsOverlay.active, #mv-player-overlay.active) {
+                 #gamesFsOverlay.active, #appsFsOverlay.active, #mv-player-overlay.active) {
             overflow: hidden;
         }
         .sunlit-back {
@@ -2535,6 +2535,11 @@ function generateFingerprint() {
             <div class="app-icon"><span class="material-symbols-outlined">computer</span></div>
             Desktop
         </div>
+        
+        <div class="app-item" onclick="toggleApps(); toggleAppsFullscreen();">
+            <div class="app-icon"><span class="material-symbols-outlined">apps</span></div>
+            View All Apps
+        </div>
         <button class="apps-close-btn" onclick="toggleApps()">Close</button>
     </div>
 </div>
@@ -2582,6 +2587,19 @@ function generateFingerprint() {
     </div>
     <div class="games-fs-grid" id="gamesFsGrid">
         <!-- Populated by JS from the GAMES_LIST array -->
+    </div>
+</div>
+
+<!-- Fullscreen Apps List -->
+<div class="games-fs-overlay" id="appsFsOverlay">
+    <div class="games-fs-header">
+        <h2>All Apps</h2>
+        <button class="games-fs-close" onclick="toggleAppsFullscreen()">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+    <div class="games-fs-grid" id="appsFsGrid">
+        <!-- Populated by JS from the APPS_LIST array -->
     </div>
 </div>
 
@@ -3950,8 +3968,11 @@ function generateFingerprint() {
         const o = document.getElementById('appsOverlay');
         o.style.display = o.style.display === 'flex' ? 'none' : 'flex';
     }
+    function closeAppsPanel() {
+        document.getElementById('appsOverlay').style.display = 'none';
+    }
     function openSunlit() {
-        toggleApps();
+        closeAppsPanel();
         const existing = tabs.find(t => t.pageId === 'sunlit-page');
         if (existing) { tabSwitch(existing.id); return; }
         const frame = document.getElementById('sunlit-frame');
@@ -3961,7 +3982,7 @@ function generateFingerprint() {
 
     // ===== DESKTOP =====
     function openDesktop() {
-        toggleApps();
+        closeAppsPanel();
         const existing = tabs.find(t => t.pageId === 'desktop-page');
         if (existing) { tabSwitch(existing.id); return; }
         const frame = document.getElementById('desktop-frame');
@@ -4130,6 +4151,57 @@ function generateFingerprint() {
                 <div class="games-fs-card" onclick="toggleGamesFullscreen(); openGame('${g.id}', '${g.src}')">
                     <div class="games-fs-icon">${gameIconHTML(g)}</div>
                     <div class="games-fs-name">${g.name}</div>
+                </div>`;
+        }).join('');
+    }
+
+    // ── Master apps list ──
+    // To add an app: set name and icon, and set open to the name of the
+    // function that launches it (e.g. 'openSunlit'). It will then appear in
+    // the fullscreen "All Apps" grid. Set placeholder to true for an empty slot.
+    const APPS_LIST = [
+        { id: 'sunlit',    name: 'Sunlit OS',   icon: 'wb_sunny',     open: 'openSunlit' },
+        { id: 'gemini',    name: 'Groq AI',     icon: 'auto_awesome', open: 'openGemini' },
+        { id: 'meet',      name: 'Meet Stable', icon: 'video_call',   open: 'openMeetStable' },
+        { id: 'spotify',   name: 'Spotify',     icon: 'graphic_eq',   open: 'openSpotify' },
+        { id: 'desktop',   name: 'Desktop',     icon: 'computer',     open: 'openDesktop' },
+        { id: 'discord',   name: 'Discord',     icon: 'forum',        open: 'openDiscordApp' },
+    ];
+
+    function toggleAppsFullscreen() {
+        const o = document.getElementById('appsFsOverlay');
+        const isActive = o.classList.contains('active');
+        if (!isActive) {
+            renderAppsFullscreenGrid();
+            o.classList.add('active');
+        } else {
+            o.classList.remove('active');
+        }
+    }
+
+    function appIconHTML(a) {
+        const value = a.icon || '';
+        if (isGameIconImage(value)) {
+            return `<img src="${value}" alt="" loading="lazy" onerror="this.outerHTML='<span class=\\'material-symbols-outlined\\'>broken_image</span>'">`;
+        }
+        return `<span class="material-symbols-outlined">${value || 'apps'}</span>`;
+    }
+
+    function renderAppsFullscreenGrid() {
+        const grid = document.getElementById('appsFsGrid');
+        grid.innerHTML = APPS_LIST.map(a => {
+            if (a.placeholder) {
+                return `
+                <div class="games-fs-card placeholder" title="Add your app opener in APPS_LIST">
+                    <div class="games-fs-icon">${appIconHTML(a)}</div>
+                    <div class="games-fs-name">${a.name}</div>
+                    <div class="games-fs-tag">Empty slot</div>
+                </div>`;
+            }
+            return `
+                <div class="games-fs-card" onclick="toggleAppsFullscreen(); ${a.open}()">
+                    <div class="games-fs-icon">${appIconHTML(a)}</div>
+                    <div class="games-fs-name">${a.name}</div>
                 </div>`;
         }).join('');
     }
@@ -4996,7 +5068,7 @@ function generateFingerprint() {
     }
 
     function openGemini() {
-        toggleApps();
+        closeAppsPanel();
         // Always open a new Groq tab (allows multiple chat tabs)
         const tabId = tabGenId();
         tabs.push({ id: tabId, label: 'Groq AI', icon: '🤖', pageId: 'gemini-page', extra: null });
@@ -5092,7 +5164,7 @@ function generateFingerprint() {
 
     // ===== MEET STABLE =====
     function openMeetStable() {
-        toggleApps();
+        closeAppsPanel();
         const existing = tabs.find(t => t.pageId === 'meet-stable-page');
         if (existing) { tabSwitch(existing.id); return; }
         tabNew('meet-stable-page', 'Meet Stable', 'videocam');
@@ -5100,7 +5172,7 @@ function generateFingerprint() {
 
     // ===== SPOTIFY =====
     function openSpotify() {
-        toggleApps();
+        closeAppsPanel();
         const existing = tabs.find(t => t.pageId === 'spotify-page');
         if (existing) { tabSwitch(existing.id); return; }
         tabNew('spotify-page', 'Spotify', 'music_note');
