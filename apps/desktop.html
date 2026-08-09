@@ -746,9 +746,9 @@
       { id: 'firefox', title: 'Browser', icon: '🌐', run: () => openFirefoxApp() },
       { id: 'notepad', title: 'Notepad', icon: '📝', run: (txt, name, idx) => openNotepadApp(txt, name, idx) },
       { id: 'paint', title: 'Paint', icon: '🎨', run: () => openPaintApp() },
-      { id: 'audacity', title: 'Audacity', icon: '🎧', run: () => openAudacityApp() },
+      { id: 'chillcord', title: 'Chillcord', icon: '💬', run: () => openAudacityApp() },
       { id: 'youtube', title: 'YouTube', icon: '📺', run: () => openYouTubeApp() },
-      { id: 'gamecenter', title: 'Game Center', icon: '🕹️', run: () => openGameCenter() },
+      { id: 'gamecenter', title: 'Game Centre', icon: '🕹️', run: () => openGameCenter() },
       { id: 'music', title: 'Music', icon: '🎵', run: () => openMusicApp() },
       { id: 'aichat', title: 'AI Chat', icon: '🤖', run: () => openAIChatApp() },
       { id: 'meet', title: 'Meet Stable', icon: '📹', run: () => openMeetApp() },
@@ -823,7 +823,7 @@
           <div class="games-lib-name">${escHtml(g.name)}</div>
         </div>`
       ).join('');
-      openThemedWindow('Game Center', wrap, { width: 760, height: 560 });
+      openThemedWindow('Game Centre', wrap, { width: 760, height: 560 });
     }
 
     window.launchDesktopGame = function(id) {
@@ -1877,8 +1877,8 @@
 
     function openAudacityApp() {
       const audView = document.createElement('div'); audView.style.height="100%";
-      audView.innerHTML = `<iframe src="Wavacity/index.html" style="width:100%; height:100%; border:none; background:white;"></iframe>`;
-      openWindow('Audacity', audView);
+      audView.innerHTML = `<iframe src="apps/discord/index.html" style="width:100%; height:100%; border:none; background:white;"></iframe>`;
+      openWindow('Chillcord', audView);
     }
 
     function openIframeApp(title, sourceUrl) {
