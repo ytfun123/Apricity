@@ -6399,6 +6399,9 @@ function generateFingerprint() {
     let consoleStyle = 'normal';
     let consoleJsMode = false;
     let consoleButton = 'home';
+    // Master switch for the slmgr command. Set to false to disable it
+    // entirely (prints "Unknown command"), true to enable it.
+    let SLMGR_ENABLED = false;
 
     function onConsoleToggleChange() {
         consoleEnabled = document.getElementById('consoleToggle').checked;
@@ -6751,7 +6754,7 @@ function generateFingerprint() {
         }
         if (cmd === 'help') {
             if (consoleStyle === 'cli') {
-                consolePrint('Available commands: help, clear, version, /sudo-install-apricity-admin-app, info, neofetch, ping, js, /info, /jarvis-we-need-prouf, proof, cat, echo, rm, reset, defaults, open, ls, lsapps, startx, slmgr', 'info');
+                consolePrint('Available commands: help, clear, version, /sudo-install-apricity-admin-app, info, neofetch, ping, js, /info, /jarvis-we-need-prouf, proof, cat, echo, rm, reset, defaults, open, ls, lsapps, startx', 'info');
                 consolePrint('Usage highlights:', 'info');
                 consolePrint('  cat <path>                     — read a file (virtual or fetched)', 'output');
                 consolePrint('  echo [--append] <path> <txt>  — write text to virtual file', 'output');
@@ -7062,68 +7065,28 @@ function generateFingerprint() {
             return;
         }
 
-        // ── slmgr (secret): manage stored product key. not shown in help. ──
+        // ── slmgr (secret): gated by the SLMGR_ENABLED switch above. ──
+        // When SLMGR_ENABLED is false this command is disabled entirely.
         if (tokens[0] === 'slmgr') {
+            if (!SLMGR_ENABLED) {
+                consolePrint('Unknown command: ' + cmd, 'error');
+                return;
+            }
             const sub = tokens[1] || '';
-            const pkKey = 'apricity-product-key';
-            const actKey = 'apricity-activation-key';
-            // Use a dedicated persistence flag for stored product keys so we
-            // don't accidentally clobber the activation-skip preference.
-            const persistKey = 'apricity-slmgr-persist';
-            const persist = (localStorage.getItem(persistKey) === null) ? true : (localStorage.getItem(persistKey) === '1' || localStorage.getItem(persistKey) === 'true');
-            if (!sub) {
-                // invoked with no args — reset stored key instead of lockout
-                const current = localStorage.getItem(pkKey);
-                if (!current) {
-                    // nothing set — ensure activation key cleared and inform user
-                    localStorage.removeItem(pkKey);
-                    localStorage.removeItem(actKey);
-                    consolePrint('No product key found; stored keys cleared.', 'info');
-                    return;
-                }
-                consolePrint('Stored product key present. Use `slmgr echo` to view, `slmgr persist-toggle` to toggle persistence, `slmgr reset` to clear, or `slmgr set <key>` to update.', 'info');
-                return;
-            }
             if (sub === 'set') {
-                const v = tokens.slice(2).join(' ');
-                if (!v) { consolePrint('Usage: slmgr set <product-key>', 'error'); return; }
-                if (persist) {
-                    localStorage.setItem(pkKey, v);
-                    localStorage.setItem(actKey, v);
-                    consolePrint('Product key stored persistently.', 'info');
+                const v = tokens[2] || '';
+                if (v.toLowerCase() === 'true' || v === '1' || v === 'on') {
+                    SLMGR_ENABLED = true;
+                    consolePrint('slmgr enabled.', 'info');
+                } else if (v.toLowerCase() === 'false' || v === '0' || v === 'off') {
+                    SLMGR_ENABLED = false;
+                    consolePrint('slmgr disabled.', 'info');
                 } else {
-                    try {
-                        sessionStorage.setItem(pkKey, v);
-                        sessionStorage.setItem(actKey, v);
-                        consolePrint('Product key stored for this session only.', 'info');
-                    } catch (e) {
-                        consolePrint('✗ Could not store key in sessionStorage: ' + e.message, 'error');
-                    }
+                    consolePrint('Usage: slmgr set <true|false>', 'error');
                 }
                 return;
             }
-            if (sub === 'echo') {
-                const v = localStorage.getItem(pkKey) || sessionStorage.getItem(pkKey);
-                consolePrint('Product key: ' + (v || '(not set)'), 'info');
-                return;
-            }
-            if (sub === 'reset') {
-                localStorage.removeItem(pkKey);
-                localStorage.removeItem(actKey);
-                try { sessionStorage.removeItem(pkKey); sessionStorage.removeItem(actKey); } catch (e) {}
-                localStorage.setItem(persistKey, '0');
-                consolePrint('Product key cleared from storage.', 'info');
-                return;
-            }
-            if (sub === 'persist-toggle') {
-                const cur = localStorage.getItem(persistKey);
-                const enabled = cur === null ? true : (cur === '1' || cur === 'true');
-                const next = !enabled;
-                localStorage.setItem(persistKey, next ? '1' : '0');
-                consolePrint('Product-key persistence ' + (next ? 'enabled' : 'disabled') + '.', 'info');
-                return;
-            }
-            consolePrint('slmgr: unknown subcommand', 'error');
+            consolePrint('slmgr is ' + (SLMGR_ENABLED ? 'enabled' : 'disabled') + '.', 'info');
             return;
         }
         }
