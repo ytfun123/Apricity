@@ -2637,7 +2637,7 @@ function generateFingerprint() {
 <div id="search-page" class="page">
     <button class="sunlit-back" onclick="searchGoBack()">&#8592; Back</button>
     <div id="search-status"></div>
-    <iframe id="search-frame" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"></iframe>
+    <iframe id="search-frame" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals allow-pointer-lock allow-downloads"></iframe>
 </div>
 
 <!-- Groq Page -->
@@ -3602,32 +3602,48 @@ function generateFingerprint() {
     }
 
     async function fetchViaCurl(url) {
-        const curl = await ensureCurl();
-        let redirectCount = 0;
-        while (true) {
-            const resp = await curl.fetch(url, { method: 'GET', headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-                'Accept-Language': 'en-US,en;q=0.9'
-            } });
-            // curl.fetch does NOT auto-follow redirects — same discovery GUST made.
-            // Without this, DDG's own result links (which are redirect/tracking
-            // URLs, not raw destinations) and most real sites' canonical-URL
-            // redirects would just render the tiny redirect stub as the "page",
-            // which is exactly what a white screen looks like.
-            if (resp.status >= 300 && resp.status < 400 && redirectCount < 12) {
-                const loc = resp.headers && resp.headers.get && resp.headers.get('location');
-                if (loc) {
-                    url = new URL(loc, url).href;
-                    redirectCount++;
-                    console.log('WISP fetch redirect', resp.status, '→', url);
+        // Retry once with a freshly re-initialized session if the WISP relay
+        // drops the connection mid-session (public relays restart/rotate often).
+        // HTTP status errors are real server responses, not tunnel problems, so
+        // those skip the retry and surface as-is.
+        for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+                const curl = await ensureCurl();
+                let redirectCount = 0;
+                while (true) {
+                    const resp = await curl.fetch(url, { method: 'GET', headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                        'Accept-Language': 'en-US,en;q=0.9'
+                    } });
+                    // curl.fetch does NOT auto-follow redirects — same discovery GUST made.
+                    // Without this, DDG's own result links (which are redirect/tracking
+                    // URLs, not raw destinations) and most real sites' canonical-URL
+                    // redirects would just render the tiny redirect stub as the "page",
+                    // which is exactly what a white screen looks like.
+                    if (resp.status >= 300 && resp.status < 400 && redirectCount < 12) {
+                        const loc = resp.headers && resp.headers.get && resp.headers.get('location');
+                        if (loc) {
+                            url = new URL(loc, url).href;
+                            redirectCount++;
+                            console.log('WISP fetch redirect', resp.status, '→', url);
+                            continue;
+                        }
+                    }
+                    if (resp.status >= 400) throw new Error('HTTP ' + resp.status + ' via WISP tunnel');
+                    const buf = await resp.arrayBuffer();
+                    const text = new TextDecoder('utf-8').decode(buf);
+                    console.log('WISP/libcurl fetch OK for', url, '— status', resp.status, '—', text.length, 'chars');
+                    return text;
+                }
+            } catch (e) {
+                if (attempt === 0 && e.message && !/^HTTP \d/.test(e.message)) {
+                    _curlSession = null;
+                    _curlInitPromise = null;
+                    console.warn('WISP fetch failed, reinitializing libcurl session —', e.message);
                     continue;
                 }
+                throw e;
             }
-            if (resp.status >= 400) throw new Error('HTTP ' + resp.status + ' via WISP tunnel');
-            const buf = await resp.arrayBuffer();
-            const text = new TextDecoder('utf-8').decode(buf);
-            console.log('WISP/libcurl fetch OK for', url, '— status', resp.status, '—', text.length, 'chars');
-            return text;
         }
     }
 
@@ -3727,12 +3743,55 @@ function generateFingerprint() {
         const doc = new DOMParser().parseFromString(html, 'text/html');
 
         // Strip CSP/framing meta tags — they were written for the page's real
-        // origin and would otherwise block our own injected script.
+        // origin and would otherwise block our own injected script. Intercept
+        // <meta http-equiv="refresh"> too — let the browser handle it natively
+        // and the sandboxed iframe navigates straight to the real site (blocked
+        // by framing policy / refused connections). Route it through the proxy
+        // instead.
         doc.querySelectorAll('meta[http-equiv]').forEach(m => {
             const v = (m.getAttribute('http-equiv') || '').toLowerCase().trim();
             if (v === 'content-security-policy' || v === 'content-security-policy-report-only' ||
                 v === 'x-frame-options' || v === 'x-content-type-options') {
                 m.remove();
+            } else if (v === 'refresh') {
+                const content = m.getAttribute('content') || '';
+                const urlMatch = content.match(/url\s*=\s*['"]?([^'";\s]+)/i);
+                m.remove();
+                if (urlMatch) {
+                    const delayMatch = content.match(/^\s*(\d+)/);
+                    const delay = delayMatch ? parseInt(delayMatch[1], 10) * 1000 : 0;
+                    const refreshUrl = urlMatch[1].trim();
+                    setTimeout(() => {
+                        try { loadProxiedUrl(new URL(refreshUrl, pageUrl).href, new URL(refreshUrl, pageUrl).hostname, { isNav: true }); }
+                        catch (e) { loadProxiedUrl(refreshUrl, refreshUrl, { isNav: true }); }
+                    }, Math.max(delay, 0));
+                }
+            }
+        });
+
+        // Resource-hint links (preconnect/dns-prefetch/prerender/prefetch/
+        // modulepreload) fire network requests outside the proxy tunnel and fail
+        // with CORS errors inside the sandboxed iframe — strip them.
+        doc.querySelectorAll('link[rel="preconnect"], link[rel="dns-prefetch"], link[rel="prerender"], link[rel="prefetch"], link[rel="modulepreload"]').forEach(l => l.remove());
+        // <base target="..."> would push embedded links into popups — neutralize.
+        doc.querySelectorAll('base[target]').forEach(b => b.removeAttribute('target'));
+
+        // Absolutify nested iframe srcs and relax their sandbox so embedded
+        // content (video players, maps, widgets) actually renders instead of
+        // being blocked by the embed's own restrictive sandbox attribute.
+        doc.querySelectorAll('iframe[src]').forEach(ifr => {
+            const s = ifr.getAttribute('src');
+            if (s && !/^(data:|blob:|javascript:|about:)/i.test(s)) {
+                try { ifr.setAttribute('src', new URL(s, pageUrl).href); } catch (e) {}
+            }
+            const sandbox = ifr.getAttribute('sandbox');
+            if (sandbox !== null) {
+                const parts = new Set(sandbox.split(/\s+/).filter(Boolean));
+                parts.add('allow-scripts');
+                parts.add('allow-same-origin');
+                parts.add('allow-forms');
+                parts.add('allow-popups');
+                ifr.setAttribute('sandbox', [...parts].join(' '));
             }
         });
 
@@ -3766,11 +3825,24 @@ function generateFingerprint() {
             };
             var OrigXHR = window.XMLHttpRequest;
             function ProxyXHR() {
-                var xhr = { readyState: 0, status: 0, statusText: '', response: '', responseText: '', responseType: '', onreadystatechange: null, onload: null, onerror: null, _headers: {} };
+                var xhr = { readyState: 0, status: 0, statusText: '', response: '', responseText: '', responseType: '', responseURL: '', onreadystatechange: null, onload: null, onerror: null, _headers: {}, _respHeaders: {} };
                 var method = 'GET', url = null;
                 xhr.open = function(m, u) { method = m; url = toUrl(u); xhr.readyState = 1; };
                 xhr.setRequestHeader = function(k, v) { xhr._headers[k] = v; };
-                xhr.getAllResponseHeaders = function() { return ''; };
+                xhr.overrideMimeType = function() {};
+                xhr.abort = function() { xhr.readyState = 4; xhr.status = 0; if (xhr.onabort) xhr.onabort(); };
+                xhr.getResponseHeader = function(name) {
+                    if (!name) return null;
+                    var lower = String(name).toLowerCase();
+                    return Object.prototype.hasOwnProperty.call(xhr._respHeaders, lower) ? xhr._respHeaders[lower] : null;
+                };
+                xhr.getAllResponseHeaders = function() {
+                    var out = '';
+                    for (var k in xhr._respHeaders) {
+                        if (Object.prototype.hasOwnProperty.call(xhr._respHeaders, k)) out += k + ': ' + xhr._respHeaders[k] + '\r\n';
+                    }
+                    return out;
+                };
                 xhr.send = function(body) {
                     if (!url) { if (xhr.onerror) xhr.onerror(new Event('error')); return; }
                     window.parent.apricityProxyFetch(url, { method: method, headers: xhr._headers, body: body })
@@ -3778,6 +3850,8 @@ function generateFingerprint() {
                             var text = new TextDecoder('utf-8').decode(r.buffer);
                             xhr.status = r.status; xhr.statusText = String(r.status);
                             xhr.response = text; xhr.responseText = text; xhr.readyState = 4;
+                            xhr.responseURL = url;
+                            if (r.headers) { try { xhr._respHeaders = r.headers; } catch (e) {} }
                             if (xhr.onreadystatechange) xhr.onreadystatechange();
                             if (xhr.onload) xhr.onload();
                         })
@@ -3830,38 +3904,171 @@ function generateFingerprint() {
                             return true;
                         }
                         if (p === 'hash') { fakeLoc.hash = v; return true; }
+                        // Assigning window.location.search re-queries the server —
+                        // route it instead of silently ignoring it.
+                        if (p === 'search') {
+                            routeLoc(fakeLoc.origin + fakeLoc.pathname + String(v) + fakeLoc.hash);
+                            return true;
+                        }
                         return true;
                     }
                 });
-                try { Object.defineProperty(window, 'location', { value: locProxy, configurable: true }); } catch (e) {}
+                // window.location = URL: define a getter+setter so direct assignment
+                // routes through the proxy too (a plain {value: proxy} data property
+                // makes window.location = url silently die in strict-mode pages).
+                try {
+                    Object.defineProperty(window, 'location', {
+                        get: function() { return locProxy; },
+                        set: function(v) { if (v) routeLoc(v); },
+                        configurable: true
+                    });
+                } catch (e) {
+                    try { Object.defineProperty(window, 'location', { value: locProxy, configurable: true }); } catch (e2) {}
+                }
                 try { Object.defineProperty(document, 'location', { get: function () { return locProxy; }, set: function (v) { if (v) routeLoc(v); }, configurable: true }); } catch (e) {}
+                // Belt-and-suspenders: some code calls the Location.prototype methods
+                // on a saved reference — patch those too.
+                try { Object.defineProperty(Location.prototype, 'assign', { value: function(u) { routeLoc(String(u)); }, writable: true, configurable: true }); } catch (e) {}
+                try { Object.defineProperty(Location.prototype, 'replace', { value: function(u) { routeLoc(String(u)); }, writable: true, configurable: true }); } catch (e) {}
+                // SPA navigation via history.pushState/replaceState won't hit any
+                // interceptor above — keep the fake location in sync so relative
+                // URL resolution and location.href reads track the SPA state.
+                try {
+                    var _origPush = history.pushState;
+                    var _origReplace = history.replaceState;
+                    history.pushState = function(s, t, u) {
+                        if (u) { try { var pu = new URL(u, document.baseURI); fakeLoc.pathname = pu.pathname; fakeLoc.search = pu.search; } catch (e) {} }
+                        return _origPush.apply(this, arguments);
+                    };
+                    history.replaceState = function(s, t, u) {
+                        if (u) { try { var ru = new URL(u, document.baseURI); fakeLoc.pathname = ru.pathname; fakeLoc.search = ru.search; } catch (e) {} }
+                        return _origReplace.apply(this, arguments);
+                    };
+                } catch (e) {}
+                // Cosmetic document overrides so site JS sees the proxied page as
+                // self-consistent (URL/domain/referrer) instead of about:srcdoc.
+                try { Object.defineProperty(document, 'URL', { get: function() { return document.baseURI; }, configurable: true }); } catch (e) {}
+                try { Object.defineProperty(document, 'documentURI', { get: function() { return document.baseURI; }, configurable: true }); } catch (e) {}
+                try { Object.defineProperty(document, 'domain', { get: function() { try { return new URL(document.baseURI).hostname; } catch (e) { return ''; } }, set: function() {}, configurable: true }); } catch (e) {}
+                try { Object.defineProperty(document, 'referrer', { get: function() { return ''; }, configurable: true }); } catch (e) {}
+            } catch (e) {}
+            // crypto.randomUUID is required by some modern frameworks (React, etc.)
+            // but absent in sandboxed/older contexts — provide a standards fallback.
+            try {
+                if (window.crypto && typeof window.crypto.randomUUID !== 'function') {
+                    window.crypto.randomUUID = function() {
+                        var buf = new Uint8Array(16);
+                        window.crypto.getRandomValues(buf);
+                        buf[6] = (buf[6] & 0x0f) | 0x40;
+                        buf[8] = (buf[8] & 0x3f) | 0x80;
+                        var hex = [];
+                        for (var i = 0; i < buf.length; i++) hex.push(buf[i].toString(16).padStart(2, '0'));
+                        return hex.slice(0, 4).join('') + '-' + hex.slice(4, 6).join('') + '-' +
+                               hex.slice(6, 8).join('') + '-' + hex.slice(8, 10).join('') + '-' + hex.slice(10, 16).join('');
+                    };
+                }
             } catch (e) {}
         })();
-        document.addEventListener('click', function(e) {
-            var a = e.target.closest && e.target.closest('a[href]');
-            if (!a) return;
+        // --- navigation interception ------------------------------------------------
+        // Every anchor/area click is routed through the proxy. DDG result links
+        // aren't direct URLs — they're wrapped in a redirect/tracking page
+        // (duckduckgo.com/l/?uddg=<real url>) that redirects via JS, which a
+        // sandboxed iframe can't execute. Unwrap it and go straight to the real
+        // target instead.
+        function unwrapUrl(u) {
+            try {
+                var t = new URL(u, document.baseURI);
+                if (/(^|\.)duckduckgo\.com$/i.test(t.hostname) && t.pathname === '/l/') {
+                    var real = t.searchParams.get('uddg');
+                    if (real) return new URL(decodeURIComponent(real)).href;
+                }
+            } catch (e) {}
+            return u;
+        }
+        function navigateTo(u, label) {
+            try {
+                var abs = new URL(unwrapUrl(u), document.baseURI).href;
+                label = label || new URL(abs).hostname;
+                if (window.parent && typeof window.parent.loadProxiedUrl === 'function') {
+                    window.parent.loadProxiedUrl(abs, label, { isNav: true });
+                }
+            } catch (e) {}
+        }
+        function clickTarget(e) {
+            var a = e.target && e.target.closest && e.target.closest('a[href], area[href]');
+            if (!a) return null;
             var href = a.getAttribute('href');
-            if (!href || href.charAt(0) === '#' || /^(javascript|mailto|tel):/i.test(href)) return;
+            if (!href || href.charAt(0) === '#' || /^(javascript|mailto|tel|data|blob):/i.test(href)) return null;
+            return a;
+        }
+        function handleClick(e, a) {
             e.preventDefault();
-            var target;
-            try { target = new URL(href, document.baseURI); } catch (err) { return; }
-            // DuckDuckGo result links aren't direct URLs — they're wrapped in a
-            // redirect/tracking page (duckduckgo.com/l/?uddg=<real url>) that
-            // redirects via JS, which a sandboxed iframe can't execute. Unwrap
-            // it here and go straight to the real target instead.
-            if (/(^|\.)duckduckgo\.com$/i.test(target.hostname) && target.pathname === '/l/') {
-                var real = target.searchParams.get('uddg');
-                if (real) { try { target = new URL(decodeURIComponent(real)); } catch (err2) {} }
-            }
-            var label = (a.textContent || '').trim().slice(0, 40) || target.hostname;
-            if (window.parent && typeof window.parent.loadProxiedUrl === 'function') {
-                window.parent.loadProxiedUrl(target.href, label, { isNav: true });
-            }
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            var label = (a.textContent || '').trim().slice(0, 40);
+            navigateTo(a.getAttribute('href'), label);
+        }
+        document.addEventListener('click', function(e) {
+            var a = clickTarget(e);
+            if (a) handleClick(e, a);
         }, true);
-        function routeGetForm(form) {
+        document.addEventListener('auxclick', function(e) { // middle-click
+            if (e.button !== 1) return;
+            var a = clickTarget(e);
+            if (a) handleClick(e, a);
+        }, true);
+        // Force anchors/forms to target _self so nothing opens a native popup
+        // (which would escape the sandbox and hit the site's framing policy).
+        try {
+            var anchorTargetDesc = Object.getOwnPropertyDescriptor(HTMLAnchorElement.prototype, 'target');
+            if (anchorTargetDesc) Object.defineProperty(HTMLAnchorElement.prototype, 'target', { get: function() { return '_self'; }, set: function(v) {}, configurable: true });
+            var formTargetDesc = Object.getOwnPropertyDescriptor(HTMLFormElement.prototype, 'target');
+            if (formTargetDesc) Object.defineProperty(HTMLFormElement.prototype, 'target', { get: function() { return ''; }, set: function(v) {}, configurable: true });
+        } catch (e) {}
+        // window.open must stay inside the proxy too — JS popups would otherwise
+        // escape the sandbox and hit X-Frame-Options/CSP.
+        try {
+            window.open = function(url, name, features) {
+                if (!url || /^(about:|javascript:)/i.test(String(url))) return null;
+                navigateTo(String(url));
+                return { closed: false, close: function() {}, focus: function() {}, blur: function() {}, postMessage: function() {},
+                         location: { href: String(url) }, document: { write: function() {}, close: function() {} } };
+            };
+        } catch (e) {}
+        // Navigation API — used by Chromium-based SPAs to navigate without
+        // touching location or firing a click/submit event.
+        try {
+            if (window.navigation && typeof window.navigation.addEventListener === 'function') {
+                window.navigation.addEventListener('navigate', function(e) {
+                    var dest = e.destination && e.destination.url;
+                    if (!dest || /^(about:|blob:|javascript:)/i.test(dest)) return;
+                    var navType = e.navigationType;
+                    if (navType === 'replace' || navType === 'reload' || navType === 'traverse') return;
+                    try {
+                        var du = new URL(dest), bu = new URL(document.baseURI);
+                        if (du.origin === bu.origin && du.pathname === bu.pathname && du.search === bu.search) return;
+                    } catch (err) {}
+                    navigateTo(dest);
+                    try {
+                        if (e.canIntercept) { e.intercept({ handler: function() {} }); }
+                        else { e.preventDefault(); }
+                    } catch (err2) { try { e.preventDefault(); } catch (err3) {} }
+                });
+            }
+        } catch (e) {}
+        // Form handling. GET forms are trivially convertible; POST forms are
+        // converted to GET-with-query-params and routed through the proxy too.
+        // DDG's HTML results page is the prime offender — its search box AND
+        // "Next" pagination are both method="post" forms. Letting those do a
+        // native submit makes the sandboxed iframe connect straight to
+        // html.duckduckgo.com, which refuses the request (the "connection
+        // refused" error). The /html/ endpoint answers GET ?q= identically.
+        function routeForm(form, submitter) {
             var action = form.getAttribute('action') || document.baseURI;
             var target = new URL(action, document.baseURI);
-            target.search = new URLSearchParams(new FormData(form)).toString();
+            var fd = new FormData(form);
+            if (submitter && submitter.name) fd.append(submitter.name, submitter.value || '');
+            target.search = new URLSearchParams(fd).toString();
             var q = target.searchParams.get('q') || '';
             if (window.parent && typeof window.parent.loadProxiedUrl === 'function') {
                 window.parent.loadProxiedUrl(target.href, q || target.hostname, { isNav: true });
@@ -3870,22 +4077,19 @@ function generateFingerprint() {
         document.addEventListener('submit', function(e) {
             var form = e.target;
             if (!(form instanceof HTMLFormElement)) return;
-            var method = (form.getAttribute('method') || 'GET').toUpperCase();
-            if (method !== 'GET') return; // don't proxy POST forms (e.g. logins) through a third-party tunnel
             e.preventDefault();
-            routeGetForm(form);
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            routeForm(form, e.submitter || null);
         }, true);
         // HTMLFormElement.submit() bypasses the 'submit' event entirely per
         // spec — pages that call it directly (rather than a user clicking a
         // submit button) would slip past the listener above and trigger a
-        // real, unproxied navigation that then gets blocked by the target's
-        // own framing policy. Patch the method itself as a second layer.
+        // real, unproxied navigation. Patch the method itself as a second layer.
         try {
             var OrigFormSubmit = HTMLFormElement.prototype.submit;
             HTMLFormElement.prototype.submit = function() {
-                var method = (this.getAttribute('method') || 'GET').toUpperCase();
-                if (method !== 'GET') { return OrigFormSubmit.call(this); }
-                routeGetForm(this);
+                routeForm(this, null);
             };
         } catch (e) {}
         `;
