@@ -4068,7 +4068,14 @@ function generateFingerprint() {
             var target = new URL(action, document.baseURI);
             var fd = new FormData(form);
             if (submitter && submitter.name) fd.append(submitter.name, submitter.value || '');
-            target.search = new URLSearchParams(fd).toString();
+            // Drop empty-valued fields. DDG's /html/ endpoint returns its bare
+            // homepage (no results) when a search form is serialized as
+            // ?q=...&kl=&df=&b= — it has to collapse to just ?q=<query>.
+            var params = new URLSearchParams();
+            fd.forEach(function(v, k) {
+                if (v !== '' && v != null) params.append(k, String(v));
+            });
+            target.search = params.toString();
             var q = target.searchParams.get('q') || '';
             if (window.parent && typeof window.parent.loadProxiedUrl === 'function') {
                 window.parent.loadProxiedUrl(target.href, q || target.hostname, { isNav: true });
