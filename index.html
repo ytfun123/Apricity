@@ -3795,6 +3795,34 @@ function generateFingerprint() {
             }
         });
 
+        // DuckDuckGo-specific hardening. DDG's /html/ results page ships
+        // method="post" forms whose serialized GET form (?q=...&kl=&df=&b=)
+        // makes DDG return its bare homepage instead of results, and DDG also
+        // serves CAPTCHA/anomaly pages for repeated automated queries. So:
+        // 1) strip the region/time selects and rename the submit button so even
+        //    a native submission collapses to a clean ?q=<query>;
+        // 2) intercept Enter in the search input directly and route through the
+        //    same clean loadSearchResults path the home page uses.
+        try {
+            const pageHost = new URL(pageUrl).hostname;
+            if (/(^|\.)duckduckgo\.com$/i.test(pageHost)) {
+                doc.querySelectorAll('form[action]').forEach(f => {
+                    let actionHost = '';
+                    try { actionHost = new URL(f.getAttribute('action'), pageUrl).hostname; } catch (e) {}
+                    if (!/(^|\.)duckduckgo\.com$/i.test(actionHost)) return;
+                    f.querySelectorAll('select, input[type="submit"], button[type="submit"]').forEach(el => el.remove());
+                    f.setAttribute('method', 'get');
+                });
+                doc.querySelectorAll('input[name="q"]').forEach(inp => {
+                    inp.setAttribute('autocomplete', 'off');
+                    inp.setAttribute('onkeydown',
+                        "if(event.key==='Enter'){event.preventDefault();event.stopPropagation();var v=this.value.trim();" +
+                        "if(v&&window.parent&&typeof window.parent.loadSearchResults==='function'){window.parent.loadSearchResults(v);}" +
+                        "return false;}");
+                });
+            }
+        } catch (e) {}
+
         const head = doc.head || doc.documentElement;
 
         // <base> so every relative URL (css/images/links/forms) on the page
@@ -3809,7 +3837,7 @@ function generateFingerprint() {
         const shim = doc.createElement('script');
         shim.textContent = `
         window.addEventListener('error', function(e) {
-            try { window.parent.console.warn('[proxied page error]', '${pageUrl}', '—', e.message, 'at', e.filename + ':' + e.lineno); } catch (err) {}
+            try { window.parent.console.warn('[proxied page error]', ${JSON.stringify(pageUrl)}, '—', e.message, 'at', e.filename + ':' + e.lineno); } catch (err) {}
         });
         (function() {
             var ORIGIN_FETCH = window.fetch ? window.fetch.bind(window) : null;
@@ -4146,12 +4174,23 @@ function generateFingerprint() {
                 const tabEntry = tabs.find(x => x.pageId === 'search-page');
                 if (tabEntry) { tabEntry.label = t.length > 18 ? t.slice(0, 18) + '…' : t; tabRender(); }
             }
+            // DDG hides a CAPTCHA/anomaly page behind the "DuckDuckGo" title when
+            // it suspects a bot (common for a shared proxy relay IP making repeated
+            // queries). It looks exactly like a bare DDG start page, so call it out.
+            let ddgBlocked = '';
+            try {
+                if (/(^|\.)duckduckgo\.com$/i.test(new URL(url).hostname) &&
+                    !/result__a/.test(html) &&
+                    !/at DuckDuckGo/i.test(titleMatch ? (titleMatch[1] || '') : '')) {
+                    ddgBlocked = 'DuckDuckGo blocked this request (CAPTCHA / anti-bot page). This is DDG rate-limiting the proxy relay — wait a minute and try again.';
+                }
+            } catch (e) {}
             html = injectPageHelpers(html, url);
             console.log('Rendering', url, '—', html.length, 'chars after helper injection');
             if (html.length < 500) console.warn('That\'s a very small response for', url, '— likely a block/error page rather than real content. Full text:', html);
             _lastSearchSrcdocAt = Date.now();
             iframe.srcdoc = html;
-            setSearchStatus('');
+            setSearchStatus(ddgBlocked);
         } catch (e) {
             setSearchStatus('Could not load page — ' + e.message + '. Open the browser console for details.', true, url, label);
         }
