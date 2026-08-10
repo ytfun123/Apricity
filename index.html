@@ -4105,6 +4105,8 @@ function generateFingerprint() {
         label = (label || 'Loading…').trim() || 'Loading…';
         const shortLabel = label.length > 18 ? label.slice(0, 18) + '…' : label;
 
+        watchSearchFrame();
+
         // Maintain back-history: navigating forward truncates any redo-stack
         // and pushes the new entry; back-jumps just move the index instead.
         if (opts.fromHistoryIndex === undefined) {
@@ -4126,6 +4128,7 @@ function generateFingerprint() {
 
         const iframe = document.getElementById('search-frame');
         setSearchStatus('Loading…');
+        _lastSearchSrcdocAt = Date.now();
         iframe.srcdoc = 'about:blank';
 
         try {
@@ -4139,11 +4142,42 @@ function generateFingerprint() {
             html = injectPageHelpers(html, url);
             console.log('Rendering', url, '—', html.length, 'chars after helper injection');
             if (html.length < 500) console.warn('That\'s a very small response for', url, '— likely a block/error page rather than real content. Full text:', html);
+            _lastSearchSrcdocAt = Date.now();
             iframe.srcdoc = html;
             setSearchStatus('');
         } catch (e) {
             setSearchStatus('Could not load page — ' + e.message + '. Open the browser console for details.', true, url, label);
         }
+    }
+
+    // Backstop for anything that slips past the injected interceptors: if the
+    // iframe ever lands on a real http(s) URL (native form submit, JS nav, etc.)
+    // — or becomes cross-origin (a net-error page like "refused to connect") —
+    // route it back through the proxy instead of letting the native error show.
+    // load events we trigger ourselves (srcdoc) are skipped via timestamp.
+    let _searchFrameWatched = false;
+    let _lastSearchSrcdocAt = 0;
+    let _lastSearchReNavAt = 0;
+    function watchSearchFrame() {
+        if (_searchFrameWatched) return;
+        _searchFrameWatched = true;
+        const iframe = document.getElementById('search-frame');
+        iframe.addEventListener('load', function() {
+            if (Date.now() - _lastSearchSrcdocAt < 1500) return;
+            let href = null;
+            try { href = iframe.contentWindow.location.href; } catch (e) { href = null; }
+            const escaped = href === null || (href && !/^(about:srcdoc|about:blank)$/i.test(href));
+            if (!escaped) return;
+            if (Date.now() - _lastSearchReNavAt < 1500) return; // avoid reload loops
+            _lastSearchReNavAt = Date.now();
+            if (href) {
+                try { loadProxiedUrl(href, new URL(href).hostname, { isNav: true }); }
+                catch (e) { loadProxiedUrl(href, href, { isNav: true }); }
+            } else {
+                const top = _navStack[_navIndex];
+                if (top) loadProxiedUrl(top.url, top.label, { fromHistoryIndex: _navIndex });
+            }
+        });
     }
 
     // Back button for the search-page tab: step back through in-app browsing
