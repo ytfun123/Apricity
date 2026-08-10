@@ -6750,19 +6750,27 @@ function generateFingerprint() {
             return;
         }
         if (cmd === 'help') {
-            consolePrint('Available commands: help, clear, version, info, proof, cat, echo, rm, reset, defaults, open, ls, lsapps, startx, ping, neofetch, js, slmgr', 'info');
-            consolePrint('Usage highlights:', 'info');
-            consolePrint('  cat <path>                     — read a file (virtual or fetched)', 'output');
-            consolePrint('  echo [--append] <path> <txt>  — write text to virtual file', 'output');
-            consolePrint('  rm <path>                      — remove a virtual file', 'output');
-            consolePrint('  reset                          — clear all localStorage (reloads)', 'output');
-            consolePrint('  defaults list              — show available config keys', 'output');
-            consolePrint('  defaults write <key> <value> — set a config value', 'output');
-            consolePrint('  defaults get <key>         — read a config value', 'output');
-            consolePrint('  open <app>                     — open an app or game (e.g. chillcord)', 'output');
-            consolePrint('  js / node        — enter a JS REPL shell (exit or .exit to leave)', 'output');
-            consolePrint('  neofetch         — show system summary', 'output');
-            consolePrint('  ping             — measure event-loop latency', 'output');
+            if (consoleStyle === 'cli') {
+                consolePrint('Available commands: help, clear, version, /sudo-install-apricity-admin-app, info, neofetch, ping, js, /info, /jarvis-we-need-prouf, proof, cat, echo, rm, reset, defaults, open, ls, lsapps, startx, slmgr', 'info');
+                consolePrint('Usage highlights:', 'info');
+                consolePrint('  cat <path>                     — read a file (virtual or fetched)', 'output');
+                consolePrint('  echo [--append] <path> <txt>  — write text to virtual file', 'output');
+                consolePrint('  rm <path>                      — remove a virtual file', 'output');
+                consolePrint('  reset                          — clear all localStorage (reloads)', 'output');
+                consolePrint('  defaults list              — show available config keys', 'output');
+                consolePrint('  defaults write <key> <value> — set a config value', 'output');
+                consolePrint('  defaults get <key>         — read a config value', 'output');
+                consolePrint('  open <app>                     — open an app or game (e.g. chillcord)', 'output');
+                consolePrint('  js / node        — enter a JS REPL shell (exit or .exit to leave)', 'output');
+                consolePrint('  neofetch         — show system summary', 'output');
+                consolePrint('  ping             — measure event-loop latency', 'output');
+            } else {
+                consolePrint('Available commands: help, clear, version, /sudo-install-apricity-admin-app, info, neofetch, ping, js, /info, /jarvis-we-need-prouf', 'info');
+                consolePrint('Usage highlights:', 'info');
+                consolePrint('  js / node        — enter a JS REPL shell (exit or .exit to leave)', 'output');
+                consolePrint('  neofetch         — show system summary', 'output');
+                consolePrint('  ping             — measure event-loop latency', 'output');
+            }
             return;
         }
         if (cmd === 'clear') {
@@ -6794,6 +6802,7 @@ function generateFingerprint() {
             consolePrint('Entering JS shell. Type exit or .exit to leave.', 'info');
             return;
         }
+        if (consoleStyle === 'cli') {
         if (cmd === 'proof') {
             consolePrint('🔍 Fetching prouf.txt…', 'info');
             fetch('system/prouf.txt')
@@ -7116,6 +7125,7 @@ function generateFingerprint() {
             }
             consolePrint('slmgr: unknown subcommand', 'error');
             return;
+        }
         }
 
         consolePrint('Unknown command: ' + cmd, 'error');
