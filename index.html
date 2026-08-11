@@ -3714,15 +3714,30 @@ function generateFingerprint() {
     window.apricityProxyFetch = async function (url, opts) {
         opts = opts || {};
         const curl = await ensureCurl();
-        const resp = await curl.fetch(url, {
-            method: opts.method || 'GET',
-            headers: opts.headers || {},
-            body: opts.body
-        });
-        const buffer = await resp.arrayBuffer();
-        const headers = {};
-        try { for (const [k, v] of resp.headers.entries()) headers[k] = v; } catch (e) {}
-        return { status: resp.status || 200, headers, buffer };
+        let redirectCount = 0;
+        // curl.fetch does NOT auto-follow redirects (same as full-page fetches),
+        // but a 302 to the browser's own fetch()/XHR is useless to the page —
+        // it would see status 302 and no data. Follow them here so the page's
+        // ajax calls see the final body like they would on the real site.
+        while (true) {
+            const resp = await curl.fetch(url, {
+                method: opts.method || 'GET',
+                headers: opts.headers || {},
+                body: opts.body
+            });
+            if (resp.status >= 300 && resp.status < 400 && redirectCount < 12) {
+                const loc = resp.headers && resp.headers.get && resp.headers.get('location');
+                if (loc) {
+                    url = new URL(loc, url).href;
+                    redirectCount++;
+                    continue;
+                }
+            }
+            const buffer = await resp.arrayBuffer();
+            const headers = {};
+            try { for (const [k, v] of resp.headers.entries()) headers[k] = v; } catch (e) {}
+            return { status: resp.status || 200, headers, buffer };
+        }
     };
 
     // Injects helpers into ANY fetched page so it behaves like a normal tab
@@ -3848,7 +3863,25 @@ function generateFingerprint() {
                 if (!url || /^(data|blob):/i.test(url)) return ORIGIN_FETCH ? ORIGIN_FETCH(input, init) : Promise.reject(new Error('fetch unavailable'));
                 var opts = init || {};
                 return window.parent.apricityProxyFetch(url, { method: opts.method, headers: opts.headers, body: opts.body })
-                    .then(function(r) { return new Response(r.buffer, { status: r.status, headers: r.headers }); })
+                    .then(function(r) {
+                        // The real Response constructor throws on invalid statuses
+                        // or malformed header values; a single bad header must not
+                        // nuke the whole request (the old code fell back to the
+                        // real fetch, which then dies with a cross-origin error).
+                        var st = (r.status >= 200 && r.status <= 599) ? r.status : (r.status ? 200 : 0);
+                        if (!st) throw new Error('proxy returned no HTTP status');
+                        var hdrs = {};
+                        if (r.headers) {
+                            for (var k in r.headers) {
+                                if (!Object.prototype.hasOwnProperty.call(r.headers, k)) continue;
+                                var name = String(k), val = String(r.headers[k]);
+                                if (/[^!#$%&'*+\-.^_\x60|~0-9A-Za-z]/.test(name)) continue;
+                                if (/[\x00-\x1F\x7F]/.test(val)) continue;
+                                hdrs[name] = val;
+                            }
+                        }
+                        return new Response(r.buffer, { status: st, headers: hdrs });
+                    })
                     .catch(function() { return ORIGIN_FETCH ? ORIGIN_FETCH(input, init) : Promise.reject(new Error('proxy fetch failed')); });
             };
             var OrigXHR = window.XMLHttpRequest;
