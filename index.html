@@ -3875,8 +3875,17 @@ function generateFingerprint() {
                             for (var k in r.headers) {
                                 if (!Object.prototype.hasOwnProperty.call(r.headers, k)) continue;
                                 var name = String(k), val = String(r.headers[k]);
-                                if (/[^!#$%&'*+\-.^_\x60|~0-9A-Za-z]/.test(name)) continue;
-                                if (/[\x00-\x1F\x7F]/.test(val)) continue;
+                                var nameOk = true, valOk = true;
+                                for (var h = 0; h < name.length; h++) {
+                                    var hc = name.charCodeAt(h);
+                                    if (!(hc === 33 || hc === 35 || hc === 36 || hc === 37 || hc === 38 || hc === 39 || hc === 42 || hc === 43 || hc === 45 || hc === 46 || hc === 47 || (hc >= 48 && hc <= 57) || hc === 61 || (hc >= 65 && hc <= 90) || hc === 94 || hc === 95 || hc === 96 || (hc >= 97 && hc <= 122) || hc === 124 || hc === 126)) { nameOk = false; break; }
+                                }
+                                if (!nameOk) continue;
+                                for (var vj = 0; vj < val.length; vj++) {
+                                    var vc = val.charCodeAt(vj);
+                                    if (vc < 32 || vc === 127) { valOk = false; break; }
+                                }
+                                if (!valOk) continue;
                                 hdrs[name] = val;
                             }
                         }
@@ -3898,9 +3907,9 @@ function generateFingerprint() {
                     return Object.prototype.hasOwnProperty.call(xhr._respHeaders, lower) ? xhr._respHeaders[lower] : null;
                 };
                 xhr.getAllResponseHeaders = function() {
-                    var out = '';
+                    var out = '', CRLF = String.fromCharCode(13, 10);
                     for (var k in xhr._respHeaders) {
-                        if (Object.prototype.hasOwnProperty.call(xhr._respHeaders, k)) out += k + ': ' + xhr._respHeaders[k] + '\r\n';
+                        if (Object.prototype.hasOwnProperty.call(xhr._respHeaders, k)) out += k + ': ' + xhr._respHeaders[k] + CRLF;
                     }
                     return out;
                 };
@@ -4039,7 +4048,7 @@ function generateFingerprint() {
         function unwrapUrl(u) {
             try {
                 var t = new URL(u, document.baseURI);
-                if (/(^|\.)duckduckgo\.com$/i.test(t.hostname) && t.pathname === '/l/') {
+                if (/(^|\\.)duckduckgo\\.com$/i.test(t.hostname) && t.pathname === '/l/') {
                     var real = t.searchParams.get('uddg');
                     if (real) return new URL(decodeURIComponent(real)).href;
                 }
