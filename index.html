@@ -2594,10 +2594,10 @@ function generateFingerprint() {
 <!-- Utopia Games Sub-View -->
 <div class="games-fs-overlay" id="utopiaGamesOverlay">
     <div class="games-fs-header">
-        <button class="games-fs-close" onclick="toggleUtopiaGames()" style="margin-right:12px;">
+        <button class="games-fs-close" onclick="toggleUtopiaGames(); toggleGamesFullscreen();" style="margin-right:12px;">
             <span class="material-symbols-outlined">arrow_back</span>
         </button>
-        <h2>Utopia</h2>
+        <h2>Utopia Games</h2>
         <button class="games-fs-close" onclick="toggleUtopiaGames()">
             <span class="material-symbols-outlined">close</span>
         </button>
@@ -4383,7 +4383,11 @@ function generateFingerprint() {
         const o = document.getElementById('gamesOverlay');
         o.style.display = o.style.display === 'flex' ? 'none' : 'flex';
     }
-    function openGame(id, src) {
+    // ── Track which game list to return to when closing a game ──
+    let _gameReturnTo = 'main';
+
+    function openGame(id, src, returnTo) {
+        _gameReturnTo = returnTo || 'main';
         toggleGames();
         const names = {
             'hollow-knight': 'Hollow Knight',
@@ -4413,6 +4417,7 @@ function generateFingerprint() {
     // and set placeholder to false. It will then open in a tab like the
     // existing games when clicked.
     const GAMES_LIST = [
+        { id: '_utopia_folder', name: 'Utopia Games', icon: 'folder', src: '', placeholder: false, folder: true },
         { id: 'gn-math', name: 'gn-math', icon: 'gamepad', src: './games/gn-math.html', placeholder: false },
         { id: 'hollow-knight', name: 'Hollow Knight', icon: 'swords', src: './hollow_knight.html', placeholder: false },
         { id: 'snow-rider',    name: 'Snow Rider',    icon: 'downhill_skiing', src: './snow_rider.html',    placeholder: false },
@@ -4443,7 +4448,6 @@ function generateFingerprint() {
         { id: 'factory balls 4',      name: 'factory balls 4', icon: 'factory',           src: './games/fb4.html', placeholder: false },
         { id: 'red ball 4',      name: 'red ball 4', icon: 'sports_volleyball',           src: './games/rb4.html', placeholder: false },
         { id: '',      name: '', icon: '',           src: './games/.html', placeholder: false },
-        { id: '_utopia_folder', name: 'Utopia', icon: 'folder', src: '', placeholder: false, folder: true },
     ];
 
     function toggleGamesFullscreen() {
@@ -4500,7 +4504,7 @@ function generateFingerprint() {
                 </div>`;
             }
             return `
-                <div class="games-fs-card" onclick="toggleGamesFullscreen(); openGame('${g.id}', '${g.src}')">
+                <div class="games-fs-card" onclick="toggleGamesFullscreen(); openGame('${g.id}', '${g.src}', 'main')">
                     <div class="games-fs-icon">${gameIconHTML(g)}</div>
                     <div class="games-fs-name">${g.name}</div>
                 </div>`;
@@ -4580,7 +4584,7 @@ function generateFingerprint() {
         const grid = document.getElementById('utopiaGamesGrid');
         grid.innerHTML = UTOPIA_GAMES.map(g => {
             return `
-                <div class="games-fs-card" onclick="toggleUtopiaGames(); openGame('${g.name}', '${g.src}')">
+                <div class="games-fs-card" onclick="toggleUtopiaGames(); openGame('${g.name}', '${g.src}', 'utopia')">
                     <div class="games-fs-icon"><span class="material-symbols-outlined">sports_esports</span></div>
                     <div class="games-fs-name">${g.name}</div>
                 </div>`;
@@ -7763,9 +7767,14 @@ function generateFingerprint() {
       const overlay = document.getElementById('game-fullscreen-overlay');
       const frame   = document.getElementById('game-fullscreen-frame');
       overlay.classList.remove('active');
-      // Short delay so the overlay hides before we clear the src (avoids flash)
       setTimeout(() => { frame.src = 'about:blank'; }, 200);
       document.body.style.overflow = '';
+      // Return to the list the game was opened from
+      if (_gameReturnTo === 'utopia') {
+          toggleUtopiaGames();
+      } else {
+          toggleGamesFullscreen();
+      }
   }
 </script>
 <script>
