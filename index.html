@@ -2582,6 +2582,8 @@ function generateFingerprint() {
 <div class="games-fs-overlay" id="gamesFsOverlay">
     <div class="games-fs-header">
         <h2>All Games</h2>
+        <div style="flex:1"></div>
+        <input type="text" id="mainGamesSearch" placeholder="Search games..." oninput="renderGamesFullscreenGrid()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;width:200px;margin-right:12px;">
         <button class="games-fs-close" onclick="toggleGamesFullscreen()">
             <span class="material-symbols-outlined">close</span>
         </button>
@@ -2598,6 +2600,11 @@ function generateFingerprint() {
             <span class="material-symbols-outlined">arrow_back</span>
         </button>
         <h2>Utopia Games</h2>
+        <div style="flex:1"></div>
+        <input type="text" id="utopiaGamesSearch" placeholder="Search games..." oninput="renderUtopiaGamesGrid()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;width:200px;margin-right:12px;">
+        <button class="games-fs-close" onclick="toggleUtopiaIconMode()" id="utopiaIconToggle" style="margin-right:8px;font-size:12px;padding:4px 10px;" title="Toggle icons/images">
+            <span class="material-symbols-outlined">image</span>
+        </button>
         <button class="games-fs-close" onclick="toggleUtopiaGames()">
             <span class="material-symbols-outlined">close</span>
         </button>
@@ -4487,7 +4494,10 @@ function generateFingerprint() {
 
     function renderGamesFullscreenGrid() {
         const grid = document.getElementById('gamesFsGrid');
-        grid.innerHTML = GAMES_LIST.map(g => {
+        const searchEl = document.getElementById('mainGamesSearch');
+        const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
+        const filtered = query ? GAMES_LIST.filter(g => g.name.toLowerCase().includes(query) || g.id.toLowerCase().includes(query)) : GAMES_LIST;
+        grid.innerHTML = filtered.map(g => {
             if (g.folder) {
                 return `
                 <div class="games-fs-card" onclick="toggleGamesFullscreen(); toggleUtopiaGames();">
@@ -4513,60 +4523,60 @@ function generateFingerprint() {
 
     // ── Utopia games sub-view ──
     const UTOPIA_GAMES = [
-        { name: '2048', src: './games/utopia/2048/' },
-        { name: 'A Dark Room', src: './games/utopia/adarkroom/' },
-        { name: 'ASCII Space', src: './games/utopia/asciispace/' },
-        { name: 'Asteroids', src: './games/utopia/asteroids/' },
-        { name: 'Astray', src: './games/utopia/astray/' },
-        { name: 'Backcountry', src: './games/utopia/backcountry/' },
-        { name: 'Black Hole Square', src: './games/utopia/blackholesquare/' },
-        { name: 'Bounce Back', src: './games/utopia/bounceback/' },
-        { name: 'Breaklock', src: './games/utopia/breaklock/' },
-        { name: 'Breakout', src: './games/utopia/breakout/' },
-        { name: 'Captain Callisto', src: './games/utopia/captaincallisto/' },
-        { name: 'Chess', src: './games/utopia/chess/' },
-        { name: 'Chroma Incident', src: './games/utopia/chromaincident/' },
-        { name: 'Chrome Dino', src: './games/utopia/chromedino/' },
-        { name: 'Connect 3', src: './games/utopia/connect3/' },
-        { name: 'Cookie Clicker', src: './games/utopia/cookieclicker/' },
-        { name: 'Drift Hunters', src: './games/utopia/drifthunters/' },
-        { name: 'Edge not Found', src: './games/utopia/edgenotfound/' },
-        { name: 'Evil Glitch', src: './games/utopia/evilglitch/' },
-        { name: 'Factory Balls Forever', src: './games/utopia/factoryballsforever/' },
-        { name: 'Flappy Bird', src: './games/utopia/flappybird/' },
-        { name: 'FNAF', src: './games/utopia/fnaf1/' },
-        { name: 'FNAF 2', src: './games/utopia/fnaf2/' },
-        { name: 'FNAF 3', src: './games/utopia/fnaf3/' },
-        { name: 'FNAF 4', src: './games/utopia/fnaf4/' },
-        { name: 'FNAF Sister Location', src: './games/utopia/fnafsl/' },
-        { name: 'Geometry Dash', src: './games/utopia/geometrydash/' },
-        { name: 'Hextris', src: './games/utopia/hextris/' },
-        { name: 'Konnekt', src: './games/utopia/konnekt/' },
-        { name: 'Minecraft', src: './games/utopia/minecraft/' },
-        { name: 'Ninja vs Evilcorp', src: './games/utopia/ninjavsevilcorp/' },
-        { name: 'Packabunchas', src: './games/utopia/packabunchas/' },
-        { name: 'Pac-Man', src: './games/utopia/pacman/' },
-        { name: 'Particle Clicker', src: './games/utopia/particleclicker/' },
-        { name: 'Push Back', src: './games/utopia/pushback/' },
-        { name: 'Q1k3', src: './games/utopia/q1k3/' },
-        { name: 'Racer', src: './games/utopia/racer/' },
-        { name: 'Radius Raid', src: './games/utopia/radiusraid/' },
-        { name: 'Retro Bowl', src: './games/utopia/retrobowl/' },
-        { name: 'Retrohaunt', src: './games/utopia/retrohaunt/' },
-        { name: 'Road Blocks', src: './games/utopia/roadblocks/' },
-        { name: 'Run 3', src: './games/utopia/run3/' },
-        { name: 'Shuttledeck', src: './games/utopia/shuttledeck/' },
-        { name: 'Sleeping Beauty', src: './games/utopia/sleepingbeauty/' },
-        { name: 'Slope', src: './games/utopia/slope/' },
-        { name: 'Snake', src: './games/utopia/snake/' },
-        { name: 'Space Company', src: './games/utopia/spacecompany/' },
-        { name: 'Space Garden', src: './games/utopia/spacegarden/' },
-        { name: 'Space Huggers', src: './games/utopia/spacehuggers/' },
-        { name: 'Temple Run 2', src: './games/utopia/templerun2/' },
-        { name: 'Tetris', src: './games/utopia/tetris/' },
-        { name: 'Maze of Space Goblins', src: './games/utopia/themazeofspacegoblins/' },
-        { name: 'Towermaster', src: './games/utopia/towermaster/' },
-        { name: 'Trimps', src: './games/utopia/trimps/' },
+        { name: '2048', src: './games/utopia/2048/', icon: 'grid_on' },
+        { name: 'A Dark Room', src: './games/utopia/adarkroom/', icon: 'dark_mode' },
+        { name: 'ASCII Space', src: './games/utopia/asciispace/', icon: 'terminal' },
+        { name: 'Asteroids', src: './games/utopia/asteroids/', icon: 'rocket_launch' },
+        { name: 'Astray', src: './games/utopia/astray/', icon: 'explore_off' },
+        { name: 'Backcountry', src: './games/utopia/backcountry/', icon: 'forest' },
+        { name: 'Black Hole Square', src: './games/utopia/blackholesquare/', icon: 'crop_square' },
+        { name: 'Bounce Back', src: './games/utopia/bounceback/', icon: 'sports_basketball' },
+        { name: 'Breaklock', src: './games/utopia/breaklock/', icon: 'lock_open' },
+        { name: 'Breakout', src: './games/utopia/breakout/', icon: 'sports_tennis' },
+        { name: 'Captain Callisto', src: './games/utopia/captaincallisto/', icon: 'rocket' },
+        { name: 'Chess', src: './games/utopia/chess/', icon: 'chess' },
+        { name: 'Chroma Incident', src: './games/utopia/chromaincident/', icon: 'palette' },
+        { name: 'Chrome Dino', src: './games/utopia/chromedino/', icon: 'dino' },
+        { name: 'Connect 3', src: './games/utopia/connect3/', icon: 'hub' },
+        { name: 'Cookie Clicker', src: './games/utopia/cookieclicker/', icon: 'cookie' },
+        { name: 'Drift Hunters', src: './games/utopia/drifthunters/', icon: 'sports_motorsports' },
+        { name: 'Edge not Found', src: './games/utopia/edgenotfound/', icon: 'error_outline' },
+        { name: 'Evil Glitch', src: './games/utopia/evilglitch/', icon: 'bug_report' },
+        { name: 'Factory Balls Forever', src: './games/utopia/factoryballsforever/', icon: 'factory' },
+        { name: 'Flappy Bird', src: './games/utopia/flappybird/', icon: 'flutter_dash' },
+        { name: 'FNAF', src: './games/utopia/fnaf1/', icon: 'visibility' },
+        { name: 'FNAF 2', src: './games/utopia/fnaf2/', icon: 'visibility' },
+        { name: 'FNAF 3', src: './games/utopia/fnaf3/', icon: 'visibility' },
+        { name: 'FNAF 4', src: './games/utopia/fnaf4/', icon: 'visibility' },
+        { name: 'FNAF Sister Location', src: './games/utopia/fnafsl/', icon: 'visibility' },
+        { name: 'Geometry Dash', src: './games/utopia/geometrydash/', icon: 'square_foot' },
+        { name: 'Hextris', src: './games/utopia/hextris/', icon: 'hexagon' },
+        { name: 'Konnekt', src: './games/utopia/konnekt/', icon: 'link' },
+        { name: 'Minecraft', src: './games/utopia/minecraft/', icon: 'block' },
+        { name: 'Ninja vs Evilcorp', src: './games/utopia/ninjavsevilcorp/', icon: 'security' },
+        { name: 'Packabunchas', src: './games/utopia/packabunchas/', icon: 'inventory_2' },
+        { name: 'Pac-Man', src: './games/utopia/pacman/', icon: 'circle' },
+        { name: 'Particle Clicker', src: './games/utopia/particleclicker/', icon: 'atom' },
+        { name: 'Push Back', src: './games/utopia/pushback/', icon: 'undo' },
+        { name: 'Q1k3', src: './games/utopia/q1k3/', icon: 'gamepad' },
+        { name: 'Racer', src: './games/utopia/racer/', icon: 'speed' },
+        { name: 'Radius Raid', src: './games/utopia/radiusraid/', icon: 'radar' },
+        { name: 'Retro Bowl', src: './games/utopia/retrobowl/', icon: 'sports_football' },
+        { name: 'Retrohaunt', src: './games/utopia/retrohaunt/', icon: 'ghost' },
+        { name: 'Road Blocks', src: './games/utopia/roadblocks/', icon: 'construction' },
+        { name: 'Run 3', src: './games/utopia/run3/', icon: 'directions_run' },
+        { name: 'Shuttledeck', src: './games/utopia/shuttledeck/', icon: 'rocket_launch' },
+        { name: 'Sleeping Beauty', src: './games/utopia/sleepingbeauty/', icon: 'bedtime' },
+        { name: 'Slope', src: './games/utopia/slope/', icon: 'downhill_skiing' },
+        { name: 'Snake', src: './games/utopia/snake/', icon: 'set_meter' },
+        { name: 'Space Company', src: './games/utopia/spacecompany/', icon: 'public' },
+        { name: 'Space Garden', src: './games/utopia/spacegarden/', icon: 'yard' },
+        { name: 'Space Huggers', src: './games/utopia/spacehuggers/', icon: 'public' },
+        { name: 'Temple Run 2', src: './games/utopia/templerun2/', icon: 'terrain' },
+        { name: 'Tetris', src: './games/utopia/tetris/', icon: 'view_module' },
+        { name: 'Maze of Space Goblins', src: './games/utopia/themazeofspacegoblins/', icon: 'labyrinth' },
+        { name: 'Towermaster', src: './games/utopia/towermaster/', icon: 'castle' },
+        { name: 'Trimps', src: './games/utopia/trimps/', icon: 'pets' },
     ];
 
     function toggleUtopiaGames() {
@@ -4580,12 +4590,31 @@ function generateFingerprint() {
         }
     }
 
+    let _utopiaIconMode = true; // true = Material icons, false = game images
+
+    function toggleUtopiaIconMode() {
+        _utopiaIconMode = !_utopiaIconMode;
+        const btn = document.getElementById('utopiaIconToggle');
+        if (btn) {
+            btn.querySelector('.material-symbols-outlined').textContent = _utopiaIconMode ? 'image' : 'sports_esports';
+        }
+        renderUtopiaGamesGrid();
+    }
+
     function renderUtopiaGamesGrid() {
         const grid = document.getElementById('utopiaGamesGrid');
-        grid.innerHTML = UTOPIA_GAMES.map(g => {
+        const searchEl = document.getElementById('utopiaGamesSearch');
+        const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
+        const filtered = query ? UTOPIA_GAMES.filter(g => g.name.toLowerCase().includes(query)) : UTOPIA_GAMES;
+        grid.innerHTML = filtered.map(g => {
+            const base = g.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const iconSrc = `./icons/utopia-games/${base}.png`;
+            const iconHTML = _utopiaIconMode
+                ? `<div class="games-fs-icon"><span class="material-symbols-outlined">${g.icon}</span></div>`
+                : `<div class="games-fs-icon"><img src="${iconSrc}" onerror="this.onerror=null;this.src='./icons/utopia-games/${base}.jpg'" alt="${g.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"></div>`;
             return `
                 <div class="games-fs-card" onclick="toggleUtopiaGames(); openGame('${g.name}', '${g.src}', 'utopia')">
-                    <div class="games-fs-icon"><span class="material-symbols-outlined">sports_esports</span></div>
+                    ${iconHTML}
                     <div class="games-fs-name">${g.name}</div>
                 </div>`;
         }).join('');
