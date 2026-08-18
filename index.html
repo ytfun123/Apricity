@@ -270,7 +270,7 @@ function generateFingerprint() {
                 rgba(0, 0, 0, 0.18);
         }
 
-        #home-page, #sunlit-page, #desktop-page, #discord-page, #utopia-page, #search-page, #youtube-page, #hollow-knight-page, #snow-rider-page, #spotify-page, #meet-stable-page, .settings-trigger, .modal-overlay, .apps-overlay {
+        #home-page, #sunlit-page, #desktop-page, #discord-page, #search-page, #youtube-page, #hollow-knight-page, #snow-rider-page, #spotify-page, #meet-stable-page, .settings-trigger, .modal-overlay, .apps-overlay {
             position: relative;
             z-index: 1;
         }
@@ -1388,8 +1388,7 @@ function generateFingerprint() {
         #desktop-page iframe { width: 100%; height: 100%; border: none; display: block; }
         #discord-page { width: 100%; height: 100vh; }
         #discord-page iframe { width: 100%; height: 100%; border: none; display: block; }
-        #utopia-page { width: 100%; height: 100vh; }
-        #utopia-page iframe { width: 100%; height: 100%; border: none; display: block; }
+
         #search-page { width: 100%; height: 100vh; position: relative; }
         #search-page iframe { width: 100%; height: 100%; border: none; display: block; background: #fff; }
         #search-status {
@@ -1417,7 +1416,7 @@ function generateFingerprint() {
         /* Full-screen app pages are pinned over the home page (same treatment
            as #gemini-page.active): fixed, covering the viewport, above home,
            with no body scrolling behind them. */
-        #sunlit-page.active, #desktop-page.active, #discord-page.active, #utopia-page.active,
+        #sunlit-page.active, #desktop-page.active, #discord-page.active,
         #hollow-knight-page.active, #snow-rider-page.active, #search-page.active {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -1428,7 +1427,7 @@ function generateFingerprint() {
         /* While any full-screen app page or overlay is showing, the parent
            document must not scroll — otherwise scrolling inside the app
            reaches the home page behind it. Covers tabs and overlay apps. */
-        body:has(#sunlit-page.active, #desktop-page.active, #discord-page.active, #utopia-page.active,
+        body:has(#sunlit-page.active, #desktop-page.active, #discord-page.active,
                  #hollow-knight-page.active, #snow-rider-page.active,
                  #search-page.active, #gemini-page.active,
                  #meet-stable-page.active, #spotify-page.active,
@@ -1961,7 +1960,6 @@ function generateFingerprint() {
         body.tabs-active #gemini-page.active,
         body.tabs-active #sunlit-page.active,
         body.tabs-active #desktop-page.active,
-        body.tabs-active #utopia-page.active,
         body.tabs-active #hollow-knight-page.active,
         body.tabs-active #snow-rider-page.active,
         body.tabs-active #meet-stable-page.active,
@@ -2538,10 +2536,6 @@ function generateFingerprint() {
             <div class="app-icon"><span class="material-symbols-outlined">computer</span></div>
             Desktop
         </div>
-        <div class="app-item" onclick="openUtopia()">
-            <div class="app-icon"><span class="material-symbols-outlined">shield</span></div>
-            Utopia
-        </div>
         
         <div class="app-item" onclick="toggleApps(); toggleAppsFullscreen();">
             <div class="app-icon"><span class="material-symbols-outlined">apps</span></div>
@@ -2597,6 +2591,22 @@ function generateFingerprint() {
     </div>
 </div>
 
+<!-- Utopia Games Sub-View -->
+<div class="games-fs-overlay" id="utopiaGamesOverlay">
+    <div class="games-fs-header">
+        <button class="games-fs-close" onclick="toggleUtopiaGames()" style="margin-right:12px;">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h2>Utopia</h2>
+        <button class="games-fs-close" onclick="toggleUtopiaGames()">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+    <div class="games-fs-grid" id="utopiaGamesGrid">
+        <!-- Populated by JS from UTOPIA_GAMES array -->
+    </div>
+</div>
+
 <!-- Fullscreen Apps List -->
 <div class="games-fs-overlay" id="appsFsOverlay">
     <div class="games-fs-header">
@@ -2638,12 +2648,6 @@ function generateFingerprint() {
 <div id="discord-page" class="page">
     <button class="sunlit-back" onclick="goBackFromDiscord()">&#8592; Back</button>
     <iframe id="discord-frame" src="about:blank"></iframe>
-</div>
-
-<!-- Utopia Page -->
-<div id="utopia-page" class="page">
-    <button class="sunlit-back" onclick="goBackFromUtopia()">&#8592; Back</button>
-    <iframe id="utopia-frame" src="about:blank" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals allow-pointer-lock allow-downloads"></iframe>
 </div>
 
 <!-- Search Results Page (proxied DuckDuckGo) -->
@@ -4374,20 +4378,6 @@ function generateFingerprint() {
         showHome();
     }
 
-    // ===== UTOPIA =====
-    function openUtopia() {
-        closeAppsPanel();
-        const existing = tabs.find(t => t.pageId === 'utopia-page');
-        if (existing) { tabSwitch(existing.id); return; }
-        const frame = document.getElementById('utopia-frame');
-        if (!frame.dataset.loaded) { frame.src = 'apps/utopia/main.html'; frame.dataset.loaded = '1'; }
-        tabNew('utopia-page', 'Utopia', 'shield');
-    }
-
-    function goBackFromUtopia() {
-        showHome();
-    }
-
     // ===== GAMES =====
     function toggleGames() {
         const o = document.getElementById('gamesOverlay');
@@ -4453,6 +4443,7 @@ function generateFingerprint() {
         { id: 'factory balls 4',      name: 'factory balls 4', icon: 'factory',           src: './games/fb4.html', placeholder: false },
         { id: 'red ball 4',      name: 'red ball 4', icon: 'sports_volleyball',           src: './games/rb4.html', placeholder: false },
         { id: '',      name: '', icon: '',           src: './games/.html', placeholder: false },
+        { id: '_utopia_folder', name: 'Utopia', icon: 'folder', src: '', placeholder: false, folder: true },
     ];
 
     function toggleGamesFullscreen() {
@@ -4493,6 +4484,13 @@ function generateFingerprint() {
     function renderGamesFullscreenGrid() {
         const grid = document.getElementById('gamesFsGrid');
         grid.innerHTML = GAMES_LIST.map(g => {
+            if (g.folder) {
+                return `
+                <div class="games-fs-card" onclick="toggleGamesFullscreen(); toggleUtopiaGames();">
+                    <div class="games-fs-icon"><span class="material-symbols-outlined">folder</span></div>
+                    <div class="games-fs-name">${g.name}</div>
+                </div>`;
+            }
             if (g.placeholder) {
                 return `
                 <div class="games-fs-card placeholder" title="Add your game source in GAMES_LIST">
@@ -4504,6 +4502,86 @@ function generateFingerprint() {
             return `
                 <div class="games-fs-card" onclick="toggleGamesFullscreen(); openGame('${g.id}', '${g.src}')">
                     <div class="games-fs-icon">${gameIconHTML(g)}</div>
+                    <div class="games-fs-name">${g.name}</div>
+                </div>`;
+        }).join('');
+    }
+
+    // ── Utopia games sub-view ──
+    const UTOPIA_GAMES = [
+        { name: '2048', src: './games/utopia/2048/' },
+        { name: 'A Dark Room', src: './games/utopia/adarkroom/' },
+        { name: 'ASCII Space', src: './games/utopia/asciispace/' },
+        { name: 'Asteroids', src: './games/utopia/asteroids/' },
+        { name: 'Astray', src: './games/utopia/astray/' },
+        { name: 'Backcountry', src: './games/utopia/backcountry/' },
+        { name: 'Black Hole Square', src: './games/utopia/blackholesquare/' },
+        { name: 'Bounce Back', src: './games/utopia/bounceback/' },
+        { name: 'Breaklock', src: './games/utopia/breaklock/' },
+        { name: 'Breakout', src: './games/utopia/breakout/' },
+        { name: 'Captain Callisto', src: './games/utopia/captaincallisto/' },
+        { name: 'Chess', src: './games/utopia/chess/' },
+        { name: 'Chroma Incident', src: './games/utopia/chromaincident/' },
+        { name: 'Chrome Dino', src: './games/utopia/chromedino/' },
+        { name: 'Connect 3', src: './games/utopia/connect3/' },
+        { name: 'Cookie Clicker', src: './games/utopia/cookieclicker/' },
+        { name: 'Drift Hunters', src: './games/utopia/drifthunters/' },
+        { name: 'Edge not Found', src: './games/utopia/edgenotfound/' },
+        { name: 'Evil Glitch', src: './games/utopia/evilglitch/' },
+        { name: 'Factory Balls Forever', src: './games/utopia/factoryballsforever/' },
+        { name: 'Flappy Bird', src: './games/utopia/flappybird/' },
+        { name: 'FNAF', src: './games/utopia/fnaf1/' },
+        { name: 'FNAF 2', src: './games/utopia/fnaf2/' },
+        { name: 'FNAF 3', src: './games/utopia/fnaf3/' },
+        { name: 'FNAF 4', src: './games/utopia/fnaf4/' },
+        { name: 'FNAF Sister Location', src: './games/utopia/fnafsl/' },
+        { name: 'Geometry Dash', src: './games/utopia/geometrydash/' },
+        { name: 'Hextris', src: './games/utopia/hextris/' },
+        { name: 'Konnekt', src: './games/utopia/konnekt/' },
+        { name: 'Minecraft', src: './games/utopia/minecraft/' },
+        { name: 'Ninja vs Evilcorp', src: './games/utopia/ninjavsevilcorp/' },
+        { name: 'Packabunchas', src: './games/utopia/packabunchas/' },
+        { name: 'Pac-Man', src: './games/utopia/pacman/' },
+        { name: 'Particle Clicker', src: './games/utopia/particleclicker/' },
+        { name: 'Push Back', src: './games/utopia/pushback/' },
+        { name: 'Q1k3', src: './games/utopia/q1k3/' },
+        { name: 'Racer', src: './games/utopia/racer/' },
+        { name: 'Radius Raid', src: './games/utopia/radiusraid/' },
+        { name: 'Retro Bowl', src: './games/utopia/retrobowl/' },
+        { name: 'Retrohaunt', src: './games/utopia/retrohaunt/' },
+        { name: 'Road Blocks', src: './games/utopia/roadblocks/' },
+        { name: 'Run 3', src: './games/utopia/run3/' },
+        { name: 'Shuttledeck', src: './games/utopia/shuttledeck/' },
+        { name: 'Sleeping Beauty', src: './games/utopia/sleepingbeauty/' },
+        { name: 'Slope', src: './games/utopia/slope/' },
+        { name: 'Snake', src: './games/utopia/snake/' },
+        { name: 'Space Company', src: './games/utopia/spacecompany/' },
+        { name: 'Space Garden', src: './games/utopia/spacegarden/' },
+        { name: 'Space Huggers', src: './games/utopia/spacehuggers/' },
+        { name: 'Temple Run 2', src: './games/utopia/templerun2/' },
+        { name: 'Tetris', src: './games/utopia/tetris/' },
+        { name: 'Maze of Space Goblins', src: './games/utopia/themazeofspacegoblins/' },
+        { name: 'Towermaster', src: './games/utopia/towermaster/' },
+        { name: 'Trimps', src: './games/utopia/trimps/' },
+    ];
+
+    function toggleUtopiaGames() {
+        const o = document.getElementById('utopiaGamesOverlay');
+        const isActive = o.classList.contains('active');
+        if (!isActive) {
+            renderUtopiaGamesGrid();
+            o.classList.add('active');
+        } else {
+            o.classList.remove('active');
+        }
+    }
+
+    function renderUtopiaGamesGrid() {
+        const grid = document.getElementById('utopiaGamesGrid');
+        grid.innerHTML = UTOPIA_GAMES.map(g => {
+            return `
+                <div class="games-fs-card" onclick="toggleUtopiaGames(); openGame('${g.name}', '${g.src}')">
+                    <div class="games-fs-icon"><span class="material-symbols-outlined">sports_esports</span></div>
                     <div class="games-fs-name">${g.name}</div>
                 </div>`;
         }).join('');
@@ -4521,7 +4599,6 @@ function generateFingerprint() {
         { id: 'desktop',   name: 'Desktop',     icon: 'computer',     open: 'openDesktop' },
         { id: 'youtube',   name: 'YouTube',     icon: 'play_circle',  open: 'showYouTube' },
         { id: 'discord',   name: 'Discord',     icon: 'forum',        open: 'openDiscordApp' },
-        { id: 'utopia',    name: 'Utopia',      icon: 'shield',       open: 'openUtopia' },
     ];
 
     function toggleAppsFullscreen() {
