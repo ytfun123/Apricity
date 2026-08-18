@@ -2583,7 +2583,7 @@ function generateFingerprint() {
     <div class="games-fs-header">
         <h2>All Games</h2>
         <div style="flex:1"></div>
-        <input type="text" id="mainGamesSearch" placeholder="Search games..." oninput="renderGamesFullscreenGrid()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;width:200px;margin-right:12px;">
+        <input type="text" id="mainGamesSearch" placeholder="Search games..." autocomplete="off" oninput="renderGamesFullscreenGrid()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;width:200px;margin-right:12px;">
         <button class="games-fs-close" onclick="toggleGamesFullscreen()">
             <span class="material-symbols-outlined">close</span>
         </button>
@@ -2601,7 +2601,7 @@ function generateFingerprint() {
         </button>
         <h2>Utopia Games</h2>
         <div style="flex:1"></div>
-        <input type="text" id="utopiaGamesSearch" placeholder="Search games..." oninput="renderUtopiaGamesGrid()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;width:200px;margin-right:12px;">
+        <input type="text" id="utopiaGamesSearch" placeholder="Search games..." autocomplete="off" oninput="renderUtopiaGamesGrid()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;width:200px;margin-right:12px;">
         <button class="games-fs-close" onclick="toggleUtopiaIconMode()" id="utopiaIconToggle" style="margin-right:8px;font-size:12px;padding:4px 10px;" title="Toggle icons/images">
             <span class="material-symbols-outlined">image</span>
         </button>
