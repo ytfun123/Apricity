@@ -984,6 +984,11 @@ function generateFingerprint() {
             align-items: center; text-align: center; padding: 0 20px;
             transition: all 0.4s ease;
         }
+        body.search-only-mode .main-content {
+            max-width: 760px;
+            min-height: 100vh;
+            justify-content: center;
+        }
         .logo {
             font-family: var(--font-logo);
             font-size: 6.5rem;
@@ -991,6 +996,19 @@ function generateFingerprint() {
             margin-bottom: 10px;
             user-select: none;
             transition: color 0.4s;
+        }
+        body.search-only-mode .logo,
+        body.search-only-mode .btn-group,
+        body.search-only-mode footer,
+        body.search-only-mode #topbar-home-icons,
+        body.search-only-mode #topbar-menu-btn,
+        body.search-only-mode #panic-btn,
+        body.search-only-mode #hide-permission-banner {
+            display: none !important;
+        }
+        body.search-only-mode .search-container {
+            margin-bottom: 0;
+            max-width: 760px;
         }
         .search-container { position: relative; width: 100%; margin-bottom: 30px; }
         .search-bar {
@@ -3223,6 +3241,29 @@ function generateFingerprint() {
     // handles missing/invalid keys server-side, so this no longer blocks anything.
     function requireKey() { return true; }
 
+    function isSearchOnlyMode() {
+        const params = new URLSearchParams(window.location.search);
+        const keys = [
+            'searchonly', 'search-only', 'onlysearch', 'only-search',
+            'hidebuttons', 'hide-buttons', 'searchbaronly', 'search-bar-only',
+            'minimalhome', 'minimal-home', 'searchmode', 'search-mode'
+        ];
+        for (const key of keys) {
+            const value = params.get(key);
+            if (value !== null && value !== '' && value !== '0' && value !== 'false') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function applyHomeLayoutMode() {
+        document.body.classList.toggle('search-only-mode', isSearchOnlyMode());
+    }
+
+    document.addEventListener('DOMContentLoaded', applyHomeLayoutMode);
+    applyHomeLayoutMode();
+
     // ===== SIDEBAR TOGGLE =====
     function toggleSidebar() {
         document.querySelector('.yt-sidebar').classList.toggle('collapsed');
@@ -4334,11 +4375,19 @@ function generateFingerprint() {
     // ===== DESKTOP =====
     function openDesktop() {
         closeAppsPanel();
-        const existing = tabs.find(t => t.pageId === 'desktop-page');
-        if (existing) { tabSwitch(existing.id); return; }
+        const desktopPage = document.getElementById('desktop-page');
         const frame = document.getElementById('desktop-frame');
-        if (!frame.dataset.loaded) { frame.src = 'apps/desktop.html'; frame.dataset.loaded = '1'; }
-        tabNew('desktop-page', 'Desktop', 'computer');
+
+        if (!frame.dataset.loaded) {
+            frame.src = 'apps/desktop.html';
+            frame.dataset.loaded = '1';
+        }
+
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        desktopPage.classList.add('active');
+        updateTopbarVisibility();
+        updateBgLayerVisibility();
+        scrollToPageTop();
     }
 
     // ===== DISCORD =====

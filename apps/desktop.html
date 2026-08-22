@@ -241,6 +241,9 @@
       pointer-events: none;
       box-sizing: border-box;
     }
+    /* Panel show/hide animation */
+    #taskbar-container { transition: transform 0.33s cubic-bezier(0.2,0.9,0.2,1), opacity 0.25s ease; }
+    #taskbar-container.hidden { transform: translateY(110%); opacity: 0; pointer-events: none; }
     
     #taskbar {
       pointer-events: auto;
@@ -755,7 +758,6 @@
       { id: 'music', title: 'Music', icon: '🎵', run: () => openMusicApp() },
       { id: 'aichat', title: 'AI Chat', icon: '🤖', run: () => openAIChatApp() },
       { id: 'meet', title: 'Meet Stable', icon: '📹', run: () => openMeetApp() },
-      { id: 'sunlit', title: 'Sunlit OS', icon: '☀️', run: () => openSunlitOSApp() },
       { id: 'settings', title: 'Settings', icon: '⚙️', run: () => openSettingsWindow() }
     ];
 
@@ -783,7 +785,7 @@
       return winId;
     }
 
-    // ===================== GAME CENTER (native to Desktop) =====================
+    // ===================== GAME CENTRE (native to Desktop) =====================
     // Desktop lives at apps/desktop.html, so paths that Apricity's own game
     // panel writes relative to the site root (e.g. './games/foo.html') need
     // one '../' to reach the same folder from here.
@@ -1230,15 +1232,7 @@
       });
     };
 
-    // ===================== SUNLIT OS =====================
-    // A real standalone app that lives right next to desktop.html in the
-    // apps/ folder — embeds directly, no path guessing needed.
-    function openSunlitOSApp() {
-      const view = document.createElement('div');
-      view.style.cssText = 'width:100%;height:100%;';
-      view.innerHTML = `<iframe src="sunlit_os.html" style="width:100%;height:100%;border:none;display:block;"></iframe>`;
-      openWindow('Sunlit OS', view);
-    }
+    
 
     window.onload = function() {
       if(!isSetupCompleted) {
@@ -1628,8 +1622,12 @@
       const minBtn = document.createElement('button'); minBtn.className = 'btn btn-min'; minBtn.innerHTML = systemStyleDesign==='classic'?'_':(systemStyleDesign==='luna'?'0':''); minBtn.onclick = (e) => { e.stopPropagation(); toggleMinimize(winId); };
       const maxBtn = document.createElement('button'); maxBtn.className = 'btn btn-max'; maxBtn.title = 'Fullscreen'; maxBtn.innerHTML = systemStyleDesign==='classic'?'□':(systemStyleDesign==='luna'?'1':''); maxBtn.onclick = (e) => { e.stopPropagation(); toggleMaximize(winId); };
 
-      windowControls.appendChild(closeBtn); windowControls.appendChild(minBtn); windowControls.appendChild(maxBtn);
+      // Traffic-light order: left -> right = yellow (min), green (max), red (close)
+      windowControls.appendChild(minBtn); windowControls.appendChild(maxBtn); windowControls.appendChild(closeBtn);
       titleBar.appendChild(titleText); titleBar.appendChild(windowControls);
+
+      // Double-clicking titlebar toggles maximize/restore
+      titleBar.addEventListener('dblclick', (e) => { if (e.target && e.target.tagName === 'BUTTON') return; toggleMaximize(winId); });
 
       const content = document.createElement('div'); content.className = 'content'; content.appendChild(customContent);
       win.appendChild(titleBar); win.appendChild(content);
@@ -1654,21 +1652,30 @@
       taskbar.appendChild(item);
     }
 
-    function closeWindow(id) { if(document.getElementById(id)) document.getElementById(id).remove(); if(document.getElementById('task-' + id)) document.getElementById('task-' + id).remove(); }
+    function closeWindow(id) {
+      const win = document.getElementById(id);
+      const panel = document.getElementById('taskbar-container');
+      if (win && win.classList.contains('maximized') && panel) panel.classList.remove('hidden');
+      if (win) win.remove();
+      if (document.getElementById('task-' + id)) document.getElementById('task-' + id).remove();
+    }
     function toggleMinimize(id) { const win = document.getElementById(id); const taskItem = document.getElementById('task-' + id); if (win.style.display === 'none') { win.style.display = 'flex'; focusWindow(id); } else { win.style.display = 'none'; taskItem.classList.remove('active'); } }
     function toggleMaximize(id) {
       const win = document.getElementById(id); if (!win) return;
+      const panel = document.getElementById('taskbar-container');
       if (win.classList.contains('maximized')) {
         win.classList.remove('maximized');
         win.style.top = win.dataset.prevTop; win.style.left = win.dataset.prevLeft;
         win.style.width = win.dataset.prevWidth; win.style.height = win.dataset.prevHeight;
         win.style.resize = 'both';
+        if (panel) panel.classList.remove('hidden');
       } else {
         win.dataset.prevTop = win.style.top; win.dataset.prevLeft = win.style.left;
         win.dataset.prevWidth = win.style.width; win.dataset.prevHeight = win.style.height;
         win.classList.add('maximized');
         win.style.top = '0'; win.style.left = '0'; win.style.width = '100%'; win.style.height = '100%';
         win.style.resize = 'none';
+        if (panel) panel.classList.add('hidden');
       }
       focusWindow(id);
     }
