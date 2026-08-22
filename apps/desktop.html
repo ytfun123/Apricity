@@ -1688,13 +1688,14 @@
       function onMouseUp() { isDragging = false; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); }
     }
 
-    /* Firefox Multi-Tab / Bookmark Engine Architecture */
+    /* Firefox Multi-Tab Engine (address bar and bookmarks removed) */
     function openFirefoxApp() {
       const browserFrame = document.createElement('div');
       browserFrame.className = 'fx-container';
-      
+
       let tabCounter = 1;
-      let browserTabs = [{ id: tabCounter, title: 'New Tab', url: 'about:newtab' }];
+      // All tabs should open the local search-only page by default
+      let browserTabs = [{ id: tabCounter, title: 'Search', url: './index.html?searchonly=1' }];
       let activeTabId = tabCounter;
 
       browserFrame.innerHTML = `
@@ -1702,21 +1703,12 @@
           <div class="fx-tabs-wrapper" style="display:flex; gap:4px; overflow-x:auto;"></div>
           <button class="fx-add-tab">+</button>
         </div>
-        <div class="fx-navbar">
-          <button class="fx-nav-btn fx-back-btn">⬅</button>
-          <button class="fx-nav-btn fx-refresh-btn">🔄</button>
-          <input type="text" class="fx-address-input" value="about:newtab">
-          <button class="fx-nav-btn fx-bookmark-toggle">⭐</button>
-        </div>
-        <div class="fx-bookmarks-bar"></div>
         <div class="fx-view-viewport"></div>
       `;
 
       const wrapper = browserFrame.querySelector('.fx-tabs-wrapper');
       const addBtn = browserFrame.querySelector('.fx-add-tab');
-      const addressInput = browserFrame.querySelector('.fx-address-input');
       const viewport = browserFrame.querySelector('.fx-view-viewport');
-      const bookmarksRow = browserFrame.querySelector('.fx-bookmarks-bar');
 
       function renderBrowserState() {
         wrapper.innerHTML = '';
@@ -1744,90 +1736,33 @@
         });
 
         const currentTab = browserTabs.find(x => x.id === activeTabId);
-        addressInput.value = currentTab.url;
         viewport.innerHTML = '';
 
-        if(currentTab.url === 'about:newtab') {
-          const ntp = document.createElement('div');
-          ntp.className = 'fx-ntp-container';
-          ntp.innerHTML = `
-            <div class="fx-ntp-logo"><span>🌐</span> Apricity Browser</div>
-            <div class="fx-ntp-search-box">
-              <input type="text" class="setup-input ntp-search-field" placeholder="Search the web or type a URL...">
-              <button class="panel-btn ntp-go-btn" style="padding:10px 20px;">Go</button>
-            </div>
-            <div class="fx-ntp-grid">
-              <div class="fx-ntp-tile" data-url="https://www.wikipedia.org">📚<br><small>Wikipedia</small></div>
-              <div class="fx-ntp-tile" data-url="https://duckduckgo.com">🦆<br><small>DuckDuckGo</small></div>
-              <div class="fx-ntp-tile" data-url="https://github.com">🐙<br><small>GitHub</small></div>
-            </div>
-          `;
-
-          const triggerSearch = () => {
-            const val = ntp.querySelector('.ntp-search-field').value.trim();
-            if(!val) return;
-            navigateCurrentTab(val.includes('.') ? (val.startsWith('http') ? val : 'https://' + val) : 'https://duckduckgo.com/?q=' + encodeURIComponent(val));
-          };
-
-          ntp.querySelector('.ntp-search-field').onkeydown = (e) => { if(e.key === 'Enter') triggerSearch(); };
-          ntp.querySelector('.ntp-go-btn').onclick = triggerSearch;
-          ntp.querySelectorAll('.fx-ntp-tile').forEach(tile => {
-            tile.onclick = () => navigateCurrentTab(tile.getAttribute('data-url'));
-          });
-          viewport.appendChild(ntp);
-        } else {
-          const frame = document.createElement('iframe');
-          frame.className = 'fx-view-viewport';
-          frame.style.width = '100%'; frame.style.height = '100%'; frame.style.border = 'none';
-          frame.src = currentTab.url;
-          viewport.appendChild(frame);
-        }
-
-        bookmarksRow.innerHTML = '';
-        fxBookmarks.forEach(bm => {
-          const node = document.createElement('span');
-          node.className = 'fx-bookmark-node';
-          node.innerHTML = `🔖 ${bm.name}`;
-          node.onclick = () => navigateCurrentTab(bm.url);
-          bookmarksRow.appendChild(node);
-        });
+        const frame = document.createElement('iframe');
+        frame.className = 'fx-view-viewport';
+        frame.style.width = '100%'; frame.style.height = '100%'; frame.style.border = 'none';
+        frame.src = currentTab.url;
+        viewport.appendChild(frame);
       }
 
-      function navigateCurrentTab(url) {
-        const tab = browserTabs.find(x => x.id === activeTabId);
-        tab.url = url;
-        tab.title = url === 'about:newtab' ? 'New Tab' : url.replace('https://','').replace('www.','').split('/')[0];
+      // Keep navigation simple: new tabs always point to the local search-only index
+      function navigateCurrentTabToLocalSearch(tabId) {
+        const tab = browserTabs.find(x => x.id === tabId || x.id === activeTabId);
+        if (!tab) return;
+        tab.url = './index.html?searchonly=1';
+        tab.title = 'Search';
         renderBrowserState();
       }
 
       addBtn.onclick = () => {
         tabCounter++;
-        browserTabs.push({ id: tabCounter, title: 'New Tab', url: 'about:newtab' });
+        browserTabs.push({ id: tabCounter, title: 'Search', url: './index.html?searchonly=1' });
         activeTabId = tabCounter;
         renderBrowserState();
       };
 
-      addressInput.onkeydown = (e) => {
-        if(e.key === 'Enter') {
-          let targetUrl = addressInput.value.trim();
-          if(targetUrl !== 'about:newtab' && !targetUrl.includes('.')) targetUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(targetUrl);
-          else if(targetUrl !== 'about:newtab' && !targetUrl.startsWith('http')) targetUrl = 'https://' + targetUrl;
-          navigateCurrentTab(targetUrl);
-        }
-      };
-
-      browserFrame.querySelector('.fx-back-btn').onclick = () => navigateCurrentTab('about:newtab');
-      browserFrame.querySelector('.fx-refresh-btn').onclick = () => renderBrowserState();
-      
-      browserFrame.querySelector('.fx-bookmark-toggle').onclick = () => {
-        const tab = browserTabs.find(x => x.id === activeTabId);
-        if(tab.url === 'about:newtab') return;
-        const bName = prompt("Save bookmark as:", tab.title);
-        if(!bName) return;
-        fxBookmarks.push({ name: bName, url: tab.url });
-        localStorage.setItem('cfg_fx_bookmarks', JSON.stringify(fxBookmarks));
-        renderBrowserState();
-      };
+      // expose a simple refresh (if refresh button exists in styles)
+      browserFrame.querySelectorAll('.fx-refresh-btn').forEach(btn => btn && (btn.onclick = () => renderBrowserState()));
 
       renderBrowserState();
       openWindow('Browser', browserFrame);
