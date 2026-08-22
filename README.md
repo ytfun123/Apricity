@@ -1,4 +1,4 @@
-## Apricity
+# Apricity
 This is a web proxy. It uses a wisp-based backend.
 Feel free to make contributions and forks, as long as you respect the terms of the licence
 
