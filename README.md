@@ -1,5 +1,16 @@
-This is a web proxy. It uses a simple backend.
-This software comes with ABSOLUTELY NO WARRANTY, and we do not take responsibility for your uses of it.
-Feel free to make contributions and forks.
+## At a glance
+This is a web proxy. It uses a wisp-based backend.
+Feel free to make contributions and forks, as long as you respect the terms of the licence
 
-Hollow Knight code owner https://github.com/aukak/hollow-knight
+## Features:
+- Many different built in games and apps
+- Desktop window manager
+- Many different customisation options
+- Built in chat and YouTube client
+
+## Acknowledgements
+- Hollow Knight: https://github.com/aukak/hollow-knight
+
+## Licence
+Apricity is licenced under the AGPL-3.0 licence.
+This software is provided AS IS with ABSOLUTELY NO WARRANTY, and we do not take responsibility for your uses of it.
