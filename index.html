@@ -4357,9 +4357,33 @@ function generateFingerprint() {
         loadProxiedUrl('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query), query);
     }
 
+    // Detect whether the home-page search input is actually a URL/domain the
+    // user wants to open through the proxy rather than a search query. Returns
+    // a full http(s):// URL to load, or null when it should be a search.
+    function detectSearchInputUrl(input) {
+        const q = (input || '').trim();
+        if (!q || /\s/.test(q)) return null;
+        // Explicit scheme (e.g. "https://example.com") — use it as-is.
+        const schemeMatch = q.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):\/\/(.+)$/);
+        if (schemeMatch && schemeMatch[2]) return q;
+        // Bare host: domain with a dot+TLD, an IP address, or localhost —
+        // plus an optional :port and/or /path, ?query, #fragment.
+        const hostRe = /^(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(\d{1,3}\.){3}\d{1,3}|localhost)(:\d+)?(([/?#]).*)?$/i;
+        if (hostRe.test(q)) return 'https://' + q;
+        return null;
+    }
+
     function goSearch() {
         const q = document.getElementById('homeSearch').value.trim();
-        if (q) loadSearchResults(q);
+        if (!q) return;
+        const url = detectSearchInputUrl(q);
+        if (url) {
+            let label = q;
+            try { label = new URL(url).hostname; } catch (e) {}
+            loadProxiedUrl(url, label);
+        } else {
+            loadSearchResults(q);
+        }
     }
 
     // ===== APPS =====
@@ -5770,12 +5794,32 @@ function generateFingerprint() {
     document.getElementById('panic-btn').onclick = panicActivate;
 
     // Keyboard shortcut: }
-    document.addEventListener('keydown', function(e) {
-        if (e.key === '}') {
-            if (panicActive) panicDeactivate();
-            else if (panicEnabled) panicActivate();
-        }
-    });
+    function handlePanicShortcut(e) {
+        if (!e || e.key !== '}') return;
+        if (panicActive) panicDeactivate();
+        else if (panicEnabled) panicActivate();
+    }
+    document.addEventListener('keydown', handlePanicShortcut);
+
+    // The shortcut above only fires while focus is on this page. Inside the
+    // Discord/desktop iframes focus lives in their own documents, so their
+    // key events never reach us — mirror the listener into those documents
+    // (same-origin, so we can reach them directly) so } still works anywhere.
+    function attachPanicShortcutToFrame(frameId) {
+        const frame = document.getElementById(frameId);
+        if (!frame) return;
+        const attach = () => {
+            let doc = null;
+            try { doc = frame.contentDocument; } catch (e) { doc = null; }
+            if (!doc || doc.__panicShortcutAttached) return;
+            doc.__panicShortcutAttached = true;
+            doc.addEventListener('keydown', handlePanicShortcut);
+        };
+        frame.addEventListener('load', attach);
+        attach();
+    }
+    attachPanicShortcutToFrame('discord-frame');
+    attachPanicShortcutToFrame('desktop-frame');
 
     // ===== FOOTER =====
     const footerMessages = [
