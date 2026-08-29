@@ -1881,12 +1881,12 @@
               <div class="gnome-row">
                 <label>Wallpaper Configuration</label>
                 <select id="gnome-wp-mode" class="panel-btn" style="width:170px;" onchange="changeWallpaperMode(this.value)">
-                  <option value="theme-default" ${currentWallpaperMode==='theme-default'?'selected':''}>Theme Standard Default</option>
-                  <option value="gradient" ${currentWallpaperMode==='gradient'?'selected':''}>Dark Gradient</option>
-                  <option value="custom-gradient" ${currentWallpaperMode==='custom-gradient'?'selected':''}>Custom Live Gradient</option>
+                  <option value="theme-default" ${currentWallpaperMode==='theme-default'?'selected':''}>Theme Default</option>
+                  <option value="gradient" ${currentWallpaperMode==='gradient'?'selected':''}>Default Gradient</option>
                   <option value="pastel-gradient" ${currentWallpaperMode==='pastel-gradient'?'selected':''}>Pastel Pink Gradient</option>
-                  <option value="luna-blue" ${currentWallpaperMode==='luna-blue'?'selected':''}>Luna Classic Blue</option>
-                  <option value="image" ${currentWallpaperMode==='image'||currentWallpaperMode==='custom-image'?'selected':''}>Custom Uploaded Image</option>
+                  <option value="luna-blue" ${currentWallpaperMode==='luna-blue'?'selected':''}>Luna Blue</option>
+                  <option value="custom-gradient" ${currentWallpaperMode==='custom-gradient'?'selected':''}>Custom Gradient</option>
+                  <option value="image" ${currentWallpaperMode==='image'||currentWallpaperMode==='custom-image'?'selected':''}>Image Upload</option>
                 </select>
               </div>
               <div id="gnome-grad-pickers-row" class="gnome-row" style="display: ${currentWallpaperMode==='custom-gradient'?'flex':'none'};">
