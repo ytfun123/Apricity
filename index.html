@@ -3424,10 +3424,11 @@ function generateFingerprint() {
         const activeTab = tabs.find(t => t.id === activeTabId);
         const ytOverlayActive = document.getElementById('youtube-page').classList.contains('yt-overlay-visible');
         const discordOverlayActive = document.getElementById('discord-page').classList.contains('discord-overlay-visible');
-        const isHome = !ytOverlayActive && !discordOverlayActive && (!activeTab || activeTab.pageId === 'home-page');
+        const desktopOpen = document.getElementById('desktop-page').classList.contains('active');
+        const isHome = !ytOverlayActive && !discordOverlayActive && !desktopOpen && (!activeTab || activeTab.pageId === 'home-page');
         const isMeet = activeTab && activeTab.pageId === 'meet-stable-page';
         document.getElementById('topbar-home-icons').style.display = isHome ? 'flex' : 'none';
-        document.getElementById('topbar-menu-btn').style.display = (isHome || isMeet || discordOverlayActive) ? 'none' : 'flex';
+        document.getElementById('topbar-menu-btn').style.display = (isHome || isMeet || discordOverlayActive || desktopOpen) ? 'none' : 'flex';
         closePageMenu();
     }
 
@@ -3502,13 +3503,16 @@ function generateFingerprint() {
 
     // Discord's own UI already has ways out, and having the panic button
     // floating over it looks out of place — hide it whenever the Discord
-    // overlay is showing, then restore it (respecting the user's panic
-    // settings) once they navigate elsewhere.
+    // overlay is showing or the desktop app is active, then restore it
+    // (respecting the user's panic settings) once they navigate elsewhere.
     function updatePanicVisibilityForPage() {
         const btn = document.getElementById('panic-btn');
         if (!btn || panicActive) return; // don't fight the panic overlay's own hide logic
         const discordPage = document.getElementById('discord-page');
-        if (discordPage && discordPage.classList.contains('discord-overlay-visible')) {
+        const desktopPage = document.getElementById('desktop-page');
+        const hideOnPage = (discordPage && discordPage.classList.contains('discord-overlay-visible')) ||
+                           (desktopPage && desktopPage.classList.contains('active'));
+        if (hideOnPage) {
             btn.style.display = 'none';
         } else {
             btn.style.display = '';
@@ -4387,6 +4391,7 @@ function generateFingerprint() {
         desktopPage.classList.add('active');
         updateTopbarVisibility();
         updateBgLayerVisibility();
+        updatePanicVisibilityForPage();
         scrollToPageTop();
     }
 
@@ -5753,6 +5758,9 @@ function generateFingerprint() {
         const btn = document.getElementById('panic-btn');
         btn.style.display = '';
         btn.onclick = panicActivate;
+        // Respect per-page hiding (Discord/desktop) so the button stays
+        // hidden on those pages after the panic overlay is dismissed.
+        if (typeof updatePanicVisibilityForPage === 'function') updatePanicVisibilityForPage();
     }
 
     // Wire up initial onclick (avoids inline onclick attribute conflict with deactivate swap)
