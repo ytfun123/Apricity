@@ -3507,16 +3507,19 @@ function generateFingerprint() {
     // (respecting the user's panic settings) once they navigate elsewhere.
     function updatePanicVisibilityForPage() {
         const btn = document.getElementById('panic-btn');
-        if (!btn || panicActive) return; // don't fight the panic overlay's own hide logic
+        const backButtons = document.querySelectorAll('.sunlit-back');
+        if ((btn === null && backButtons.length === 0) || panicActive) return; // don't fight the panic overlay's own hide logic
         const discordPage = document.getElementById('discord-page');
         const desktopPage = document.getElementById('desktop-page');
         const hideOnPage = (discordPage && discordPage.classList.contains('discord-overlay-visible')) ||
                            (desktopPage && desktopPage.classList.contains('active'));
-        if (hideOnPage) {
-            btn.style.display = 'none';
-        } else {
-            btn.style.display = '';
+
+        if (btn) {
+            btn.style.display = hideOnPage ? 'none' : '';
         }
+        backButtons.forEach((button) => {
+            button.style.display = hideOnPage ? 'none' : '';
+        });
     }
 
     function tabSwitch(id) {

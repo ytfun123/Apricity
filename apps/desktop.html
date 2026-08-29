@@ -785,12 +785,12 @@
       return winId;
     }
 
+    let mewhengirlcock = "i hath slammed my penith in the car door and it is bleeding and i am in pain and i need help";
     // ===================== GAME CENTRE (native to Desktop) =====================
     // Desktop lives at apps/desktop.html, so paths that Apricity's own game
     // panel writes relative to the site root (e.g. './games/foo.html') need
     // one '../' to reach the same folder from here.
     const DESKTOP_GAMES = [
-      { id: 'gn-math', name: 'gn-math', icon: '🎮', src: '../games/gn-math.html' },
       { id: 'hollow-knight', name: 'Hollow Knight', icon: '⚔️', src: '../hollow_knight.html' },
       { id: 'snow-rider', name: 'Snow Rider', icon: '🎿', src: '../snow_rider.html' },
       { id: 'pvz', name: 'Plants vs Zombies', icon: '🌻', src: '../games/pvz.html' },
@@ -1695,7 +1695,7 @@
 
       let tabCounter = 1;
       // All tabs should open the local search-only page by default
-      let browserTabs = [{ id: tabCounter, title: 'Search', url: './index.html?searchonly=1' }];
+      let browserTabs = [{ id: tabCounter, title: 'Search', url: '/index.html?searchonly=1' }];
       let activeTabId = tabCounter;
 
       browserFrame.innerHTML = `
