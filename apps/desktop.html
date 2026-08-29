@@ -613,6 +613,58 @@
     [data-system-style="luna"] .fx-tab { border-radius: 5px 5px 0 0 !important; background: linear-gradient(to bottom, #7ca7f8 0%, #3c81f3 100%); color: #fff; border: 1px solid #2256c5; }
     [data-system-style="luna"] .fx-tab.active { background: #f1efe7; color: #000; border-bottom: none; }
     [data-system-style="luna"] .fx-address-input { border-radius: 3px; border: 1px solid #7f9db9; background: #fff; color: #000; }
+
+    /* Power tray button + menu */
+    .tray-icon-btn:hover { background: var(--icon-hover); }
+    #power-menu {
+      position: fixed;
+      background: var(--start-menu-bg);
+      backdrop-filter: blur(30px) saturate(150%);
+      -webkit-backdrop-filter: blur(30px) saturate(150%);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--window-radius);
+      box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.2);
+      min-width: 190px;
+      padding: 6px;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 10001;
+      overflow: hidden;
+    }
+    #power-menu.visible { display: flex; }
+    .power-menu-header { padding: 10px 14px 6px; font-weight: 700; font-size: 0.85rem; opacity: 0.7; }
+    .power-menu-item { padding: 9px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text-color); }
+    .power-menu-item:hover { background: var(--accent-color); color: white; }
+
+    /* Sleep (black screen) overlay */
+    #sleep-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      background: #000;
+      color: #fff;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+    }
+    #sleep-overlay .sleep-icon { font-size: 4rem; opacity: 0.5; }
+    #sleep-overlay .sleep-hint { font-size: 0.95rem; opacity: 0.35; }
+
+    /* Shutdown overlay */
+    #shutdown-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20001;
+      background: #000;
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #shutdown-text { font-size: 1.6rem; font-weight: 600; letter-spacing: 0.5px; opacity: 0; transition: opacity 2s ease; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
@@ -709,8 +761,27 @@
           <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
         </button>
         <div id="clock">00:00:00 AM</div>
+        <button class="tray-icon-btn" id="power-btn" onclick="togglePowerMenu(event)" title="Power &amp; Session">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.41L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+        </button>
       </div>
     </div>
+  </div>
+
+  <div id="power-menu">
+    <div class="power-menu-header">Power</div>
+    <div class="power-menu-item" onclick="sleepSystem()">😴 Sleep</div>
+    <div class="power-menu-item" onclick="shutdownSystem()">🛑 Shut Down</div>
+    <div class="power-menu-item" onclick="logoutSystem()">🚪 Log Out</div>
+  </div>
+
+  <div id="sleep-overlay">
+    <div class="sleep-icon">🌙</div>
+    <div class="sleep-hint">Move the mouse or press any key to wake</div>
+  </div>
+
+  <div id="shutdown-overlay">
+    <div id="shutdown-text">Shutting down</div>
   </div>
 
   <div id="start-menu">
@@ -1346,6 +1417,140 @@
       if(chk) chk.checked = !document.fullscreenElement;
     }
 
+    // ========================== POWER / SESSION ==========================
+    // The desktop lives inside an iframe that the parent keeps mounted, so a
+    // plain exit (Log Out) preserves every open window — reopening the page
+    // without reloading shows the exact same desktop. A real Shut Down
+    // closes all windows like a real OS shutdown.
+
+    function togglePowerMenu(e) {
+      e.stopPropagation();
+      closeStartMenu();
+      const menu = document.getElementById('power-menu');
+      if (menu.classList.contains('visible')) {
+        closePowerMenu();
+        return;
+      }
+      menu.classList.add('visible');
+      const powerBtn = document.getElementById('power-btn');
+      const rect = powerBtn.getBoundingClientRect();
+      menu.style.left = Math.max(8, rect.right - menu.offsetWidth) + 'px';
+      menu.style.bottom = (window.innerHeight - rect.top + 12) + 'px';
+    }
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('power-menu');
+      const powerBtn = document.getElementById('power-btn');
+      if (menu && !menu.contains(e.target) && e.target !== powerBtn && !powerBtn.contains(e.target)) {
+        menu.classList.remove('visible');
+      }
+    });
+    document.addEventListener('contextmenu', () => closePowerMenu());
+
+    // ---- Sleep: black, fullscreen "standby". Move the mouse or press any
+    // key to wake right back to exactly where you were. The Screen Wake Lock
+    // keeps the real device's display awake unless the user changes the
+    // "sleep affects real device" setting in System Settings.
+    let sleepWakeLock = null;
+    let sleepSystemWantsFullscreen = false;
+    let sleepEnteredAt = 0;
+    function sleepSystem() {
+      closePowerMenu();
+      closeStartMenu();
+      const overlay = document.getElementById('sleep-overlay');
+      overlay.style.setProperty('display', 'flex', 'important');
+      sleepEnteredAt = Date.now();
+
+      sleepSystemWantsFullscreen = !document.fullscreenElement;
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(()=>{});
+      }
+
+      const affectsReal = localStorage.getItem('cfg_sleepRealDevice') === 'true';
+      if (!affectsReal && 'wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').then(lock => { sleepWakeLock = lock; }).catch(()=>{});
+      }
+    }
+
+    function closePowerMenu() {
+      const menu = document.getElementById('power-menu');
+      if (menu) menu.classList.remove('visible');
+    }
+
+    // Wake on mouse move, any key press, or screen tap. The 800ms guard
+    // after entering sleep stops the click's own micro-motion from causing
+    // an instant wake.
+    function sleepWakeHandler() {
+      if (!isSleeping()) return;
+      if (Date.now() - sleepEnteredAt < 800) return;
+      wakeSystem();
+    }
+    document.addEventListener('mousemove', sleepWakeHandler);
+    document.addEventListener('keydown', sleepWakeHandler);
+    document.addEventListener('pointerdown', sleepWakeHandler);
+
+    function isSleeping() {
+      const overlay = document.getElementById('sleep-overlay');
+      return overlay && overlay.style.display === 'flex';
+    }
+
+    function wakeSystem() {
+      const overlay = document.getElementById('sleep-overlay');
+      if (!overlay) return;
+      overlay.style.setProperty('display', 'none', 'important');
+      if (sleepWakeLock && sleepWakeLock.release) { sleepWakeLock.release().catch(()=>{}); }
+      sleepWakeLock = null;
+      if (document.fullscreenElement && sleepSystemWantsFullscreen) { document.exitFullscreen().catch(()=>{}); }
+      sleepSystemWantsFullscreen = false;
+    }
+
+    // ---- Shut Down: "Shutting down…" that fades slowly, then "Goodbye",
+    // then exit the desktop app. Closes everything (like a real shutdown).
+    // ---- Log Out: exits back like the back button, but keeps every window
+    // where it was — reopening the desktop (without reloading the page)
+    // brings you back exactly as you left it.
+
+    function closeAllDesktopWindows() {
+      document.querySelectorAll('#taskbar-windows .taskbar-item').forEach(el => el.remove());
+      document.querySelectorAll('#desktop > .window').forEach(el => el.remove());
+    }
+
+    function exitDesktopApp() {
+      // Leaving the desktop flips back to the parent page (the same as the
+      // desktop's own "← Back" button) without reloading the iframe, so the
+      // desktop's runtime lives on for instant "Log Out → reopen" restore.
+      try {
+        if (window.parent && window.parent !== window && typeof window.parent.showHome === 'function') {
+          window.parent.showHome();
+          return;
+        }
+      } catch (e) {}
+      window.location.href = '../index.html';
+    }
+
+    function shutdownSystem() {
+      closePowerMenu();
+      closeStartMenu();
+      closeAllDesktopWindows();
+      if (document.fullscreenElement) { document.exitFullscreen().catch(()=>{}); }
+
+      const overlay = document.getElementById('shutdown-overlay');
+      const text = document.getElementById('shutdown-text');
+      overlay.style.setProperty('display', 'flex', 'important');
+      text.textContent = 'Shutting down';
+      text.style.transition = 'opacity 2s ease';
+      text.style.opacity = '1';
+      setTimeout(() => { text.style.opacity = '0'; }, 2000);
+      setTimeout(() => { text.textContent = 'Goodbye'; text.style.opacity = '1'; }, 4300);
+      setTimeout(() => { text.style.opacity = '0'; }, 6300);
+      setTimeout(exitDesktopApp, 7300);
+    }
+
+    function logoutSystem() {
+      closePowerMenu();
+      closeStartMenu();
+      exitDesktopApp();
+    }
+
     function handleSetupStyleTransition(style) {
       document.getElementById('setup-modern-options-group').style.display = (style === 'modern') ? 'block' : 'none';
       if (document.getElementById('setup-wp-select').value === 'theme-default') {
@@ -1920,6 +2125,7 @@
               <div class="gnome-row" style="flex-direction: column; align-items: flex-start;"><label>Browser Details</label><span class="ua-string">${navigator.userAgent}</span></div>
               <div class="gnome-row"><label>Kernel</label><span style="opacity:0.65; font-family:monospace;">4.20.69-apricity</span></div>
               <div class="gnome-row"><label>Window Manager</label><span style="opacity:0.65; font-family:monospace;">ApricityWM v1.1</span></div>
+              <div class="gnome-row"><label>Sleep affects real device</label><input type="checkbox" id="gnome-chk-sleep-real" onchange="toggleSleepRealDevice(this.checked)"></div>
               <div class="gnome-row" style="background: rgba(255,0,0,0.05);"><label style="color: #c0392b;">System Maintenance</label><button class="panel-btn" style="background:#e74c3c; color:white; border:none;" onclick="triggerSystemHardReset()">Reset Desktop</button></div>
             </div>
           </div>
@@ -1929,6 +2135,12 @@
       document.getElementById('gnome-chk-date').checked = showDateInPanel;
       document.getElementById('gnome-chk-fullscreen').checked = fullScreenPanel;
       document.getElementById('gnome-chk-fullscreen-app').checked = forceFullscreenMode;
+      const sleepRealChk = document.getElementById('gnome-chk-sleep-real');
+      if (sleepRealChk) sleepRealChk.checked = localStorage.getItem('cfg_sleepRealDevice') === 'true';
+    }
+
+    function toggleSleepRealDevice(checked) {
+      localStorage.setItem('cfg_sleepRealDevice', checked ? 'true' : 'false');
     }
 
     function switchGnomeTab(btn, targetPageId) {
