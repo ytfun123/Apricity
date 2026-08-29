@@ -647,12 +647,35 @@
       background: #000;
       color: #fff;
       display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #sleep-overlay .sleep-big {
+      display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 18px;
     }
     #sleep-overlay .sleep-hint { font-size: 0.95rem; opacity: 0.35; }
+
+    /* Small "corner moon" sleep indicator: a tiny banana moon floats in the
+       top-right corner, softly fading in and out. */
+    #sleep-overlay .sleep-small {
+      position: fixed;
+      top: 16px;
+      right: 18px;
+      font-size: 1.6rem;
+      color: #fff;
+      animation: sleepMoonFade 3.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+    #sleep-overlay[data-sleep-mode="small"] .sleep-big { display: none; }
+    @keyframes sleepMoonFade {
+      0%   { opacity: 0; }
+      40%  { opacity: 0.85; }
+      100% { opacity: 0; }
+    }
 
     /* Shutdown overlay */
     #shutdown-overlay {
@@ -780,8 +803,10 @@
   </div>
 
   <div id="sleep-overlay">
-    <span class="material-symbols-outlined" style="font-size: 4rem; opacity: 0.5;">bedtime</span>
-    <div class="sleep-hint">Move the mouse or press any key to wake</div>
+    <div class="sleep-big">
+      <span class="material-symbols-outlined" style="font-size: 4rem; opacity: 0.5;">bedtime</span>
+      <div class="sleep-hint">Move the mouse or press any key to wake</div>
+    </div>
   </div>
 
   <div id="shutdown-overlay">
@@ -1457,10 +1482,31 @@
     let sleepWakeLock = null;
     let sleepSystemWantsFullscreen = false;
     let sleepEnteredAt = 0;
+    function applySleepDisplayMode() {
+      const overlay = document.getElementById('sleep-overlay');
+      const bigMode = localStorage.getItem('cfg_sleepBigIcon') === 'true';
+      const big = overlay.querySelector('.sleep-big');
+      // Small mode: a tiny banana moon floats in the top-right corner,
+      // fading in and out. Big mode: large centered moon + hint text.
+      if (bigMode) {
+        overlay.removeAttribute('data-sleep-mode');
+        const small = overlay.querySelector('.sleep-small');
+        if (small) small.remove();
+      } else {
+        overlay.setAttribute('data-sleep-mode', 'small');
+        if (!overlay.querySelector('.sleep-small')) {
+          const small = document.createElement('span');
+          small.className = 'material-symbols-outlined sleep-small';
+          small.textContent = 'bedtime';
+          overlay.appendChild(small);
+        }
+      }
+    }
     function sleepSystem() {
       closePowerMenu();
       closeStartMenu();
       const overlay = document.getElementById('sleep-overlay');
+      applySleepDisplayMode();
       overlay.style.setProperty('display', 'flex', 'important');
       sleepEnteredAt = Date.now();
 
@@ -2139,6 +2185,7 @@
               <div class="gnome-row"><label>Kernel</label><span style="opacity:0.65; font-family:monospace;">4.20.69-apricity</span></div>
               <div class="gnome-row"><label>Window Manager</label><span style="opacity:0.65; font-family:monospace;">ApricityWM v1.1</span></div>
               <div class="gnome-row"><label>Sleep affects real device</label><input type="checkbox" id="gnome-chk-sleep-real" onchange="toggleSleepRealDevice(this.checked)"></div>
+              <div class="gnome-row"><label>Big sleep icon</label><input type="checkbox" id="gnome-chk-sleep-big" onchange="toggleSleepBigIcon(this.checked)"></div>
               <div class="gnome-row" style="background: rgba(255,0,0,0.05);"><label style="color: #c0392b;">System Maintenance</label><button class="panel-btn" style="background:#e74c3c; color:white; border:none;" onclick="triggerSystemHardReset()">Reset Desktop</button></div>
             </div>
           </div>
@@ -2150,10 +2197,16 @@
       document.getElementById('gnome-chk-fullscreen-app').checked = forceFullscreenMode;
       const sleepRealChk = document.getElementById('gnome-chk-sleep-real');
       if (sleepRealChk) sleepRealChk.checked = localStorage.getItem('cfg_sleepRealDevice') === 'true';
+      const sleepBigChk = document.getElementById('gnome-chk-sleep-big');
+      if (sleepBigChk) sleepBigChk.checked = localStorage.getItem('cfg_sleepBigIcon') === 'true';
     }
 
     function toggleSleepRealDevice(checked) {
       localStorage.setItem('cfg_sleepRealDevice', checked ? 'true' : 'false');
+    }
+
+    function toggleSleepBigIcon(checked) {
+      localStorage.setItem('cfg_sleepBigIcon', checked ? 'true' : 'false');
     }
 
     function switchGnomeTab(btn, targetPageId) {
