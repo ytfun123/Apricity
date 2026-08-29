@@ -1518,6 +1518,15 @@
       // Leaving the desktop flips back to the parent page (the same as the
       // desktop's own "← Back" button) without reloading the iframe, so the
       // desktop's runtime lives on for instant "Log Out → reopen" restore.
+      // Make sure no fullscreen overlay is left covering the desktop when it
+      // is shown again later.
+      const shutOverlay = document.getElementById('shutdown-overlay');
+      const sleepOverlay = document.getElementById('sleep-overlay');
+      if (shutOverlay) shutOverlay.style.setProperty('display', 'none', 'important');
+      if (sleepOverlay) sleepOverlay.style.setProperty('display', 'none', 'important');
+      if (sleepWakeLock && sleepWakeLock.release) { sleepWakeLock.release().catch(()=>{}); }
+      sleepWakeLock = null;
+      sleepSystemWantsFullscreen = false;
       try {
         if (window.parent && window.parent !== window && typeof window.parent.showHome === 'function') {
           window.parent.showHome();
