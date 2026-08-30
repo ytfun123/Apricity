@@ -8,11 +8,16 @@
 //      GROQ_API_KEY    = gsk_...
 //      SUPABASE_URL    = https://xxxx.supabase.co
 //      SUPABASE_KEY    = sb_publishable_...  (or a service_role key if you need one later)
+//      SUPABASE_SERVICE_KEY = <service_role key>  (netchat accounts: username/password/device
+//                                                  tokens; get from Supabase Settings -> API.
+//                                                  Keep secret, never sent to the browser.)
 //    (Add to Production, Preview, and Development so it works everywhere.)
 // 2. Redeploy (env var changes need a redeploy to take effect).
 // 3. Your function is live at:  https://your-project.vercel.app/api/proxy
 //    Same-origin if index.html is served from the same Vercel project — so
 //    the frontend can just call "/api/proxy" with no URL/key to configure.
+
+import { randomUUID, randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -27,6 +32,10 @@ export default async function handler(req, res) {
     if (service === 'groq')     return res.status(200).json(await handleGroq(req.body));
     if (service === 'supabase') {
       const { status, data } = await handleSupabase(req);
+      return res.status(status).json(data);
+    }
+    if (service === 'account') {
+      const { status, data } = await handleAccount(req);
       return res.status(status).json(data);
     }
     return res.status(400).json({ error: 'Unknown or missing service: ' + service });
@@ -175,4 +184,141 @@ async function handleSupabase(req) {
   let data;
   try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text }; }
   return { status: upstream.status, data };
+}
+
+// ---------------------------------------------------------------------
+// Accounts (netchat): username/password/device-token identity, backed by
+// the `accounts` table. Uses SUPABASE_SERVICE_KEY (service_role, bypasses
+// RLS) rather than the anon key -- this table is never touched directly
+// by the browser, only through this proxy.
+// ---------------------------------------------------------------------
+
+function hashPassword(password) {
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, stored) {
+  const [salt, hash] = String(stored || '').split(':');
+  if (!salt || !hash) return false;
+  const candidate = scryptSync(password, salt, 64);
+  const expected = Buffer.from(hash, 'hex');
+  if (candidate.length !== expected.length) return false;
+  return timingSafeEqual(candidate, expected);
+}
+
+async function supaFetch(path, options) {
+  const supaUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+  if (!supaUrl || !serviceKey) {
+    throw new Error('SUPABASE_URL/SUPABASE_SERVICE_KEY not set in Vercel env vars');
+  }
+  const r = await fetch(`${supaUrl}${path}`, {
+    ...options,
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      'Content-Type': 'application/json',
+      ...(options && options.headers),
+    },
+  });
+  const text = await r.text();
+  let data;
+  try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+  return { ok: r.ok, status: r.status, data };
+}
+
+async function findAccount(username) {
+  const { data } = await supaFetch(
+    `/rest/v1/accounts?username=eq.${encodeURIComponent(username)}&select=*`,
+    { method: 'GET' }
+  );
+  return Array.isArray(data) && data.length ? data[0] : null;
+}
+
+async function handleAccount(req) {
+  const action = String(req.query.action || '').toLowerCase();
+  const { username, password, color, token, peer_id } = req.body || {};
+
+  if (!username || typeof username !== 'string' || !username.trim()) {
+    return { status: 400, data: { error: 'Missing username' } };
+  }
+
+  if (action === 'check') {
+    const existing = await findAccount(username);
+    return { status: 200, data: { exists: !!existing } };
+  }
+
+  if (action === 'register') {
+    if (!password) return { status: 400, data: { error: 'Missing password' } };
+    const existing = await findAccount(username);
+    if (existing) {
+      return { status: 409, data: { error: 'Username already exists' } };
+    }
+    const newToken = randomUUID();
+    const { ok, data } = await supaFetch('/rest/v1/accounts', {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        username,
+        password_hash: hashPassword(password),
+        device_token: newToken,
+        color: color || null,
+      }),
+    });
+    if (!ok) return { status: 500, data: { error: 'Failed to create account', details: data } };
+    return { status: 200, data: { token: newToken, username } };
+  }
+
+  if (action === 'claim') {
+    if (!password) return { status: 400, data: { error: 'Missing password' } };
+    const existing = await findAccount(username);
+    if (!existing) return { status: 404, data: { error: 'No account with that username' } };
+    if (!verifyPassword(password, existing.password_hash)) {
+      return { status: 403, data: { error: 'Incorrect password' } };
+    }
+    return { status: 200, data: { token: existing.device_token, username } };
+  }
+
+  if (action === 'verify-token') {
+    if (!token) return { status: 400, data: { error: 'Missing token' } };
+    const existing = await findAccount(username);
+    if (!existing) return { status: 200, data: { valid: false } };
+    return { status: 200, data: { valid: existing.device_token === token } };
+  }
+
+  if (action === 'get-peer') {
+    if (!token) return { status: 400, data: { error: 'Missing token' } };
+    const existing = await findAccount(username);
+    if (!existing) return { status: 404, data: { error: 'No account with that username' } };
+    if (existing.device_token !== token) {
+      return { status: 403, data: { error: 'Invalid token' } };
+    }
+    return { status: 200, data: { peer_id: existing.peer_id || '' } };
+  }
+
+  if (action === 'save-peer') {
+    if (!token) return { status: 400, data: { error: 'Missing token' } };
+    if (!peer_id || typeof peer_id !== 'string') {
+      return { status: 400, data: { error: 'Missing peer_id' } };
+    }
+    const existing = await findAccount(username);
+    if (!existing) return { status: 404, data: { error: 'No account with that username' } };
+    if (existing.device_token !== token) {
+      return { status: 403, data: { error: 'Invalid token' } };
+    }
+    const { ok, data } = await supaFetch(
+      `/rest/v1/accounts?username=eq.${encodeURIComponent(username)}`,
+      {
+        method: 'PATCH',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify({ peer_id }),
+      }
+    );
+    if (!ok) return { status: 500, data: { error: 'Failed to save peer id', details: data } };
+    return { status: 200, data: { ok: true, peer_id } };
+  }
+
+  return { status: 400, data: { error: 'Unknown action: ' + action } };
 }

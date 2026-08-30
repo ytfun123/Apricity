@@ -1,0 +1,5 @@
+[
+  { "file": "SWIPE.8xp", "label": "SwipeCE (2048-style)" },
+  { "file": "clibs.8xg", "label": "Required libraries" },
+  { "file": "graphc.8xv", "label": "Graphics data" }
+]

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ti-flash</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="favicon.ico">
+    <script type="text/javascript" src="index.js"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-KKHH0F88Y4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-KKHH0F88Y4', { 'anonymize_ip': true });
+    </script>
+  </head>
+  <body>
+    <main>
+      <section id="flow">
+        <h1>ti-flash is fork of ticalc.link but better</h1>
+        <p>Send one or more files to your calculator over USB from right here in your web browser.</p>
+
+        <section class="test-panel" id="test-panel">
+          <h2>Quick compatibility check</h2>
+          <ul id="test-list">
+            <li id="test-browser" class="pending">Checking your browser for WebUSB support&hellip;</li>
+            <li id="test-https" class="pending">Checking connection security&hellip;</li>
+          </ul>
+        </section>
+
+        <section class="buttons">
+          <button id="connect" class="active"><span class="number">1</span> Select calculator</button>
+          <button id="os"><span class="number">2</span> <span class="label">Calculator OS version</span></button>
+          <button id="upload"><span class="number">3</span> Add file(s)</button>
+        </section>
+
+        <p>Currently supported: <span id="supported"></span></p>
+
+        <section id="files">
+          <h2>Files to send</h2>
+          <ul id="file-list"></ul>
+          <p class="hint">
+            Files are sent one at a time &mdash; click <strong>Send</strong> next to a file when you're ready.
+            After sending a jailbreak file, you'll still need to open it by hand on the calculator
+            (usually via the <strong>CabriJr</strong> app, see the instructions that come with it).
+          </p>
+        </section>
+
+        <section id="games">
+          <h2>Games library</h2>
+          <p class="hint">Pick a game below and it'll send all its files to your calculator.</p>
+          <p id="games-locked" class="hint">Complete the OS check above (step 2) to unlock the games library.</p>
+          <div id="game-categories" style="display: none;"></div>
+        </section>
+      </section>
+      <section id="incompatible">
+        <h1>ticalc.link</h1>
+        <p>Sorry, this web browser does not support WebUSB. Please try using a different web browser, such as a recent version of Chrome or Edge!</p>
+      </section>
+    </main>
+    <footer>
+      <p>
+        This website is still very experimental.
+        It comes with absolutely no guarantees.
+        So be warned, and please <a href="https://github.com/Timendus/ticalc.link/issues">report any issues</a>.
+        It is Open Source, and can be found <a href="https://github.com/Timendus/ticalc.link">on Github</a>.
+        This fork adds multi-file sending and OS-version-aware jailbreak/shell helpers.
+      </p>
+    </footer>
+    <section id="popup">
+      <section id="content">
+        <h2></h2>
+        <p></p>
+        <section class="custom"></section>
+        <section class="buttons"></section>
+      </section>
+    </section>
+  </body>
+</html>

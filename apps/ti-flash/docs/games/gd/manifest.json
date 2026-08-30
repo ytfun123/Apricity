@@ -1,0 +1,17 @@
+[
+  { "file": "AGD.8XP", "label": "Geometry Dash CE (main program)" },
+  { "file": "GDMenu.8xv", "label": "Menu data" },
+  { "file": "GDGrphc.8xv", "label": "Graphics data" },
+  { "file": "STEREO_MADNESS.8xv", "label": "Level: Stereo Madness" },
+  { "file": "DRY_OUT.8xv", "label": "Level: Dry Out" },
+  { "file": "graphx.8xv", "label": "Library: graphx" },
+  { "file": "fileioc.8xv", "label": "Library: fileioc" },
+  { "file": "fontlibc.8xv", "label": "Library: fontlibc" },
+  { "file": "keypadc.8xv", "label": "Library: keypadc" },
+  { "file": "fatdrvce.8xv", "label": "Library: fatdrvce" },
+  { "file": "usbdrvce.8xv", "label": "Library: usbdrvce" },
+  { "file": "msddrvce.8xv", "label": "Library: msddrvce" },
+  { "file": "srldrvce.8xv", "label": "Library: srldrvce" },
+  { "file": "lcddrvce.8xv", "label": "Library: lcddrvce" },
+  { "file": "libload.8xv", "label": "Library: libload" }
+]
