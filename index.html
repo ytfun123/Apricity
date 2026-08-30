@@ -1040,6 +1040,19 @@ function generateFingerprint() {
         }
         .home-btn:active { transform: scale(0.95); }
         .home-btn:hover { opacity: 0.85; }
+        .home-btn.has-update {
+            position: relative;
+            box-shadow: 0 0 0 2px #e53935, 0 0 10px rgba(229,57,53,.55);
+        }
+        .home-btn.has-update .update-log-dot { display: flex; }
+        .update-log-dot {
+            position: absolute; top: -6px; right: -6px; width: 15px; height: 15px;
+            border-radius: 50%; background: #e53935; color: #fff;
+            font-size: 10px; font-weight: 700; line-height: 1;
+            display: none; align-items: center; justify-content: center;
+            box-shadow: 0 0 4px rgba(229,57,53,.8);
+            pointer-events: none;
+        }
         .home-btn-primary {
             background: var(--md-sys-color-primary);
             color: var(--md-sys-color-on-primary);
@@ -3015,9 +3028,10 @@ function generateFingerprint() {
                 <span class="material-symbols-outlined" style="font-size:16px;">terminal</span>
                 Console
             </button>
-            <button class="home-btn" onclick="openUpdateLog()">
+            <button class="home-btn" id="updateLogBtn" onclick="openUpdateLog()">
                 <span class="material-symbols-outlined" style="font-size:16px;">new_releases</span>
                 Update Log
+                <span class="update-log-dot" id="updateLogDot">!</span>
             </button>
         </div>
     </div>
@@ -3281,17 +3295,44 @@ function generateFingerprint() {
 
     // ===== UPDATE LOG (loads text from updatelog.txt in the same folder) =====
     let _updateLogLoaded = false;
+    let _updateLogHash = null;
+
+    function _updateLogHashOf(text) {
+        let h = 5381;
+        for (let i = 0; i < text.length; i++) {
+            h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
+        }
+        return String(h);
+    }
+
+    function _updateLogSeenHash() {
+        try { return localStorage.getItem('apricity-updatelog-seen') || ''; } catch (e) { return ''; }
+    }
+
+    function _updateLogSaveSeen() {
+        try { localStorage.setItem('apricity-updatelog-seen', _updateLogHash || ''); } catch (e) {}
+    }
+
+    function _updateLogBadge(show) {
+        const btn = document.getElementById('updateLogBtn');
+        if (btn) btn.classList.toggle('has-update', !!show);
+    }
 
     function openUpdateLog() {
         document.getElementById('updateLogOverlay').style.display = 'flex';
-        if (!_updateLogLoaded) loadUpdateLog();
+        if (!_updateLogLoaded) {
+            loadUpdateLog(() => { _updateLogSaveSeen(); _updateLogBadge(false); });
+        } else {
+            _updateLogSaveSeen();
+            _updateLogBadge(false);
+        }
     }
 
     function closeUpdateLog() {
         document.getElementById('updateLogOverlay').style.display = 'none';
     }
 
-    function loadUpdateLog() {
+    function loadUpdateLog(done) {
         const body = document.getElementById('updateLogBody');
         body.textContent = 'Loading…';
         fetch('system/updatelog.txt', { cache: 'no-store' })
@@ -3302,12 +3343,18 @@ function generateFingerprint() {
             .then(text => {
                 body.textContent = text.trim() ? text : 'No updates yet.';
                 _updateLogLoaded = true;
+                _updateLogHash = _updateLogHashOf(text);
+                _updateLogBadge(_updateLogHash !== _updateLogSeenHash());
+                if (done) done();
             })
             .catch(() => {
                 body.textContent = 'Could not load updatelog.txt. Make sure the file exists in the same folder as this page and that you are viewing it through a web server (not opened directly as a local file).';
                 _updateLogLoaded = false;
+                if (done) done();
             });
     }
+
+    loadUpdateLog();
 
     function switchTab(tab) {
         ['themes','backgrounds','settings'].forEach(t => {
