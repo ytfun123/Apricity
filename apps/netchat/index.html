@@ -395,15 +395,16 @@ function resolveAccount(username, password, color) {
 const MESSAGES_PATH = '/rest/v1/messages';
 
 async function supabaseRequest(path, method, payload) {
-  const r = await fetch('/api/proxy?service=supabase', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      path,
-      method,
-      body: payload ? JSON.stringify(payload) : undefined
-    })
-  });
+const r = await fetch('/api/proxy?service=supabase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path,
+        method,
+        body: payload ? JSON.stringify(payload) : undefined,
+        netchat: true
+      })
+    });
   return r.json();
 }
 

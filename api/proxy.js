@@ -6,11 +6,13 @@
 //      YOUTUBE_API_KEY = AIzaSy...
 //      TMDB_API_KEY    = ee533eb...
 //      GROQ_API_KEY    = gsk_...
-//      SUPABASE_URL    = https://xxxx.supabase.co
-//      SUPABASE_KEY    = sb_publishable_...  (or a service_role key if you need one later)
-//      SUPABASE_SERVICE_KEY = <service_role key>  (netchat accounts: username/password/device
-//                                                  tokens; get from Supabase Settings -> API.
-//                                                  Keep secret, never sent to the browser.)
+//      SUPABASE_URL    = https://xxxx.supabase.co          (ChillCord)
+//      SUPABASE_KEY    = sb_publishable_...                (ChillCord)
+//      netchat_key_url = https://netchat-xxxx.supabase.co  (NetChat's OWN project)
+//      netchat_key     = <project key>                     (NetChat; use the
+//                          service_role key if the accounts table has no anon
+//                          RLS policies -- it never reaches the browser, the
+//                          proxy injects it server-side only)
 //    (Add to Production, Preview, and Development so it works everywhere.)
 // 2. Redeploy (env var changes need a redeploy to take effect).
 // 3. Your function is live at:  https://your-project.vercel.app/api/proxy
@@ -131,13 +133,17 @@ function containsBlockedWord(str) {
 // code + body back untouched, so existing client code that checks
 // response.ok / response.status keeps working exactly as before.
 async function handleSupabase(req) {
-  const supaUrl = process.env.SUPABASE_URL;
-  const supaKey = process.env.SUPABASE_KEY;
+  const { path, method, body, headers: extraHeaders, captchaToken, netchat } = req.body || {};
+
+  // NetChat uses its own Supabase project so it never conflicts with
+  // ChillCord's -- pick the right env pair based on the requesting client.
+  const supaUrl = netchat ? process.env.netchat_key_url : process.env.SUPABASE_URL;
+  const supaKey = netchat ? process.env.netchat_key : process.env.SUPABASE_KEY;
   if (!supaUrl || !supaKey) {
-    return { status: 500, data: { error: 'SUPABASE_URL/SUPABASE_KEY not set in Vercel env vars' } };
+    const which = netchat ? 'netchat_key_url/netchat_key' : 'SUPABASE_URL/SUPABASE_KEY';
+    return { status: 500, data: { error: which + ' not set in Vercel env vars' } };
   }
 
-  const { path, method, body, headers: extraHeaders, captchaToken } = req.body || {};
   if (!path || typeof path !== 'string' || !path.startsWith('/rest/v1/')) {
     return { status: 400, data: { error: 'Missing or invalid path (must start with /rest/v1/)' } };
   }
@@ -188,9 +194,9 @@ async function handleSupabase(req) {
 
 // ---------------------------------------------------------------------
 // Accounts (netchat): username/password/device-token identity, backed by
-// the `accounts` table. Uses SUPABASE_SERVICE_KEY (service_role, bypasses
-// RLS) rather than the anon key -- this table is never touched directly
-// by the browser, only through this proxy.
+// the `accounts` table in netchat's own Supabase project. Uses the
+// `netchat_key` for writes (paste your service_role key here if the
+// accounts table has no anon RLS policies -- it never leaves the server).
 // ---------------------------------------------------------------------
 
 function hashPassword(password) {
@@ -209,10 +215,10 @@ function verifyPassword(password, stored) {
 }
 
 async function supaFetch(path, options) {
-  const supaUrl = process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+  const supaUrl = process.env.netchat_key_url;
+  const serviceKey = process.env.netchat_key;
   if (!supaUrl || !serviceKey) {
-    throw new Error('SUPABASE_URL/SUPABASE_SERVICE_KEY not set in Vercel env vars');
+    throw new Error('netchat_key_url/netchat_key not set in Vercel env vars');
   }
   const r = await fetch(`${supaUrl}${path}`, {
     ...options,
