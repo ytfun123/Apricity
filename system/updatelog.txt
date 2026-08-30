@@ -15,3 +15,5 @@
 07/26/2026: !!!Chillcord was hacked so we removed it fro mapricity for fixing!!!
 
 07/29/2026: Chillcord was fully fixed, was added capctha, but still chillcord doesnt collect emails and phone numbers.
+
+08/29/2026: Added ti_flash, netchat , fixed and added some things to desktop app.
