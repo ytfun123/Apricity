@@ -201,10 +201,51 @@ function attachClickListeners() {
           );
 
   document.querySelector('#os')
-          .addEventListener('click', () => askOsVersion());
+          .addEventListener('click', () => osButtonFlow());
 
   document.querySelector('#upload')
           .addEventListener('click', () => addFiles());
+}
+
+// Same ASM + jailbreak questions the #os button asks, as a re-usable sequence.
+async function osButtonFlow() {
+  if ( asmLocked === null ) await askOsVersion();
+  if ( asmLocked && !jailbreakReady ) await askJailbreakStatus();
+  updateButtons();
+}
+
+// ---------------------------------------------------------------------------
+// Sending prerequisites: connect the calculator, then sort out ASM / jailbreak
+// ---------------------------------------------------------------------------
+
+function waitForCalculator() {
+  return new Promise(resolve => {
+    const deadline = Date.now() + 15000;
+    const tick = () => {
+      if ( calculator ) return resolve(true);
+      if ( Date.now() > deadline ) return resolve(false);
+      setTimeout(tick, 100);
+    };
+    tick();
+  });
+}
+
+// Makes sure we have a connected calculator and that the ASM/jailbreak
+// questions have been answered, so files can be sent right away.
+async function ensureSendReady() {
+  if ( !calculator ) {
+    try {
+      await ticalc.choose();
+    } catch (e) {
+      return false; // user cancelled the device picker
+    }
+    if ( !(await waitForCalculator()) ) return false;
+  }
+
+  if ( asmLocked === null ) await askOsVersion();
+  if ( asmLocked && !jailbreakReady ) await askJailbreakStatus();
+  updateButtons();
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -230,24 +271,28 @@ function askOsVersion() {
     </details>
   `;
 
-  const yesBtn = popupButton('no', "Yes, it's blocked", () => {
-    asmLocked = true;
-    popup.classList.remove('active');
-    updateButtons();
-    askJailbreakStatus();
-  });
+  return new Promise(resolve => {
+    const yesBtn = popupButton('no', "Yes, it's blocked", () => {
+      asmLocked = true;
+      jailbreakReady = false;
+      popup.classList.remove('active');
+      updateButtons();
+      resolve();
+    });
 
-  const noBtn = popupButton('yes', 'No, ASM still works', () => {
-    asmLocked = false;
-    jailbreakReady = true;
-    popup.classList.remove('active');
-    updateButtons();
-  });
+    const noBtn = popupButton('yes', 'No, ASM still works', () => {
+      asmLocked = false;
+      jailbreakReady = true;
+      popup.classList.remove('active');
+      updateButtons();
+      resolve();
+    });
 
-  popup.querySelector('.buttons').innerHTML = '';
-  popup.querySelector('.buttons').appendChild(noBtn);
-  popup.querySelector('.buttons').appendChild(yesBtn);
-  popup.classList.add('active');
+    popup.querySelector('.buttons').innerHTML = '';
+    popup.querySelector('.buttons').appendChild(noBtn);
+    popup.querySelector('.buttons').appendChild(yesBtn);
+    popup.classList.add('active');
+  });
 }
 
 function askJailbreakStatus() {
@@ -256,21 +301,25 @@ function askJailbreakStatus() {
     'Do you already have arTIfiCE and Cesium installed on your calculator?'
   );
 
-  const haveItBtn = popupButton('yes', 'I already have it', () => {
-    jailbreakReady = true;
-    popup.classList.remove('active');
-    updateButtons();
-  });
+  return new Promise(async resolve => {
+    const haveItBtn = popupButton('yes', 'I already have it', () => {
+      jailbreakReady = true;
+      popup.classList.remove('active');
+      updateButtons();
+      resolve();
+    });
 
-  const installBtn = popupButton('no', 'Install it now', () => {
-    popup.classList.remove('active');
-    installJailbreak();
-  });
+    const installBtn = popupButton('no', 'Install it now', async () => {
+      popup.classList.remove('active');
+      await installJailbreak();
+      resolve();
+    });
 
-  popup.querySelector('.buttons').innerHTML = '';
-  popup.querySelector('.buttons').appendChild(haveItBtn);
-  popup.querySelector('.buttons').appendChild(installBtn);
-  popup.classList.add('active');
+    popup.querySelector('.buttons').innerHTML = '';
+    popup.querySelector('.buttons').appendChild(haveItBtn);
+    popup.querySelector('.buttons').appendChild(installBtn);
+    popup.classList.add('active');
+  });
 }
 
 async function installJailbreak() {
@@ -476,12 +525,11 @@ function renderGamesGate() {
   const unlocked = document.querySelector('#game-categories');
   if ( !locked || !unlocked ) return;
 
-  const unlockedNow = asmLocked !== null && jailbreakReady;
+  // The games library is always available — no OS-check gate anymore.
+  locked.style.display = 'none';
+  unlocked.style.display = 'block';
 
-  locked.style.display = unlockedNow ? 'none' : 'block';
-  unlocked.style.display = unlockedNow ? 'block' : 'none';
-
-  if ( unlockedNow && !gamesInitialized ) {
+  if ( !gamesInitialized ) {
     gamesInitialized = true;
     initGameCategories();
   }
@@ -491,14 +539,16 @@ async function initGameCategories() {
   const container = document.querySelector('#game-categories');
   if ( !container ) return;
   container.innerHTML = '';
+  container.setAttribute('data-model', 'ce');
 
   for ( const category of GAME_CATEGORIES ) {
     const card = document.createElement('section');
     card.className = 'game-category';
+    card.setAttribute('data-model', 'ce');
 
     const downloadBtn = document.createElement('button');
     downloadBtn.className = 'download-btn';
-    downloadBtn.textContent = `Download ${category.label}`;
+    downloadBtn.textContent = `Send ${category.label}`;
     card.appendChild(downloadBtn);
 
     const status = document.createElement('p');
@@ -506,9 +556,8 @@ async function initGameCategories() {
     card.appendChild(status);
 
     downloadBtn.addEventListener('click', async () => {
-      if ( !calculator ) {
-        return alert('Connect your calculator first', 'Please select your calculator (step 1) before downloading games.');
-      }
+      const ready = await ensureSendReady();
+      if ( !ready ) return;
 
       downloadBtn.disabled = true;
       downloadBtn.textContent = 'Loading file list\u2026';
@@ -517,7 +566,7 @@ async function initGameCategories() {
       const files = await fetchManifest(category);
       if ( !files.length ) {
         downloadBtn.disabled = false;
-        downloadBtn.textContent = `Download ${category.label}`;
+        downloadBtn.textContent = `Send ${category.label}`;
         status.textContent = 'No files available yet. Check back soon!';
         return;
       }
