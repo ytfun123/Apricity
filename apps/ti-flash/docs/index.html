@@ -30,6 +30,17 @@
       .empty-note{text-align:center;color:#777;font-family:Roboto,Tahoma,Arial,sans-serif;font-size:.95em;margin:1em auto;max-width:620px;line-height:1.5;}
       .empty-note.beta{color:#b07a10;}
       footer{position:static !important;}
+      .our-app-card{display:flex;align-items:center;gap:1.2em;background:#fff;border-radius:10px;padding:1.2em 1.4em;box-shadow:0 2px 12px rgba(0,0,0,.08);max-width:600px;margin:0 auto;}
+      .our-app-card img{width:80px;height:80px;border-radius:14px;object-fit:cover;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+      .our-app-card .app-info{flex:1;text-align:left;}
+      .our-app-card .app-info h3{margin:0 0 .2em 0;font-size:1.15em;color:#222;font-family:Roboto,Tahoma,Arial,sans-serif;}
+      .our-app-card .app-info p{margin:0 0 .6em 0;font-size:.85em;color:#777;font-family:Roboto,Tahoma,Arial,sans-serif;}
+      .our-app-card .app-send-btn{background:#3237d4;color:#fff;border:none;border-radius:8px;padding:.7em 1.6em;font-size:.95em;font-weight:600;cursor:pointer;font-family:Roboto,Tahoma,Arial,sans-serif;transition:background .15s,transform .1s;white-space:nowrap;}
+      .our-app-card .app-send-btn:hover{background:#2529b8;}
+      .our-app-card .app-send-btn:active{transform:scale(.97);}
+      .our-app-card .app-send-btn:disabled{background:#cdcdce;color:#888;cursor:not-allowed;}
+      .our-app-card .app-status{margin-top:.4em;font-size:.82em;color:#777;font-family:Roboto,Tahoma,Arial,sans-serif;}
+      @media screen and (max-width:500px){.our-app-card{flex-direction:column;text-align:center;gap:.8em;padding:1em;}.our-app-card .app-info{text-align:center;}.our-app-card img{width:64px;height:64px;}}
       @media screen and (max-width:600px){#site-nav{flex-wrap:wrap;gap:.6em;}}
     </style>
   </head>
@@ -216,18 +227,37 @@
           grid.dataset.init = '1';
           grid.innerHTML = '';
 
-          var card = document.createElement('section');
-          card.className = 'game-category';
+          var card = document.createElement('div');
+          card.className = 'our-app-card game-category';
           card.setAttribute('data-model', 'ce');
 
-          var sendBtn = document.createElement('button');
-          sendBtn.className = 'download-btn';
-          sendBtn.textContent = 'Send NetChat';
-          card.appendChild(sendBtn);
+          var img = document.createElement('img');
+          img.src = 'our-apps/netchat/icon.png';
+          img.alt = 'NetChat icon';
+          card.appendChild(img);
 
-          var status = document.createElement('p');
-          status.className = 'game-status';
-          card.appendChild(status);
+          var info = document.createElement('div');
+          info.className = 'app-info';
+
+          var h3 = document.createElement('h3');
+          h3.textContent = 'NetChat';
+          info.appendChild(h3);
+
+          var desc = document.createElement('p');
+          desc.textContent = 'Chat with friends from your TI calculator over USB. Connects to the webchat server.';
+          info.appendChild(desc);
+
+          var sendBtn = document.createElement('button');
+          sendBtn.className = 'app-send-btn';
+          sendBtn.textContent = 'Send to Calculator';
+          info.appendChild(sendBtn);
+
+          var status = document.createElement('div');
+          status.className = 'app-status';
+          info.appendChild(status);
+
+          card.appendChild(info);
+          grid.appendChild(card);
 
           sendBtn.addEventListener('click', async function() {
             var tf = window.tiFlash;
@@ -240,15 +270,15 @@
             status.textContent = '';
 
             try {
-              var res = await fetch('our-apps/netchat/manifest.json?v=5');
+              var res = await fetch('our-apps/netchat/manifest.json?v=6');
               if (!res.ok) throw new Error('manifest not found');
               var files = await res.json();
-              if (!Array.isArray(files) || !files.length) { status.textContent = 'No files available.'; sendBtn.disabled = false; sendBtn.textContent = 'Send NetChat'; return; }
+              if (!Array.isArray(files) || !files.length) { status.textContent = 'No files available.'; sendBtn.disabled = false; sendBtn.textContent = 'Send to Calculator'; return; }
 
               var sent = 0;
               for (var i = 0; i < files.length; i++) {
                 sendBtn.textContent = 'Sending ' + (i + 1) + '/' + files.length + '\u2026';
-                var item = await tf.addFileFromPath(files[i].label || files[i].file, 'our-apps/netchat/' + files[i].file + '?v=5');
+                var item = await tf.addFileFromPath(files[i].label || files[i].file, 'our-apps/netchat/' + files[i].file);
                 tf.updateButtons();
                 if (item && item.tiFile) {
                   await tf.sendQueueItem(item.id);
@@ -258,20 +288,19 @@
 
               sendBtn.disabled = false;
               if (sent === files.length) {
-                sendBtn.textContent = 'Reinstall NetChat';
+                sendBtn.textContent = 'Reinstall';
                 status.textContent = 'NetChat installed \u2713';
               } else {
-                sendBtn.textContent = 'Retry NetChat';
+                sendBtn.textContent = 'Retry';
                 status.textContent = sent + '/' + files.length + ' files sent \u2014 check the queue above for errors.';
               }
             } catch (e) {
               sendBtn.disabled = false;
-              sendBtn.textContent = 'Send NetChat';
+              sendBtn.textContent = 'Send to Calculator';
               status.textContent = 'Failed to load file: ' + e.message;
             }
           });
 
-          grid.appendChild(card);
           applyFilter('page-our-apps');
         }
 
