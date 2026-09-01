@@ -48,7 +48,7 @@ const GAME_CATEGORIES = [
   { key: 'dino', label: 'Dino Run', dir: 'games/dino' },
   { key: 'swipe', label: 'SwipeCE', dir: 'games/swipe' },
   { key: 'falldown', label: 'Falldown', dir: 'games/falldown' },
-  { key: 'netchat', label: 'NetChat', dir: 'games/netchat' }
+  { key: 'netchat', label: 'NetChat', dir: 'our-apps/netchat' }
 ];
 
 // ---------------------------------------------------------------------------
