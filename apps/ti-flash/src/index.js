@@ -390,7 +390,8 @@ async function addFileToQueue(rawFile) {
 
 async function addFileFromPath(label, path, extra = {}) {
   try {
-    const response = await fetch(path);
+    const sep = path.includes('?') ? '&' : '?';
+    const response = await fetch(`${path}${sep}v=6`);
     if ( !response.ok ) throw new Error('Not found');
     const buffer = new Uint8Array(await response.arrayBuffer());
     const tiFile = tifiles.parseFile(buffer);
@@ -599,7 +600,7 @@ async function initGameCategories() {
 
 async function fetchManifest(category) {
   try {
-    const response = await fetch(`${category.dir}/manifest.json`);
+    const response = await fetch(`${category.dir}/manifest.json?v=6`);
     if ( !response.ok ) throw new Error('Not found');
     const files = await response.json();
     return Array.isArray(files) ? files : [];
