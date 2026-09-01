@@ -47,7 +47,8 @@ const GAME_CATEGORIES = [
   { key: 'stacker', label: 'Stacker', dir: 'games/stacker' },
   { key: 'dino', label: 'Dino Run', dir: 'games/dino' },
   { key: 'swipe', label: 'SwipeCE', dir: 'games/swipe' },
-  { key: 'falldown', label: 'Falldown', dir: 'games/falldown' }
+  { key: 'falldown', label: 'Falldown', dir: 'games/falldown' },
+  { key: 'netchat', label: 'NetChat', dir: 'games/netchat' }
 ];
 
 // ---------------------------------------------------------------------------
@@ -698,3 +699,6 @@ function confirm(title, body) {
     popup.classList.add('active');
   });
 }
+
+// Expose send primitives for inline scripts that create their own game cards.
+window.tiFlash = { ensureSendReady, addFileFromPath, sendQueueItem, updateButtons };
