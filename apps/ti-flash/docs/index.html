@@ -14,8 +14,34 @@
       gtag('js', new Date());
       gtag('config', 'G-KKHH0F88Y4', { 'anonymize_ip': true });
     </script>
+    <style>
+      #site-nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:1.5em;padding:.7em 1.5em;background:#3237d4;color:#fff;font-family:Roboto,Tahoma,Arial,sans-serif;}
+      #site-nav .brand{font-weight:bold;font-size:1.05em;letter-spacing:.3px;color:#fff;}
+      #site-nav .nav-links{display:flex;gap:.4em;flex-wrap:wrap;}
+      #site-nav .nav-links a{color:rgba(255,255,255,.88);text-decoration:none;padding:.45em .95em;border-radius:5px;font-size:.95em;transition:background .15s,color .15s;}
+      #site-nav .nav-links a:hover{background:rgba(255,255,255,.16);}
+      #site-nav .nav-links a.active{background:#fff;color:#3237d4;font-weight:600;}
+      main{padding-top:1em;}
+      .cat-tabs{display:flex;flex-wrap:wrap;gap:.5em;justify-content:center;margin:1em auto .9em auto;max-width:800px;}
+      .cat-tab{border:1px solid #cdcdce;background:#fff;color:#444;border-radius:20px;padding:.5em 1.1em;cursor:pointer;font-family:Roboto,Tahoma,Arial,sans-serif;font-size:.9em;transition:background .15s,color .15s,border-color .15s;}
+      .cat-tab:hover{border-color:#3237d4;}
+      .cat-tab.active{background:#3237d4;color:#fff;border-color:#3237d4;}
+      .cat-grid{max-width:800px;margin:0 auto;}
+      .empty-note{text-align:center;color:#777;font-family:Roboto,Tahoma,Arial,sans-serif;font-size:.95em;margin:1em auto;max-width:620px;line-height:1.5;}
+      .empty-note.beta{color:#b07a10;}
+      footer{position:static !important;}
+      @media screen and (max-width:600px){#site-nav{flex-wrap:wrap;gap:.6em;}}
+    </style>
   </head>
   <body>
+    <nav id="site-nav">
+      <span class="brand">ti-flash</span>
+      <div class="nav-links">
+        <a href="#" data-page="page-home" class="active">Home</a>
+        <a href="#" data-page="page-our-apps">Our Apps/Games</a>
+        <a href="#" data-page="page-other-apps">Other Apps/Games</a>
+      </div>
+    </nav>
     <main>
       <section id="flow">
         <h1>ti-flash is fork of ticalc.link but better</h1>
@@ -46,14 +72,39 @@
             (usually via the <strong>CabriJr</strong> app, see the instructions that come with it).
           </p>
         </section>
+      </section>
 
+      <section id="page-our-apps">
+        <h1>Our Apps &amp; Games</h1>
+        <p>Apps and games made by us for the TI-84 family.</p>
+        <div class="cat-tabs">
+          <button class="cat-tab active" data-model="all">All</button>
+          <button class="cat-tab" data-model="ce">TI-84 Plus CE</button>
+          <button class="cat-tab" data-model="84">TI-84 Plus (still in beta testing)</button>
+        </div>
+        <div class="cat-grid" id="our-apps-grid">
+          <p class="empty-note">Our own apps and games aren&rsquo;t here yet &mdash; check back soon! Everything currently available lives in <strong>Other Apps/Games</strong>.</p>
+        </div>
+      </section>
+
+      <section id="page-other-apps">
+        <h1>Other Apps &amp; Games</h1>
+        <p>Apps and games from the community that work on your calculator.</p>
+        <div class="cat-tabs">
+          <button class="cat-tab active" data-model="all">All</button>
+          <button class="cat-tab" data-model="ce">TI-84 Plus CE</button>
+          <button class="cat-tab" data-model="84">TI-84 Plus (still in beta testing)</button>
+        </div>
+        <p class="empty-note beta" id="page-other-apps-plus-note" style="display:none;">TI-84 Plus support is still in beta testing &mdash; no apps or games available for it yet.</p>
+        <p class="empty-note" id="page-other-apps-empty" style="display:none;">The games library unlocks after you finish the OS check on the <strong>Home</strong> page (step 2).</p>
         <section id="games">
           <h2>Games library</h2>
           <p class="hint">Pick a game below and it'll send all its files to your calculator.</p>
-          <p id="games-locked" class="hint">Complete the OS check above (step 2) to unlock the games library.</p>
+          <p id="games-locked" class="hint">Complete the OS check on the <strong>Home</strong> page (step 2) to unlock the games library.</p>
           <div id="game-categories" style="display: none;"></div>
         </section>
       </section>
+
       <section id="incompatible">
         <h1>ticalc.link</h1>
         <p>Sorry, this web browser does not support WebUSB. Please try using a different web browser, such as a recent version of Chrome or Edge!</p>
@@ -76,5 +127,89 @@
         <section class="buttons"></section>
       </section>
     </section>
+    <script>
+      (function() {
+        var PAGES = ['page-home', 'page-our-apps', 'page-other-apps'];
+
+        var flow = document.getElementById('flow');
+        var incompat = document.getElementById('incompatible');
+        var navLinks = document.querySelectorAll('#site-nav a[data-page]');
+        var supported = false;
+
+        // Index.js decides WebUSB support on window load (it toggles #flow/#incompatible).
+        // Snapshot its verdict so Home renders the right content.
+        window.addEventListener('load', function() {
+          supported = !!(flow && flow.classList.contains('active'));
+        });
+
+        function showPage(target, actor) {
+          if (flow) flow.classList.toggle('active', target === 'page-home' && supported);
+          if (incompat) incompat.classList.toggle('active', target === 'page-home' && !supported);
+          PAGES.forEach(function(p) {
+            if (p === 'page-home') return;
+            var el = document.getElementById(p);
+            if (el) el.classList.toggle('active', p === target);
+          });
+          navLinks.forEach(function(x) {
+            x.classList.toggle('active', x === actor);
+          });
+          var popup = document.getElementById('popup');
+          if (popup) popup.classList.remove('active');
+        }
+
+        navLinks.forEach(function(a) {
+          a.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            showPage(a.getAttribute('data-page'), a);
+          });
+        });
+
+        // ---- model filters (All / TI-84 Plus CE / TI-84 Plus beta) ----
+        function applyFilter(scopeId) {
+          var scope = document.getElementById(scopeId);
+          if (!scope) return;
+          var active = 'all';
+          scope.querySelectorAll('.cat-tab').forEach(function(t) {
+            if (t.classList.contains('active')) active = t.getAttribute('data-model');
+          });
+          var cards = scope.querySelectorAll('.game-category');
+          var visible = 0;
+          cards.forEach(function(c) {
+            var m = c.getAttribute('data-model') || 'ce';
+            var show = (active === 'all' || active === m);
+            c.style.display = show ? '' : 'none';
+            if (show) visible++;
+          });
+          var betaNote = document.getElementById(scopeId + '-plus-note');
+          if (betaNote) betaNote.style.display = (active === '84') ? 'block' : 'none';
+          var empty = document.getElementById(scopeId + '-empty');
+          if (empty) empty.style.display = (visible === 0 && active !== '84') ? 'block' : 'none';
+        }
+
+        function setupTabs(scopeId) {
+          var scope = document.getElementById(scopeId);
+          if (!scope) return;
+          scope.querySelectorAll('.cat-tab').forEach(function(t) {
+            t.addEventListener('click', function() {
+              scope.querySelectorAll('.cat-tab').forEach(function(x) { x.classList.remove('active'); });
+              t.classList.add('active');
+              applyFilter(scopeId);
+            });
+          });
+        }
+
+        // Everything in the current library is for the TI-84 Plus CE.
+        function tagCECards() {
+          document.querySelectorAll('#page-other-apps .game-category').forEach(function(c) {
+            if (!c.hasAttribute('data-model')) c.setAttribute('data-model', 'ce');
+          });
+          applyFilter('page-other-apps');
+        }
+
+        setupTabs('page-our-apps');
+        setupTabs('page-other-apps');
+        setInterval(tagCECards, 500);
+      })();
+    </script>
   </body>
 </html>
