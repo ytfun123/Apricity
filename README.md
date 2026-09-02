@@ -1,6 +1,6 @@
 # Apricity
 This is a web proxy. It uses a wisp-based backend.
-Feel free to make contributions and forks, as long as you respect the terms of the licence.
+Feel free to make contributions and report issues, if you want to make fork you can, as long as you respect the terms of the **LICENSE-ADDITIONS** .
 
 ## Features
 - Many different built in games and apps
