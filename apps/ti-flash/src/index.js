@@ -35,9 +35,9 @@ const BUILTIN_FILES = [
 // other code changes needed.
 const GAME_CATEGORIES = [
   { key: 'gd', label: 'Geometry Dash', dir: 'games/gd' },
-  { key: 'mc', label: 'Minecraft', dir: 'games/mc', plusDir: 'games/ti-84 plus/minecraft-plus' },
+  { key: 'mc', label: 'Minecraft', dir: 'games/mc', plusDir: 'games/ti-84 plus/minecraft-plus', screenshot: 'games/ti-84 plus/minecraft-plus/screenshot.webp' },
   { key: 'pacman', label: 'Pac-Man', dir: 'games/pacman' },
-  { key: 'flappy', label: 'Flappy Bird', dir: 'games/flappy', plusDir: 'games/ti-84 plus/flappy-plus' },
+  { key: 'flappy', label: 'Flappy Bird', dir: 'games/flappy', plusDir: 'games/ti-84 plus/flappy-plus', screenshot: 'games/ti-84 plus/flappy-plus/screenshot.png' },
   { key: 'portal', label: 'Portal', dir: 'games/portal' },
   { key: 'tetris', label: 'Tetris', dir: 'games/tetris' },
   { key: '2048', label: '2048', dir: 'games/2048', plusDir: 'games/ti-84 plus/2048' },
@@ -48,13 +48,13 @@ const GAME_CATEGORIES = [
   { key: 'dino', label: 'Dino Run', dir: 'games/dino' },
   { key: 'swipe', label: 'SwipeCE', dir: 'games/swipe' },
   { key: 'falldown', label: 'Falldown', dir: 'games/falldown' },
-  { key: '256snake', label: '256 Snake', dir: 'games/ti-84 plus/256snake', model: 'plus' },
+  { key: '256snake', label: '256 Snake', dir: 'games/ti-84 plus/256snake', model: 'plus', screenshot: 'games/ti-84 plus/256snake/screenshot.gif' },
   { key: 'alien-breed', label: 'Alien Breed 5', dir: 'games/ti-84 plus/alien-breed', model: 'plus' },
   { key: 'centipede', label: 'Centipede', dir: 'games/ti-84 plus/centipede', model: 'plus' },
-  { key: 'fnaf', label: "Five Nights at Freddy's", dir: 'games/ti-84 plus/fnaf', model: 'plus' },
+  { key: 'fnaf', label: "Five Nights at Freddy's", dir: 'games/ti-84 plus/fnaf', model: 'plus', screenshot: 'games/ti-84 plus/fnaf/screenshot.png' },
   { key: 'minesweeper', label: 'Grayscale Minesweeper', dir: 'games/ti-84 plus/minesweeper', model: 'plus' },
-  { key: 'pokemon-battle-factory', label: 'Pokemon Battle Factory', dir: 'games/ti-84 plus/pokemon-battle-factory', model: 'plus' },
-  { key: 'pokemon-topaze', label: 'Pokemon Topaze', dir: 'games/ti-84 plus/pokemon-topaze', model: 'plus' },
+  { key: 'pokemon-battle-factory', label: 'Pokemon Battle Factory', dir: 'games/ti-84 plus/pokemon-battle-factory', model: 'plus', screenshot: 'games/ti-84 plus/pokemon-battle-factory/screenshot.webp' },
+  { key: 'pokemon-topaze', label: 'Pokemon Topaze', dir: 'games/ti-84 plus/pokemon-topaze', model: 'plus', screenshot: 'games/ti-84 plus/pokemon-topaze/screenshot.webp' },
   { key: 'racer3d', label: 'Racer 3D', dir: 'games/ti-84 plus/racer3d', model: 'plus' },
   { key: 'tag', label: 'Tag', dir: 'games/ti-84 plus/tag', model: 'plus' },
   { key: 'worlds-hardest-game', label: "The World's Hardest Game", dir: 'games/ti-84 plus/worlds-hardest-game', model: 'plus' }
@@ -559,6 +559,15 @@ async function initGameCategories() {
     const card = document.createElement('section');
     card.className = 'game-category';
     card.setAttribute('data-model', hasCE ? (hasPlus ? 'both' : 'ce') : 'plus');
+
+    if ( category.screenshot ) {
+      const img = document.createElement('img');
+      img.className = 'game-screenshot';
+      img.src = category.screenshot + '?v=7';
+      img.alt = category.label;
+      img.loading = 'lazy';
+      card.appendChild(img);
+    }
 
     if ( isDual ) {
       const btnCE = document.createElement('button');
