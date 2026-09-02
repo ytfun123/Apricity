@@ -1,0 +1,6 @@
+[
+  { "file": "Pokedat.8xv", "label": "Pokemon data" },
+  { "file": "PokeSPR.8xv", "label": "Pokemon sprites" },
+  { "file": "Pokemap.8xv", "label": "Pokemon map" },
+  { "file": "POKEMON.8xp", "label": "Pokemon Topaze 1.15" }
+]

@@ -6,7 +6,7 @@
     <title>ti-flash</title>
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="favicon.ico">
-    <script type="text/javascript" src="index.js?v=6"></script>
+    <script type="text/javascript" src="index.js?v=7"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-KKHH0F88Y4"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -104,9 +104,8 @@
         <div class="cat-tabs">
           <button class="cat-tab active" data-model="all">All</button>
           <button class="cat-tab" data-model="ce">TI-84 Plus CE</button>
-          <button class="cat-tab" data-model="84">TI-84 Plus (still in beta testing)</button>
+          <button class="cat-tab" data-model="84">TI-84 Plus</button>
         </div>
-        <p class="empty-note beta" id="page-other-apps-plus-note" style="display:none;">TI-84 Plus support is still in beta testing &mdash; no apps or games available for it yet.</p>
         <p class="empty-note" id="page-other-apps-empty" style="display:none;">No apps or games here yet — check back soon!</p>
         <section id="games">
           <h2>Games library</h2>
@@ -141,6 +140,9 @@
     <script>
       (function() {
         var PAGES = ['page-home', 'page-our-apps', 'page-other-apps'];
+        var style = document.createElement('style');
+        style.textContent = '.game-category .download-btn.plus-btn{background:#5a6fd6;margin-left:.5em}.game-category .download-btn.plus-btn:hover{background:#4a5ec6}';
+        document.head.appendChild(style);
 
         var flow = document.getElementById('flow');
         var incompat = document.getElementById('incompatible');
@@ -175,7 +177,7 @@
           });
         });
 
-        // ---- model filters (All / TI-84 Plus CE / TI-84 Plus beta) ----
+        // ---- model filters (All / TI-84 Plus CE / TI-84 Plus) ----
         function applyFilter(scopeId) {
           var scope = document.getElementById(scopeId);
           if (!scope) return;
@@ -187,14 +189,14 @@
           var visible = 0;
           cards.forEach(function(c) {
             var m = c.getAttribute('data-model') || 'ce';
-            var show = (active === 'all' || active === m);
+            var show = (active === 'all' || active === m ||
+              (active === 'ce' && m === 'both') ||
+              (active === '84' && m === 'both'));
             c.style.display = show ? '' : 'none';
             if (show) visible++;
           });
-          var betaNote = document.getElementById(scopeId + '-plus-note');
-          if (betaNote) betaNote.style.display = (active === '84') ? 'block' : 'none';
           var empty = document.getElementById(scopeId + '-empty');
-          if (empty) empty.style.display = (visible === 0 && active !== '84') ? 'block' : 'none';
+          if (empty) empty.style.display = (visible === 0) ? 'block' : 'none';
         }
 
         function setupTabs(scopeId) {
@@ -209,7 +211,7 @@
           });
         }
 
-        // Everything in the current library is for the TI-84 Plus CE.
+        // Tag game cards that don't have a model yet.
         function tagCECards() {
           document.querySelectorAll('#page-other-apps .game-category').forEach(function(c) {
             if (!c.hasAttribute('data-model')) c.setAttribute('data-model', 'ce');
@@ -270,7 +272,7 @@
             status.textContent = '';
 
             try {
-              var res = await fetch('our-apps/netchat/manifest.json?v=6');
+              var res = await fetch('our-apps/netchat/manifest.json?v=7');
               if (!res.ok) throw new Error('manifest not found');
               var files = await res.json();
               if (!Array.isArray(files) || !files.length) { status.textContent = 'No files available.'; sendBtn.disabled = false; sendBtn.textContent = 'Send to Calculator'; return; }

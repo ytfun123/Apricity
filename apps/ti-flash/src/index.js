@@ -35,12 +35,12 @@ const BUILTIN_FILES = [
 // other code changes needed.
 const GAME_CATEGORIES = [
   { key: 'gd', label: 'Geometry Dash', dir: 'games/gd' },
-  { key: 'mc', label: 'Minecraft', dir: 'games/mc' },
+  { key: 'mc', label: 'Minecraft', dir: 'games/mc', plusDir: 'games/ti-84 plus/minecraft-plus' },
   { key: 'pacman', label: 'Pac-Man', dir: 'games/pacman' },
-  { key: 'flappy', label: 'Flappy Bird', dir: 'games/flappy' },
+  { key: 'flappy', label: 'Flappy Bird', dir: 'games/flappy', plusDir: 'games/ti-84 plus/flappy-plus' },
   { key: 'portal', label: 'Portal', dir: 'games/portal' },
   { key: 'tetris', label: 'Tetris', dir: 'games/tetris' },
-  { key: '2048', label: '2048', dir: 'games/2048' },
+  { key: '2048', label: '2048', dir: 'games/2048', plusDir: 'games/ti-84 plus/2048' },
   { key: 'checkers', label: 'Checkers', dir: 'games/checkers' },
   { key: 'chess', label: 'Chess', dir: 'games/chess' },
   { key: 'totl', label: 'This Is The Only Level', dir: 'games/totl' },
@@ -48,7 +48,16 @@ const GAME_CATEGORIES = [
   { key: 'dino', label: 'Dino Run', dir: 'games/dino' },
   { key: 'swipe', label: 'SwipeCE', dir: 'games/swipe' },
   { key: 'falldown', label: 'Falldown', dir: 'games/falldown' },
-  { key: 'netchat', label: 'NetChat', dir: 'our-apps/netchat' }
+  { key: '256snake', label: '256 Snake', dir: 'games/ti-84 plus/256snake', model: 'plus' },
+  { key: 'alien-breed', label: 'Alien Breed 5', dir: 'games/ti-84 plus/alien-breed', model: 'plus' },
+  { key: 'centipede', label: 'Centipede', dir: 'games/ti-84 plus/centipede', model: 'plus' },
+  { key: 'fnaf', label: "Five Nights at Freddy's", dir: 'games/ti-84 plus/fnaf', model: 'plus' },
+  { key: 'minesweeper', label: 'Grayscale Minesweeper', dir: 'games/ti-84 plus/minesweeper', model: 'plus' },
+  { key: 'pokemon-battle-factory', label: 'Pokemon Battle Factory', dir: 'games/ti-84 plus/pokemon-battle-factory', model: 'plus' },
+  { key: 'pokemon-topaze', label: 'Pokemon Topaze', dir: 'games/ti-84 plus/pokemon-topaze', model: 'plus' },
+  { key: 'racer3d', label: 'Racer 3D', dir: 'games/ti-84 plus/racer3d', model: 'plus' },
+  { key: 'tag', label: 'Tag', dir: 'games/ti-84 plus/tag', model: 'plus' },
+  { key: 'worlds-hardest-game', label: "The World's Hardest Game", dir: 'games/ti-84 plus/worlds-hardest-game', model: 'plus' }
 ];
 
 // ---------------------------------------------------------------------------
@@ -391,7 +400,7 @@ async function addFileToQueue(rawFile) {
 async function addFileFromPath(label, path, extra = {}) {
   try {
     const sep = path.includes('?') ? '&' : '?';
-    const response = await fetch(`${path}${sep}v=6`);
+    const response = await fetch(`${path}${sep}v=7`);
     if ( !response.ok ) throw new Error('Not found');
     const buffer = new Uint8Array(await response.arrayBuffer());
     const tiFile = tifiles.parseFile(buffer);
@@ -541,66 +550,91 @@ async function initGameCategories() {
   const container = document.querySelector('#game-categories');
   if ( !container ) return;
   container.innerHTML = '';
-  container.setAttribute('data-model', 'ce');
 
   for ( const category of GAME_CATEGORIES ) {
+    const hasCE = !category.model || category.model === 'ce';
+    const hasPlus = category.plusDir || category.model === 'plus';
+    const isDual = hasCE && hasPlus;
+
     const card = document.createElement('section');
     card.className = 'game-category';
-    card.setAttribute('data-model', 'ce');
+    card.setAttribute('data-model', hasCE ? (hasPlus ? 'both' : 'ce') : 'plus');
 
-    const downloadBtn = document.createElement('button');
-    downloadBtn.className = 'download-btn';
-    downloadBtn.textContent = `Send ${category.label}`;
-    card.appendChild(downloadBtn);
+    if ( isDual ) {
+      const btnCE = document.createElement('button');
+      btnCE.className = 'download-btn';
+      btnCE.textContent = `Install for TI-84 Plus CE`;
+      card.appendChild(btnCE);
 
-    const status = document.createElement('p');
-    status.className = 'game-status';
-    card.appendChild(status);
+      const btnPlus = document.createElement('button');
+      btnPlus.className = 'download-btn plus-btn';
+      btnPlus.textContent = `Install for TI-84 Plus`;
+      card.appendChild(btnPlus);
 
-    downloadBtn.addEventListener('click', async () => {
-      const ready = await ensureSendReady();
-      if ( !ready ) return;
+      const status = document.createElement('p');
+      status.className = 'game-status';
+      card.appendChild(status);
 
-      downloadBtn.disabled = true;
-      downloadBtn.textContent = 'Loading file list\u2026';
-      status.textContent = '';
+      btnCE.addEventListener('click', () => sendCategoryFiles(category, btnCE, status));
+      btnPlus.addEventListener('click', () => sendCategoryFiles({ ...category, dir: category.plusDir }, btnPlus, status));
+    } else {
+      const label = hasPlus ? `Install for TI-84 Plus` : `Send ${category.label}`;
+      const downloadBtn = document.createElement('button');
+      downloadBtn.className = 'download-btn';
+      downloadBtn.textContent = label;
+      card.appendChild(downloadBtn);
 
-      const files = await fetchManifest(category);
-      if ( !files.length ) {
-        downloadBtn.disabled = false;
-        downloadBtn.textContent = `Send ${category.label}`;
-        status.textContent = 'No files available yet. Check back soon!';
-        return;
-      }
+      const status = document.createElement('p');
+      status.className = 'game-status';
+      card.appendChild(status);
 
-      let sent = 0;
-      for ( const entry of files ) {
-        downloadBtn.textContent = `Sending ${sent + 1}/${files.length}\u2026`;
-        const item = await addFileFromPath(entry.label || entry.file, `${category.dir}/${entry.file}`);
-        updateButtons();
-        if ( item && item.tiFile ) {
-          await sendQueueItem(item.id);
-          if ( item.status === 'sent' ) sent++;
-        }
-      }
-
-      downloadBtn.disabled = false;
-      if ( sent === files.length ) {
-        downloadBtn.textContent = `Reinstall ${category.label}`;
-        status.textContent = `${category.label} installed \u2713`;
-      } else {
-        downloadBtn.textContent = `Retry ${category.label}`;
-        status.textContent = `${sent}/${files.length} files sent \u2014 check the queue above for errors.`;
-      }
-    });
+      downloadBtn.addEventListener('click', () => sendCategoryFiles(category, downloadBtn, status));
+    }
 
     container.appendChild(card);
   }
 }
 
+async function sendCategoryFiles(category, btn, status) {
+  const ready = await ensureSendReady();
+  if ( !ready ) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Loading file list\u2026';
+  status.textContent = '';
+
+  const files = await fetchManifest(category);
+  if ( !files.length ) {
+    btn.disabled = false;
+    btn.textContent = `Send ${category.label}`;
+    status.textContent = 'No files available yet. Check back soon!';
+    return;
+  }
+
+  let sent = 0;
+  for ( const entry of files ) {
+    btn.textContent = `Sending ${sent + 1}/${files.length}\u2026`;
+    const item = await addFileFromPath(entry.label || entry.file, `${category.dir}/${entry.file}`);
+    updateButtons();
+    if ( item && item.tiFile ) {
+      await sendQueueItem(item.id);
+      if ( item.status === 'sent' ) sent++;
+    }
+  }
+
+  btn.disabled = false;
+  if ( sent === files.length ) {
+    btn.textContent = `Reinstall`;
+    status.textContent = `${category.label} installed \u2713`;
+  } else {
+    btn.textContent = `Retry`;
+    status.textContent = `${sent}/${files.length} files sent \u2014 check the queue above for errors.`;
+  }
+}
+
 async function fetchManifest(category) {
   try {
-    const response = await fetch(`${category.dir}/manifest.json?v=6`);
+    const response = await fetch(`${category.dir}/manifest.json?v=7`);
     if ( !response.ok ) throw new Error('Not found');
     const files = await response.json();
     return Array.isArray(files) ? files : [];
