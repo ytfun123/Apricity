@@ -6,7 +6,7 @@
     <title>ti-flash</title>
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="favicon.ico">
-    <script type="text/javascript" src="index.js?v=7"></script>
+    <script type="text/javascript" src="index.js?v=9"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-KKHH0F88Y4"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -142,24 +142,24 @@
         var PAGES = ['page-home', 'page-our-apps', 'page-other-apps'];
         var style = document.createElement('style');
         style.textContent = `
-          .game-category{background:#fff;border-radius:10px;padding:0;margin-bottom:1em;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden}
-          .game-card-inner{display:flex;gap:1em;padding:1.2em;align-items:flex-start}
-          .game-thumb{flex-shrink:0;width:100px;height:100px;border-radius:8px;overflow:hidden;background:#e8e8e8;display:flex;align-items:center;justify-content:center}
-          .game-thumb img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
-          .game-info{flex:1;min-width:0}
-          .game-title{margin:0 0 .3em 0;font-size:1.1em;color:#333;font-family:Roboto,Tahoma,Arial,sans-serif}
-          .game-desc{margin:0 0 .8em 0;font-size:.85em;color:#777;line-height:1.4;font-family:Roboto,Tahoma,Arial,sans-serif}
-          .game-btn-row{display:flex;gap:.6em;flex-wrap:wrap}
-          .game-btn-row .download-btn{flex:1;min-width:80px;padding:.6em 1em;border:none;border-radius:6px;font-size:.85em;font-weight:600;cursor:pointer;transition:background .2s;font-family:Roboto,Tahoma,Arial,sans-serif}
-          .game-btn-row .download-btn.btn-ce{background:#4a90d9;color:#fff}
-          .game-btn-row .download-btn.btn-ce:hover{background:#3a7cc9}
-          .game-btn-row .download-btn.btn-plus{background:#5a6fd6;color:#fff}
-          .game-btn-row .download-btn.btn-plus:hover{background:#4a5ec6}
-          .game-btn-row .download-btn:not(.btn-ce):not(.btn-plus){background:#4a90d9;color:#fff;width:100%}
-          .game-btn-row .download-btn:not(.btn-ce):not(.btn-plus):hover{background:#3a7cc9}
-          .game-btn-row .download-btn:disabled{opacity:.5;cursor:default}
-          .game-status{margin:.5em 0 0 0;font-size:.8em;color:#666;font-family:Roboto,Tahoma,Arial,sans-serif}
-          @media(max-width:500px){.game-card-inner{flex-direction:column;align-items:stretch}.game-thumb{width:100%;height:140px}}
+          #game-categories .game-category{background:#fff;border-radius:10px;padding:0;margin-bottom:1em;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;text-align:left!important}
+          #game-categories .game-card-inner{display:flex!important;gap:1em;padding:1.2em;align-items:flex-start}
+          #game-categories .game-thumb{flex-shrink:0;width:100px;height:100px;border-radius:8px;overflow:hidden;background:#e8e8e8;display:flex;align-items:center;justify-content:center}
+          #game-categories .game-thumb img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+          #game-categories .game-info{flex:1;min-width:0}
+          #game-categories .game-title{margin:0 0 .3em 0;font-size:1.1em;color:#333;font-family:Roboto,Tahoma,Arial,sans-serif}
+          #game-categories .game-desc{margin:0 0 .8em 0;font-size:.85em;color:#777;line-height:1.4;font-family:Roboto,Tahoma,Arial,sans-serif}
+          #game-categories .game-btn-row{display:flex!important;gap:.6em;flex-wrap:wrap}
+          #game-categories .game-btn-row .download-btn{flex:1!important;min-width:80px!important;padding:.6em 1em!important;border:none!important;border-radius:6px!important;font-size:.85em!important;font-weight:600!important;cursor:pointer;transition:background .2s;font-family:Roboto,Tahoma,Arial,sans-serif;display:block!important;width:auto!important}
+          #game-categories .game-btn-row .download-btn.btn-ce{background:#4a90d9!important;color:#fff}
+          #game-categories .game-btn-row .download-btn.btn-ce:hover{background:#3a7cc9}
+          #game-categories .game-btn-row .download-btn.btn-plus{background:#5a6fd6!important;color:#fff}
+          #game-categories .game-btn-row .download-btn.btn-plus:hover{background:#4a5ec6}
+          #game-categories .game-btn-row .download-btn:not(.btn-ce):not(.btn-plus){background:#4a90d9!important;color:#fff;flex:1 0 100%!important}
+          #game-categories .game-btn-row .download-btn:not(.btn-ce):not(.btn-plus):hover{background:#3a7cc9}
+          #game-categories .game-btn-row .download-btn:disabled{opacity:.5;cursor:default}
+          #game-categories .game-status{margin:.5em 0 0 0;font-size:.8em;color:#666;font-family:Roboto,Tahoma,Arial,sans-serif}
+          @media(max-width:500px){#game-categories .game-card-inner{flex-direction:column;align-items:stretch}#game-categories .game-thumb{width:100%;height:140px}}
         `;
         document.head.appendChild(style);
 

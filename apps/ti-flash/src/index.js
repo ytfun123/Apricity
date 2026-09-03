@@ -400,7 +400,7 @@ async function addFileToQueue(rawFile) {
 async function addFileFromPath(label, path, extra = {}) {
   try {
     const sep = path.includes('?') ? '&' : '?';
-    const response = await fetch(`${path}${sep}v=7`);
+    const response = await fetch(`${path}${sep}v=9`);
     if ( !response.ok ) throw new Error('Not found');
     const buffer = new Uint8Array(await response.arrayBuffer());
     const tiFile = tifiles.parseFile(buffer);
@@ -567,7 +567,7 @@ async function initGameCategories() {
       const imgWrap = document.createElement('div');
       imgWrap.className = 'game-thumb';
       const img = document.createElement('img');
-      img.src = category.screenshot + '?v=7';
+      img.src = category.screenshot + '?v=9';
       img.alt = category.label;
       img.loading = 'lazy';
       imgWrap.appendChild(img);
@@ -664,7 +664,7 @@ async function sendCategoryFiles(category, btn, status) {
 
 async function fetchManifest(category) {
   try {
-    const response = await fetch(`${category.dir}/manifest.json?v=7`);
+    const response = await fetch(`${category.dir}/manifest.json?v=9`);
     if ( !response.ok ) throw new Error('Not found');
     const files = await response.json();
     return Array.isArray(files) ? files : [];
