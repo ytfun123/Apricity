@@ -35,12 +35,12 @@ const BUILTIN_FILES = [
 // other code changes needed.
 const GAME_CATEGORIES = [
   { key: 'gd', label: 'Geometry Dash', dir: 'games/gd', desc: 'Classic rhythm-based platformer for CE.' },
-  { key: 'mc', label: 'Minecraft', dir: 'games/mc', plusDir: 'games/ti-84 plus/minecraft-plus', desc: 'Build and mine in this blocky world.', screenshot: 'games/ti-84 plus/minecraft-plus/screenshot.webp' },
+  { key: 'mc', label: 'Minecraft', dir: 'games/mc', plusDir: 'games/ti-84 plus/minecraft-plus', desc: 'Build and mine in this blocky world.', screenshot: 'games/ti-84 plus/minecraft-plus/screenshot.webp?v=10' },
   { key: 'pacman', label: 'Pac-Man', dir: 'games/pacman', desc: 'Navigate the maze and eat all the dots.' },
-  { key: 'flappy', label: 'Flappy Bird', dir: 'games/flappy', plusDir: 'games/ti-84 plus/flappy-plus', desc: 'The infamous bird-flapping game.', screenshot: 'games/ti-84 plus/flappy-plus/screenshot.png' },
+  { key: 'flappy', label: 'Flappy Bird', dir: 'games/flappy', plusDir: 'games/ti-84 plus/flappy-plus', desc: 'The infamous bird-flapping game.', screenshot: 'games/ti-84 plus/flappy-plus/screenshot.png?v=10' },
   { key: 'portal', label: 'Portal', dir: 'games/portal', desc: 'Think with portals \u2014 puzzle platformer.' },
-  { key: 'tetris', label: 'Tetris', dir: 'games/tetris', desc: 'Stack blocks and clear lines.', screenshot: 'games/tetris/screenshot.webp' },
-  { key: '2048', label: '2048', dir: 'games/2048', plusDir: 'games/ti-84 plus/2048', desc: 'Slide and merge tiles to reach 2048.', screenshot: 'games/ti-84 plus/2048/screenshot.webp' },
+  { key: 'tetris', label: 'Tetris', dir: 'games/tetris', desc: 'Stack blocks and clear lines.', screenshot: 'games/tetris/screenshot.webp?v=10' },
+  { key: '2048', label: '2048', dir: 'games/2048', plusDir: 'games/ti-84 plus/2048', desc: 'Slide and merge tiles to reach 2048.', screenshot: 'games/ti-84 plus/2048/screenshot.webp?v=10' },
   { key: 'checkers', label: 'Checkers', dir: 'games/checkers', desc: 'Classic board game for two players.' },
   { key: 'chess', label: 'Chess', dir: 'games/chess', desc: 'The game of kings.' },
   { key: 'totl', label: 'This Is The Only Level', dir: 'games/totl', desc: 'Same level, different rules every time.' },
@@ -48,16 +48,16 @@ const GAME_CATEGORIES = [
   { key: 'dino', label: 'Dino Run', dir: 'games/dino', desc: 'Run, jump, and dodge obstacles.' },
   { key: 'swipe', label: 'SwipeCE', dir: 'games/swipe', desc: 'Fast-paced swipe puzzle game.' },
   { key: 'falldown', label: 'Falldown', dir: 'games/falldown', desc: 'Keep the ball falling through gaps.' },
-  { key: '256snake', label: '256 Snake', dir: 'games/ti-84 plus/256snake', model: 'plus', desc: 'Tiny 256-byte snake game.', screenshot: 'games/ti-84 plus/256snake/screenshot.png' },
-  { key: 'alien-breed', label: 'Alien Breed 5', dir: 'games/ti-84 plus/alien-breed', model: 'plus', desc: '54 levels of alien-shooting action.', screenshot: 'games/ti-84 plus/alien-breed/screenshot.png' },
-  { key: 'centipede', label: 'Centipede', dir: 'games/ti-84 plus/centipede', model: 'plus', desc: 'Classic arcade shooter.', screenshot: 'games/ti-84 plus/centipede/screenshot.png' },
-  { key: 'fnaf', label: "Five Nights at Freddy's", dir: 'games/ti-84 plus/fnaf', model: 'plus', desc: 'Survive the night at Freddy Fazbear\'s.', screenshot: 'games/ti-84 plus/fnaf/screenshot.webp' },
+  { key: '256snake', label: '256 Snake', dir: 'games/ti-84 plus/256snake', model: 'plus', desc: 'Tiny 256-byte snake game.', screenshot: 'games/ti-84 plus/256snake/screenshot.png?v=10' },
+  { key: 'alien-breed', label: 'Alien Breed 5', dir: 'games/ti-84 plus/alien-breed', model: 'plus', desc: '54 levels of alien-shooting action.', screenshot: 'games/ti-84 plus/alien-breed/screenshot.png?v=10' },
+  { key: 'centipede', label: 'Centipede', dir: 'games/ti-84 plus/centipede', model: 'plus', desc: 'Classic arcade shooter.', screenshot: 'games/ti-84 plus/centipede/screenshot.png?v=10' },
+  { key: 'fnaf', label: "Five Nights at Freddy's", dir: 'games/ti-84 plus/fnaf', model: 'plus', desc: 'Survive the night at Freddy Fazbear\'s.', screenshot: 'games/ti-84 plus/fnaf/screenshot.webp?v=10' },
   { key: 'minesweeper', label: 'Grayscale Minesweeper', dir: 'games/ti-84 plus/minesweeper', model: 'plus', desc: 'Classic minesweeper with grayscale graphics.' },
-  { key: 'pokemon-battle-factory', label: 'Pokemon Battle Factory', dir: 'games/ti-84 plus/pokemon-battle-factory', model: 'plus', desc: 'Pokemon battle game for Plus.', screenshot: 'games/ti-84 plus/pokemon-battle-factory/screenshot.png' },
-  { key: 'pokemon-topaze', label: 'Pokemon Topaze', dir: 'games/ti-84 plus/pokemon-topaze', model: 'plus', desc: 'Catch and battle Pokemon.', screenshot: 'games/ti-84 plus/pokemon-topaze/screenshot.webp' },
-  { key: 'racer3d', label: 'Racer 3D', dir: 'games/ti-84 plus/racer3d', model: 'plus', desc: '3D racing game.', screenshot: 'games/ti-84 plus/racer3d/screenshot.png' },
-  { key: 'tag', label: 'Tag', dir: 'games/ti-84 plus/tag', model: 'plus', desc: 'Chase and tag across levels.', screenshot: 'games/ti-84 plus/tag/screenshot.png' },
-  { key: 'worlds-hardest-game', label: "The World's Hardest Game", dir: 'games/ti-84 plus/worlds-hardest-game', model: 'plus', desc: '30 brutal levels of precision platforming.', screenshot: 'games/ti-84 plus/worlds-hardest-game/screenshot.webp' }
+  { key: 'pokemon-battle-factory', label: 'Pokemon Battle Factory', dir: 'games/ti-84 plus/pokemon-battle-factory', model: 'plus', desc: 'Pokemon battle game for Plus.', screenshot: 'games/ti-84 plus/pokemon-battle-factory/screenshot.png?v=10' },
+  { key: 'pokemon-topaze', label: 'Pokemon Topaze', dir: 'games/ti-84 plus/pokemon-topaze', model: 'plus', desc: 'Catch and battle Pokemon.', screenshot: 'games/ti-84 plus/pokemon-topaze/screenshot.webp?v=10' },
+  { key: 'racer3d', label: 'Racer 3D', dir: 'games/ti-84 plus/racer3d', model: 'plus', desc: '3D racing game.', screenshot: 'games/ti-84 plus/racer3d/screenshot.png?v=10' },
+  { key: 'tag', label: 'Tag', dir: 'games/ti-84 plus/tag', model: 'plus', desc: 'Chase and tag across levels.', screenshot: 'games/ti-84 plus/tag/screenshot.png?v=10' },
+  { key: 'worlds-hardest-game', label: "The World's Hardest Game", dir: 'games/ti-84 plus/worlds-hardest-game', model: 'plus', desc: '30 brutal levels of precision platforming.', screenshot: 'games/ti-84 plus/worlds-hardest-game/screenshot.webp?v=10' }
 ];
 
 // ---------------------------------------------------------------------------
@@ -567,7 +567,7 @@ async function initGameCategories() {
       const imgWrap = document.createElement('div');
       imgWrap.className = 'game-thumb';
       const img = document.createElement('img');
-      img.src = category.screenshot + '?v=9';
+      img.src = category.screenshot;
       img.alt = category.label;
       img.loading = 'lazy';
       imgWrap.appendChild(img);
