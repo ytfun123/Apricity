@@ -1,25 +1,23 @@
 /**
  * ===== APRICITY — ACTIVATION KEYS BACKEND (Google Apps Script) =====
  *
- * Validates/redeems activation keys and tracks distinct devices (by device
- * id AND fingerprint). Creates and manages ONLY a "Keys" sheet/tab.
- *
- * Deploy as its OWN Web App with its OWN /exec URL, bound to a Sheet.
+ * Validates/redeems activation keys, tracks distinct devices by device id
+ * and fingerprint. Manages ONLY a "Keys" sheet.
  *
  * ---- "Keys" sheet columns (auto-created on first run) ----
- *   A: Key
+ *   A: Key            e.g. APRICOT-1234
  *   B: Max Uses       number, or "inf" for unlimited
- *   C: Used Count     (script-maintained)
- *   D: Devices        ||| delimited list of device IDs
- *   E: Fingerprints   ||| delimited list, same order as Devices
+ *   C: Used Count     (script-maintained = distinct devices)
+ *   D: Devices        ||| delimited device IDs
+ *   E: Fingerprints   ||| delimited, same order as Devices
  *   F: Status         "Active" / "Expired"
- *   G: Last Used      timestamp
- *   H: Created        timestamp (optional)
+ *   G: Last Used      timestamp of most recent redemption
+ *   H: Created        timestamp, optional
  *
- * NOTE: Devices and Fingerprints use ||| as delimiter instead of comma,
- *       because canvas fingerprints contain commas (base64 data URIs).
+ * NOTE: Uses ||| delimiter (not comma) because canvas fingerprints
+ *       contain commas from base64 data.
  *
- * ---- Request format (POST, x-www-form-urlencoded) ----
+ * ---- Request format (POST) ----
  *   key=<key>&did=<device id>&fp=<fingerprint>
  *
  * ---- Response ----
@@ -51,20 +49,27 @@ function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var p = (e && e.parameter) || {};
-    var fp = String(p.fp || '').trim();
-    var did = String(p.did || '').trim();
+    // Parse params from both e.parameter and e.postData as fallback
+    var p = parseRequestParams_(e);
     var key = String(p.key || '').trim();
+    var did = String(p.did || '').trim();
+    var fp  = String(p.fp || '').trim();
 
-    // Validate fingerprint — reject garbage
-    if (fp && !isValidFingerprint_(fp)) {
-      Logger.log('Rejected invalid fp="' + fp + '" for did="' + did + '" key="' + key + '"');
-      fp = '';
+    // Log everything so you can debug from View > Logs
+    Logger.log('=== doPost ===');
+    Logger.log('key="' + key + '" did="' + did + '" fp="' + fp + '"');
+    Logger.log('e.parameter keys: ' + JSON.stringify(Object.keys(e.parameter || {})));
+    if (e.postData && e.postData.contents) {
+      Logger.log('e.postData.contents=' + e.postData.contents);
     }
 
     var result = validateKey_(key, did, fp);
-    Logger.log('key="' + key + '" did="' + did + '" fp="' + fp + '" => ' + JSON.stringify(result));
+    Logger.log('result: ' + JSON.stringify(result));
     return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    Logger.log('ERROR in doPost: ' + err.message);
+    return ContentService.createTextOutput(JSON.stringify({ valid: false, reason: 'error', message: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   } finally {
     lock.releaseLock();
@@ -76,19 +81,36 @@ function doGet(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ===================== FINGERPRINT VALIDATION =====================
+// ===================== PARAMETER PARSING =====================
 
 /**
- * Fingerprints from the front-end look like "fp_abc123" (base-36 hash).
- * Reject anything that's clearly not a valid fingerprint.
+ * Robustly extract POST parameters. GAS can lose e.parameter on redirects,
+ * so we also parse e.postData.contents as a fallback.
  */
-function isValidFingerprint_(fp) {
-  if (!fp || fp === 'fp_unknown') return false;
-  // Must start with "fp_" and be at least 5 chars total
-  if (fp.indexOf('fp_') !== 0 || fp.length < 5) return false;
-  // Must only contain safe characters
-  if (/[^a-zA-Z0-9_]/.test(fp)) return false;
-  return true;
+function parseRequestParams_(e) {
+  // Try e.parameter first (standard GAS behavior)
+  if (e && e.parameter && e.parameter.key) {
+    return e.parameter;
+  }
+
+  // Fallback: parse the raw POST body
+  if (e && e.postData && e.postData.contents) {
+    var raw = e.postData.contents;
+    var params = {};
+    var pairs = raw.split('&');
+    for (var i = 0; i < pairs.length; i++) {
+      var pair = pairs[i].split('=');
+      if (pair.length === 2) {
+        params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+      }
+    }
+    if (params.key) {
+      Logger.log('Parsed from postData: ' + JSON.stringify(params));
+      return params;
+    }
+  }
+
+  return {};
 }
 
 // ===================== SHEET HELPERS =====================
@@ -103,8 +125,7 @@ function getKeysSheet_() {
     sheet.getRange(1, 1, 1, KEYS_HEADERS.length).setValues([KEYS_HEADERS]).setFontWeight('bold');
     sheet.setFrozenRows(1);
   }
-  // Migrate old comma-delimited data to ||| delimiter on first run
-  migrateCommaToPipe_(sheet);
+  migrateOldDelimiters_(sheet);
   return sheet;
 }
 
@@ -121,17 +142,14 @@ function findRowByKey_(sheet, key) {
 }
 
 // ===================== DELIMITER HANDLING =====================
-// Old data used commas, which breaks canvas fingerprints. Migrate to |||.
 
 function parseList_(raw) {
   var s = String(raw || '').trim();
   if (s === '') return [];
-  // If it contains |||, use that as delimiter
   if (s.indexOf(DELIM) !== -1) {
     return s.split(DELIM);
   }
-  // Legacy comma-delimited: only 1 element = no commas in data, safe
-  // Multiple elements with exactly the right count = probably not canvas fp
+  // Legacy comma-delimited (only works if no commas in data)
   return s.split(',');
 }
 
@@ -139,7 +157,7 @@ function joinList_(arr) {
   return arr.join(DELIM);
 }
 
-function migrateCommaToPipe_(sheet) {
+function migrateOldDelimiters_(sheet) {
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return;
 
@@ -150,7 +168,6 @@ function migrateCommaToPipe_(sheet) {
   for (var i = 0; i < devices.length; i++) {
     var d = String(devices[i][0] || '');
     var f = String(fingerprints[i][0] || '');
-    // Only migrate if the data uses commas and has multiple entries
     if (d.indexOf(',') !== -1 && d.indexOf(DELIM) === -1) {
       sheet.getRange(i + 2, COL_DEVICES).setValue(d.replace(/,/g, DELIM));
       changed = true;
@@ -160,12 +177,10 @@ function migrateCommaToPipe_(sheet) {
       changed = true;
     }
   }
-  if (changed) {
-    Logger.log('Migrated comma-delimited data to ||| delimiter');
-  }
+  if (changed) Logger.log('Migrated comma-delimited data to |||');
 }
 
-// ===================== KEY VALIDATION / USAGE TRACKING =====================
+// ===================== KEY VALIDATION =====================
 
 function parseMaxUses_(raw) {
   var s = String(raw).trim().toLowerCase();
@@ -174,9 +189,6 @@ function parseMaxUses_(raw) {
   return isNaN(n) ? Infinity : n;
 }
 
-/**
- * Validates + (if applicable) redeems a key for a given device.
- */
 function validateKey_(key, did, fp) {
   if (!key) return { valid: false, reason: 'not_found', message: 'Invalid activation key.' };
 
@@ -191,16 +203,15 @@ function validateKey_(key, did, fp) {
   var devices = parseList_(vals[COL_DEVICES - 1]);
   var fingerprints = parseList_(vals[COL_FINGERPRINTS - 1]);
 
-  // Pad fingerprints array to match devices length if sheet is stale
+  // Pad fingerprints to match devices length
   while (fingerprints.length < devices.length) {
     fingerprints.push('');
   }
 
   var existingIndex = did ? devices.indexOf(did) : -1;
 
-  // Device already redeemed — keep fingerprint fresh, don't burn a use
+  // Device already redeemed — update fingerprint if we got a better one
   if (existingIndex !== -1) {
-    // Only update fingerprint if we got a valid one
     if (fp && fp !== fingerprints[existingIndex]) {
       fingerprints[existingIndex] = fp;
       sheet.getRange(row, COL_FINGERPRINTS).setValue(joinList_(fingerprints));
@@ -227,7 +238,7 @@ function validateKey_(key, did, fp) {
   sheet.getRange(row, COL_LAST_USED).setValue(new Date());
   paintKeyRow_(sheet, row, status);
 
-  Logger.log('New device did="' + did + '" fp="' + fp + '" key="' + key + '" count=' + newCount);
+  Logger.log('NEW device: did="' + did + '" fp="' + fp + '" key="' + key + '" count=' + newCount);
   return { valid: true, reason: 'redeemed' };
 }
 
@@ -239,9 +250,6 @@ function paintKeyRow_(sheet, row, status) {
   sheet.getRange(row, 1, 1, KEYS_HEADERS.length).setBackground(color);
 }
 
-/**
- * Re-check every key row and repaint Active/Expired colors.
- */
 function repaintAllKeys() {
   var sheet = getKeysSheet_();
   var lastRow = sheet.getLastRow();
@@ -258,44 +266,69 @@ function repaintAllKeys() {
   }
 }
 
-// ===================== BACKFILL MISSING FINGERPRINTS =====================
+// ===================== FINGERPRINT DIAGNOSTICS =====================
 
-/**
- * Scans all keys and reports how many devices have empty fingerprints.
- * Useful for diagnosing collection issues.
- */
 function diagnoseFingerprints() {
   var sheet = getKeysSheet_();
   var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return 'No keys found.';
+  if (lastRow < 2) {
+    SpreadsheetApp.getUi().alert('No keys found.');
+    return;
+  }
 
   var data = sheet.getRange(2, 1, lastRow - 1, KEYS_HEADERS.length).getValues();
   var totalDevices = 0;
   var totalWithFp = 0;
   var totalEmpty = 0;
+  var rows = [];
 
   for (var i = 0; i < data.length; i++) {
+    var key = String(data[i][COL_KEY - 1] || '').trim();
     var devices = parseList_(data[i][COL_DEVICES - 1]);
     var fingerprints = parseList_(data[i][COL_FINGERPRINTS - 1]);
     while (fingerprints.length < devices.length) fingerprints.push('');
 
     for (var j = 0; j < devices.length; j++) {
       totalDevices++;
-      if (fingerprints[j] && fingerprints[j] !== 'fp_unknown') {
+      var fpVal = fingerprints[j] || '';
+      if (fpVal && fpVal !== 'fp_unknown') {
         totalWithFp++;
       } else {
         totalEmpty++;
       }
+      rows.push([key, devices[j], fpVal, fpVal && fpVal !== 'fp_unknown' ? 'Yes' : 'NO']);
     }
   }
 
-  var msg = 'Total devices: ' + totalDevices
+  var pct = totalDevices > 0 ? Math.round(totalWithFp / totalDevices * 100) : 0;
+  var summary = 'Total devices: ' + totalDevices
     + '\nWith fingerprint: ' + totalWithFp
     + '\nMissing/invalid: ' + totalEmpty
-    + '\nCoverage: ' + (totalDevices > 0 ? Math.round(totalWithFp / totalDevices * 100) : 0) + '%';
-  Logger.log(msg);
-  SpreadsheetApp.getUi().alert('Fingerprint Diagnosis', msg, SpreadsheetApp.getUi().ButtonSet.OK);
-  return msg;
+    + '\nCoverage: ' + pct + '%';
+
+  // Build a detail sheet
+  var sheetName = 'FP Diagnosis';
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var diagSheet = ss.getSheetByName(sheetName);
+  if (diagSheet) diagSheet.clear();
+  else diagSheet = ss.insertSheet(sheetName);
+
+  diagSheet.getRange(1, 1, 1, 1).setValue(summary).setFontWeight('bold');
+  diagSheet.getRange(3, 1, 1, 4).setValues([['Key', 'Device ID', 'Fingerprint', 'Has FP?']]).setFontWeight('bold');
+
+  if (rows.length > 0) {
+    diagSheet.getRange(4, 1, rows.length, 4).setValues(rows);
+    // Highlight missing fingerprints in red
+    for (var k = 0; k < rows.length; k++) {
+      if (rows[k][3] === 'NO') {
+        diagSheet.getRange(4 + k, 1, 1, 4).setBackground(COLOR_EXPIRED);
+      }
+    }
+  }
+
+  diagSheet.autoResizeColumns(1, 4);
+  ss.setActiveSheet(diagSheet);
+  SpreadsheetApp.getUi().alert('Fingerprint Diagnosis', summary, SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 // ===================== ADMIN MENU =====================
@@ -352,7 +385,7 @@ function showKeyUsageDialog() {
     + '    document.getElementById("status").textContent = "Building sheet...";'
     + '    google.script.run'
     + '      .withSuccessHandler(function (sheetName) {'
-    + '        document.getElementById("status").textContent = "Done — see the \\"" + sheetName + "\\" tab.";'
+    + '        document.getElementById("status").textContent = "Done \u2014 see the \\"" + sheetName + "\\" tab.";'
     + '        btn.disabled = false;'
     + '      })'
     + '      .withFailureHandler(function (err) {'
@@ -364,7 +397,7 @@ function showKeyUsageDialog() {
     + '</script>';
 
   var output = HtmlService.createHtmlOutput(html).setWidth(360).setHeight(200);
-  SpreadsheetApp.getUi().showModalDialog(output, 'Apricity Keys — View Usage');
+  SpreadsheetApp.getUi().showModalDialog(output, 'Apricity Keys \u2014 View Usage');
 }
 
 function escapeHtml_(s) {
@@ -391,18 +424,14 @@ function generateKeyUsageSheet(key) {
   var sheetName = ('Usage - ' + key).slice(0, 100);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var usageSheet = ss.getSheetByName(sheetName);
-  if (usageSheet) {
-    usageSheet.clear();
-  } else {
-    usageSheet = ss.insertSheet(sheetName);
-  }
+  if (usageSheet) usageSheet.clear();
+  else usageSheet = ss.insertSheet(sheetName);
 
   usageSheet.getRange(1, 1, 1, 2).setValues([['Key:', key]]).setFontWeight('bold');
   usageSheet.getRange(2, 1, 1, 2).setValues([['Max Uses:', maxUses]]);
   usageSheet.getRange(3, 1, 1, 2).setValues([['Status:', status]]);
   usageSheet.getRange(4, 1, 1, 2).setValues([['Total Devices:', devices.length]]);
 
-  // Count valid fingerprints
   var withFp = fingerprints.filter(function(f) { return f && f !== 'fp_unknown'; }).length;
   usageSheet.getRange(5, 1, 1, 2).setValues([['With Fingerprint:', withFp + ' / ' + devices.length]]);
 
@@ -418,7 +447,6 @@ function generateKeyUsageSheet(key) {
     });
     usageSheet.getRange(headerRow + 1, 1, rows.length, 3).setValues(rows);
 
-    // Highlight rows without fingerprints in red
     for (var i = 0; i < rows.length; i++) {
       if (rows[i][2] === 'No') {
         usageSheet.getRange(headerRow + 1 + i, 1, 1, 3).setBackground(COLOR_EXPIRED);
