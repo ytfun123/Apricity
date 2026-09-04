@@ -8002,7 +8002,8 @@ function generateFingerprint() {
     const visits = parseInt(localStorage.getItem('apricity-visit-count') || '0') + 1;
     localStorage.setItem('apricity-visit-count', String(visits));
 
-    const fp = generateFingerprint();
+    const fp = localStorage.getItem('apricity-fp') || generateFingerprint();
+    localStorage.setItem('apricity-fp', fp);
     window._apricityDid = did;
     window._apricityFp  = fp;
     window._apricityEndpoint = 'https://script.google.com/macros/s/AKfycbzodCN9S5ZcDrg9TqR9B_iaLNtopyOsofajWP2gkciMqLUeaAlz7G-JegYM_FSmE4yp/exec';
