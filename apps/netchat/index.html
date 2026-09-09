@@ -106,10 +106,7 @@ select:focus{border-color:var(--accent)}
 
 <div class="app">
   <div class="panel">
-    <div style="display:flex;align-items:center;gap:10px">
-      <img src="icon.png" alt="" style="width:34px;height:34px;border-radius:9px;flex:none;object-fit:cover">
-      <h1 style="margin:0">netchat</h1>
-    </div>
+    <h1>netchat</h1>
 
     <div>
       <h2 style="margin-bottom:8px">Calculator</h2>
@@ -395,16 +392,15 @@ function resolveAccount(username, password, color) {
 const MESSAGES_PATH = '/rest/v1/messages';
 
 async function supabaseRequest(path, method, payload) {
-const r = await fetch('/api/proxy?service=supabase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        path,
-        method,
-        body: payload ? JSON.stringify(payload) : undefined,
-        netchat: true
-      })
-    });
+  const r = await fetch('/api/proxy?service=supabase', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      path,
+      method,
+      body: payload ? JSON.stringify(payload) : undefined
+    })
+  });
   return r.json();
 }
 
