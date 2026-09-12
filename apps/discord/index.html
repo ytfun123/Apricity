@@ -1054,6 +1054,7 @@ function playNotificationSound(){
       <div class="snav-item active" id="snav-account" onclick="switchSettings('account')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">person</span><span class="ic-emoji">👤</span></span> Account</div>
       <div class="snav-item" id="snav-profile" onclick="switchSettings('profile')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">palette</span><span class="ic-emoji">🎨</span></span> Profile</div>
       <div class="snav-item" id="snav-notifs" onclick="switchSettings('notifs')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">notifications</span><span class="ic-emoji">🔔</span></span> Notifications</div>
+      ${isLiteMode(me)?`<div class="snav-item" id="snav-privacy" onclick="switchSettings('privacy')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">shield</span><span class="ic-emoji">🛡️</span></span> Privacy</div>`:''}
       <div class="snav-divider"></div>
       <div class="settings-nav-title">App</div>
       <div class="snav-item" id="snav-appearance" onclick="switchSettings('appearance')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">desktop_windows</span><span class="ic-emoji">🖥️</span></span> Appearance</div>
@@ -1864,7 +1865,7 @@ async function bootApp(){
   await loadAllUsers();
   await loadFriendsData();
   myDMs=JSON.parse(localStorage.getItem('nc_dms')||'[]');
-  await loadMyServers();
+  loadMyServers();  // don't await — loads from cache instantly, refreshes API in background
   goFriends();
   hideLoading();
   // Home menu wiring: ensure the button responds and menu is pre-rendered
@@ -1975,7 +1976,7 @@ async function confirmLiteModeToggle(){
   errEl.style.display='none';
   if(!pass){ errEl.textContent='Enter your password'; errEl.style.display='block'; return; }
   try{
-    const verify=await rpc('login_user',{p_username:me.username,p_password:pass});
+    const verify=await rpc('verify_password',{p_username:me.username,p_password:pass});
     if(verify&&verify.error){ errEl.textContent='Incorrect password'; errEl.style.display='block'; return; }
     if(window._liteAction==='show_hide'){
       if(window._showLiteValue) localStorage.setItem('nc_show_lite_role','1');
@@ -1984,7 +1985,7 @@ async function confirmLiteModeToggle(){
       document.getElementById('lite-confirm-modal').classList.remove('on');
       showToast('Setting updated','success');
       document.getElementById('my-name-el').innerHTML=escH(me.username)+renderRoleBadges(me);
-      if(document.getElementById('settings-panel').classList.contains('on')) switchSettings('account');
+      if(document.getElementById('settings-panel').classList.contains('on')) switchSettings('privacy');
       return;
     }
     if(window._liteAction==='show_full'){
@@ -1994,7 +1995,7 @@ async function confirmLiteModeToggle(){
       document.getElementById('lite-confirm-modal').classList.remove('on');
       showToast('Setting updated','success');
       document.getElementById('my-name-el').innerHTML=escH(me.username)+renderRoleBadges(me);
-      if(document.getElementById('settings-panel').classList.contains('on')) switchSettings('account');
+      if(document.getElementById('settings-panel').classList.contains('on')) switchSettings('privacy');
       return;
     }
     const r=await rpc('set_lite_mode',{p_token:token,p_enable_lite:pendingLiteModeEnable});
@@ -2049,7 +2050,7 @@ async function confirmNukeAllMessages(){
   if(!pass){ errEl.textContent='Enter your password'; errEl.style.display='block'; return; }
   if(typed!=='DELETE'){ errEl.textContent='Type DELETE exactly to confirm'; errEl.style.display='block'; return; }
   try{
-    const verify=await rpc('login_user',{p_username:me.username,p_password:pass});
+    const verify=await rpc('verify_password',{p_username:me.username,p_password:pass});
     if(verify&&verify.error){ errEl.textContent='Incorrect password'; errEl.style.display='block'; return; }
     const r=await rpc('nuke_all_messages',{p_token:token});
     if(r&&r.error){ errEl.textContent=r.error; errEl.style.display='block'; return; }
@@ -2091,7 +2092,7 @@ async function confirmNukeSelective(){
   const keepIds=Array.from(nukeSelKeepIds);
   if(!keepIds.length){ errEl.textContent='Check at least one user to keep'; errEl.style.display='block'; return; }
   try{
-    const verify=await rpc('login_user',{p_username:me.username,p_password:pass});
+    const verify=await rpc('verify_password',{p_username:me.username,p_password:pass});
     if(verify&&verify.error){ errEl.textContent='Incorrect password'; errEl.style.display='block'; return; }
     const r=await rpc('nuke_messages_except_users',{p_token:token,p_keep_user_ids:keepIds});
     if(r&&r.error){ errEl.textContent=r.error; errEl.style.display='block'; return; }
@@ -2241,7 +2242,7 @@ function saveServerCaches(){
 }
 function renderServerRail(){
   const backEl=document.getElementById('srv-back');
-  if(backEl) backEl.style.display=navHistory.length?'flex':'none';
+  if(backEl) backEl.style.display='flex';
   const el=document.getElementById('custom-srv-icons');
   if(!el) return;
   el.innerHTML=customServers.map(s=>`
@@ -2409,6 +2410,8 @@ async function goDM(userId,username,color){
   pushNav(view,active,activeServerId);
   view='dm'; activeServerId=null;
   active={type:'dm',id:'dm-'+userId,userId,name:username,icon:'💬',desc:'Direct message',color};
+  // Ensure this DM shows in sidebar — persist if not already tracked
+  if(!myDMs.find(u=>u.id===userId)){myDMs.push({id:userId,username,color});try{localStorage.setItem('nc_dms',JSON.stringify(myDMs));}catch(e){}}
   document.getElementById('server-title').textContent='ChillCord';
   document.getElementById('members-btn').style.display='none';
   document.getElementById('invite-btn').style.display='none';
@@ -4069,6 +4072,7 @@ async function deleteCurrentServer(){
     await supaFetch(`/rest/v1/servers?id=eq.${srvSetId}`,{method:'DELETE'});
     customServers=customServers.filter(s=>s.id!==srvSetId);
     activeServerId=null; srvSetId=null;
+    try{localStorage.setItem('nc_servers',JSON.stringify(customServers));}catch(e){}
     renderServerRail();
     goGlobal();
     showToast('Server deleted','success');
@@ -4079,7 +4083,9 @@ async function leaveServer(serverId){
   try{
     await supaFetch(`/rest/v1/server_members?server_id=eq.${serverId}&user_id=eq.${me.id}`,{method:'DELETE'});
     customServers=customServers.filter(s=>s.id!==serverId);
-    activeServerId=null; renderServerRail(); goGlobal();
+    activeServerId=null;
+    try{localStorage.setItem('nc_servers',JSON.stringify(customServers));}catch(e){}
+    renderServerRail(); goGlobal();
     showToast('You left the server');
   }catch(e){showToast('Failed to leave','error');}
 }
@@ -4114,6 +4120,7 @@ function renderSettingsTab(tab){
   else if(tab==='profile') el.innerHTML=profileTabHTML();
   else if(tab==='notifs') el.innerHTML=notifsTabHTML();
   else if(tab==='appearance') el.innerHTML=appearanceTabHTML();
+  else if(tab==='privacy') el.innerHTML=privacyTabHTML();
 }
 
 function accountTabHTML(){
@@ -4161,19 +4168,8 @@ function accountTabHTML(){
     <div style="height:20px"></div>
     <div style="font-size:13px;font-weight:600;margin-bottom:10px;padding-top:14px;border-top:1px solid var(--border)">Lite Mode</div>
     <div class="s-toggle">
-      <div><div class="s-toggle-label">Lite Mode</div><div class="s-toggle-sub">Same Co-Owner/Creator moderation powers, but hides your Google Sheet access. Requires your password to switch.</div></div>
+      <div><div class="s-toggle-label">Lite Mode</div></div>
       <div class="toggle-switch${isLiteMode(me)?' on':''}" id="tog-lite-mode" onclick="requestLiteModeToggle(this)"></div>
-    </div>`:''}
-    ${isLiteMode(me)?`
-    <div style="height:16px"></div>
-    <div style="font-size:13px;font-weight:600;margin-bottom:10px;padding-top:14px;border-top:1px solid var(--border)">Privacy</div>
-    <div class="s-toggle">
-      <div><div class="s-toggle-label">Show Lite Role Badge</div><div class="s-toggle-sub">Show your "(Lite)" suffix to other users. By default this is hidden. Requires your password to change.</div></div>
-      <div class="toggle-switch${localStorage.getItem('nc_show_lite_role')==='1'?' on':''}" id="tog-show-lite" onclick="requestShowLiteToggle()"></div>
-    </div>
-    <div class="s-toggle" style="margin-top:12px">
-      <div><div class="s-toggle-label">Show Full Role</div><div class="s-toggle-sub">Show "Co-Owner"/"Creator" instead of "Co-Owner (Lite)"/"Creator (Lite)" to others. On by default for lite users. Requires your password to change.</div></div>
-      <div class="toggle-switch${localStorage.getItem('nc_show_full_role')!=='0'?' on':''}" id="tog-show-full" onclick="requestShowFullToggle()"></div>
     </div>`:''}
     ${isOwnerOrCoOwnerOnly(me)?`
     <div style="height:20px"></div>
@@ -4246,6 +4242,19 @@ function notifsTabHTML(){
     <button class="s-btn neutral" style="margin-top:10px" onclick="playNotificationSound()">${icon('volume_up','🔊')} Test sound</button>`;
 }
 
+function privacyTabHTML(){
+  return `
+    <div class="s-section-title">Privacy</div>
+    <div class="s-toggle">
+      <div><div class="s-toggle-label">Show Lite Role Badge</div><div class="s-toggle-sub">Show your "(Lite)" suffix to other users. By default this is hidden.</div></div>
+      <div class="toggle-switch${localStorage.getItem('nc_show_lite_role')==='1'?' on':''}" id="tog-show-lite" onclick="requestShowLiteToggle()"></div>
+    </div>
+    <div class="s-toggle" style="margin-top:12px">
+      <div><div class="s-toggle-label">Show Full Role</div><div class="s-toggle-sub">Show "Co-Owner"/"Creator" instead of "Co-Owner (Lite)"/"Creator (Lite)" to others.</div></div>
+      <div class="toggle-switch${localStorage.getItem('nc_show_full_role')!=='0'?' on':''}" id="tog-show-full" onclick="requestShowFullToggle()"></div>
+    </div>`;
+}
+
 function appearanceTabHTML(){
   const compact=localStorage.getItem('nc_compact')==='1';
   const ts=localStorage.getItem('nc_timestamps')!=='0';
@@ -4303,7 +4312,7 @@ async function saveUsername(){
   if(containsBlockedWord(newName)){document.getElementById('s-acc-err').textContent='That username isn\'t allowed, please choose another';document.getElementById('s-acc-err').classList.add('show');return;}
   try{
     // Verify password first by logging in
-    const check=await rpc('login_user',{p_username:me.username,p_password:pass});
+    const check=await rpc('verify_password',{p_username:me.username,p_password:pass});
     if(check.error){document.getElementById('s-acc-err').textContent='Incorrect password';document.getElementById('s-acc-err').classList.add('show');return;}
     // Update username
     await supaFetch(`/rest/v1/users?id=eq.${me.id}`,{
@@ -4331,7 +4340,7 @@ async function savePassword(){
   if(newP!==conf){document.getElementById('s-pass-err').textContent='Passwords do not match';document.getElementById('s-pass-err').classList.add('show');return;}
   try{
     // Verify old password
-    const check=await rpc('login_user',{p_username:me.username,p_password:oldP});
+    const check=await rpc('verify_password',{p_username:me.username,p_password:oldP});
     if(check.error){document.getElementById('s-pass-err').textContent='Current password is incorrect';document.getElementById('s-pass-err').classList.add('show');return;}
     // Update password hash via Supabase function
     await supaFetch(`/rest/v1/users?id=eq.${me.id}`,{
