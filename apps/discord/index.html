@@ -1170,8 +1170,9 @@ let me=null, token=null;
 let channels=[], allUsers=[], myDMs=[];
 let navHistory=[];
 function pushNav(view,active,activeServerId){navHistory.push({view,active:active?{...active}:null,activeServerId});if(navHistory.length>30)navHistory.shift();}
-function goBack(){if(!navHistory.length)return;const h=navHistory.pop();view=h.view;active=h.active;activeServerId=h.activeServerId;document.getElementById('srv-home')?.classList.remove('active');document.getElementById('srv-main')?.classList.remove('active');document.querySelectorAll('#custom-srv-icons .srv-icon').forEach(el=>el.classList.remove('active'));renderServerRail();if(view==='global'){activeServerId=null;document.getElementById('srv-home')?.classList.add('active');active={type:'global',name:'Global Chat',icon:'🌐',desc:'Everyone is here'};renderGlobalSidebar();updateHeader();loadMsgs();}else if(view==='friends'){activeServerId=null;renderDMSidebar();renderFriendsMain();updateHeader();}else if(view==='dm'&&active){renderDMSidebar();updateHeader();loadMsgs();}else if(view==='default'){renderDefaultSidebar();updateHeader();loadMsgs();}else if(view==='home'){goHome();return;}}
+function goBack(){if(!navHistory.length){try{window.parent.goBackFromDiscord();}catch(e){}return;}const h=navHistory.pop();view=h.view;active=h.active;activeServerId=h.activeServerId;document.getElementById('srv-home')?.classList.remove('active');document.getElementById('srv-main')?.classList.remove('active');document.querySelectorAll('#custom-srv-icons .srv-icon').forEach(el=>el.classList.remove('active'));renderServerRail();if(view==='global'){activeServerId=null;document.getElementById('srv-home')?.classList.add('active');active={type:'global',name:'Global Chat',icon:'🌐',desc:'Everyone is here'};renderGlobalSidebar();updateHeader();loadMsgs();}else if(view==='friends'){activeServerId=null;renderDMSidebar();renderFriendsMain();updateHeader();}else if(view==='dm'&&active){renderDMSidebar();updateHeader();loadMsgs();}else if(view==='default'){renderDefaultSidebar();updateHeader();loadMsgs();}else if(view==='home'){goHome();return;}}
 let customServers=[];
+try{customServers=JSON.parse(localStorage.getItem('nc_servers')||'[]')||[];}catch(e){}
 let activeServerId=null;
 let currentMute=null; // {action_type:'mute', reason, message, expires_at, moderator} for the CURRENT context, or null
 
@@ -1986,6 +1987,16 @@ async function confirmLiteModeToggle(){
       if(document.getElementById('settings-panel').classList.contains('on')) switchSettings('account');
       return;
     }
+    if(window._liteAction==='show_full'){
+      if(window._showFullValue) localStorage.removeItem('nc_show_full_role');
+      else localStorage.setItem('nc_show_full_role','0');
+      window._liteAction=null; window._showFullValue=null;
+      document.getElementById('lite-confirm-modal').classList.remove('on');
+      showToast('Setting updated','success');
+      document.getElementById('my-name-el').innerHTML=escH(me.username)+renderRoleBadges(me);
+      if(document.getElementById('settings-panel').classList.contains('on')) switchSettings('account');
+      return;
+    }
     const r=await rpc('set_lite_mode',{p_token:token,p_enable_lite:pendingLiteModeEnable});
     if(r&&r.error){ errEl.textContent=r.error; errEl.style.display='block'; return; }
     me.role=r.role; me.role2=r.role2; me.role3=r.role3;
@@ -2009,6 +2020,20 @@ function requestShowLiteToggle(){
   document.getElementById('lite-confirm-modal').classList.add('on');
   window._liteAction='show_hide';
   window._showLiteValue=showIt;
+}
+function requestShowFullToggle(){
+  pendingLiteModeEnable=null;
+  const isOn=localStorage.getItem('nc_show_full_role')!=='0';
+  const turningOn=!isOn;
+  document.getElementById('lite-confirm-title').textContent=turningOn?'Show Full Role':'Show Lite Role';
+  document.getElementById('lite-confirm-sub').textContent=turningOn
+    ?'This shows "Co-Owner"/"Creator" instead of the Lite variant to other users. Enter your password to confirm.'
+    :'This shows "Co-Owner (Lite)"/"Creator (Lite)" to other users. Enter your password to confirm.';
+  document.getElementById('lite-pass-input').value='';
+  document.getElementById('lite-pass-err').style.display='none';
+  document.getElementById('lite-confirm-modal').classList.add('on');
+  window._liteAction='show_full';
+  window._showFullValue=turningOn;
 }
 function requestNukeAllMessages(){
   document.getElementById('nuke-pass-input').value='';
@@ -2192,9 +2217,17 @@ async function callFriend(uid,username,color){
 async function loadMyServers(){
   try{
     const r=await rpc('get_my_servers',{p_token:token});
-    customServers=Array.isArray(r)?r:[];
+    if(Array.isArray(r)){
+      customServers=r;
+      try{localStorage.setItem('nc_servers',JSON.stringify(r));}catch(e){}
+    }
     renderServerRail();
-  }catch(e){customServers=[];}
+  }catch(e){
+    if(!customServers.length){
+      try{customServers=JSON.parse(localStorage.getItem('nc_servers')||'[]')||[];}catch(e2){customServers=[];}
+    }
+    renderServerRail();
+  }
 }
 
 let lastCustomChList=[];
@@ -2684,9 +2717,14 @@ function currentMsgTable(){
 }
 const ROLE_LABELS={'C':'Creator','O':'Owner','V':'Co-Owner','CS':'Creator (Lite)','VS':'Co-Owner (Lite)','A':'Admin','M':'Mod','T':'Tester','H':'Helper'};
 const LITE_ROLES=['CS','VS'];
+const FULL_ROLE_MAP={'CS':'C','VS':'V'};
 function renderRoleBadges(user){
   const showLite=localStorage.getItem('nc_show_lite_role')==='1';
-  const roles=[user?.role,user?.role2,user?.role3].filter(r=>r&&ROLE_LABELS[r]&&(showLite||!LITE_ROLES.includes(r)));
+  const showFull=localStorage.getItem('nc_show_full_role')!=='0';
+  let roles=[user?.role,user?.role2,user?.role3].filter(r=>r&&ROLE_LABELS[r]&&(showLite||!LITE_ROLES.includes(r)));
+  if(showFull){
+    roles=roles.map(r=>FULL_ROLE_MAP[r]||r);
+  }
   if(roles.length){
     return roles.map(r=>`<span class="role-badge role-${r}">${ROLE_LABELS[r]}</span>`).join('');
   }
@@ -4132,6 +4170,10 @@ function accountTabHTML(){
     <div class="s-toggle">
       <div><div class="s-toggle-label">Show Lite Role Badge</div><div class="s-toggle-sub">Show your "(Lite)" suffix to other users. By default this is hidden. Requires your password to change.</div></div>
       <div class="toggle-switch${localStorage.getItem('nc_show_lite_role')==='1'?' on':''}" id="tog-show-lite" onclick="requestShowLiteToggle()"></div>
+    </div>
+    <div class="s-toggle" style="margin-top:12px">
+      <div><div class="s-toggle-label">Show Full Role</div><div class="s-toggle-sub">Show "Co-Owner"/"Creator" instead of "Co-Owner (Lite)"/"Creator (Lite)" to others. On by default for lite users. Requires your password to change.</div></div>
+      <div class="toggle-switch${localStorage.getItem('nc_show_full_role')!=='0'?' on':''}" id="tog-show-full" onclick="requestShowFullToggle()"></div>
     </div>`:''}
     ${isOwnerOrCoOwnerOnly(me)?`
     <div style="height:20px"></div>
