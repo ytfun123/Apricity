@@ -125,6 +125,8 @@ body{font-family:var(--font);background:var(--bg-app);color:var(--text-hi);font-
 .srv-icon{width:46px;height:46px;border-radius:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;transition:border-radius .2s,transform .12s,box-shadow .15s;position:relative;flex-shrink:0;color:#fff;font-weight:700;user-select:none}
 .srv-icon:hover{transform:translateY(-1px)}
 .srv-icon.active{border-radius:16px;box-shadow:0 0 0 2px var(--bg-app),0 0 0 4px var(--accent)}
+#srv-back{opacity:.65;transition:opacity .15s,transform .12s}
+#srv-back:hover{opacity:1;transform:translateY(-1px)}
 .home-menu{position:absolute;left:56px;top:0;background:var(--bg-sidebar);border:1px solid var(--border);box-shadow:0 8px 20px rgba(0,0,0,.6);padding:8px;border-radius:8px;min-width:220px;display:none;z-index:60}
 .srv-icon.open .home-menu{display:block}
 .home-menu-btn{background:transparent;border:1px solid var(--border);color:var(--text-hi);padding:6px 8px;border-radius:6px;cursor:pointer;font-weight:600}
@@ -725,6 +727,7 @@ function playNotificationSound(){
 <div class="app">
   <!-- SERVER BAR -->
   <div class="server-bar">
+    <div class="srv-icon" id="srv-back" onclick="goBack()" title="Go back" style="background:var(--bg-surface);border:1px solid var(--border);color:var(--text-md);font-size:18px;cursor:pointer"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">arrow_back</span><span class="ic-emoji">⬅️</span></span></div>
     <div class="srv-icon" id="srv-home" onclick="goHome(event)" oncontextmenu="toggleHomeMenu(event);return false;" title="Home" style="background:var(--accent)"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">home</span><span class="ic-emoji">🏠</span></span>
       <div id="home-menu" class="home-menu" onclick="event.stopPropagation()">
         <!-- menu populated by renderHomeMenu() -->
@@ -1165,6 +1168,9 @@ function playNotificationSound(){
 // ================================================================
 let me=null, token=null;
 let channels=[], allUsers=[], myDMs=[];
+let navHistory=[];
+function pushNav(view,active,activeServerId){navHistory.push({view,active:active?{...active}:null,activeServerId});if(navHistory.length>30)navHistory.shift();}
+function goBack(){if(!navHistory.length)return;const h=navHistory.pop();view=h.view;active=h.active;activeServerId=h.activeServerId;document.getElementById('srv-home')?.classList.remove('active');document.getElementById('srv-main')?.classList.remove('active');document.querySelectorAll('#custom-srv-icons .srv-icon').forEach(el=>el.classList.remove('active'));renderServerRail();if(view==='global'){activeServerId=null;document.getElementById('srv-home')?.classList.add('active');active={type:'global',name:'Global Chat',icon:'🌐',desc:'Everyone is here'};renderGlobalSidebar();updateHeader();loadMsgs();}else if(view==='friends'){activeServerId=null;renderDMSidebar();renderFriendsMain();updateHeader();}else if(view==='dm'&&active){renderDMSidebar();updateHeader();loadMsgs();}else if(view==='default'){renderDefaultSidebar();updateHeader();loadMsgs();}else if(view==='home'){goHome();return;}}
 let customServers=[];
 let activeServerId=null;
 let currentMute=null; // {action_type:'mute', reason, message, expires_at, moderator} for the CURRENT context, or null
@@ -1953,6 +1959,7 @@ async function submitConsentBackfill(){
 let pendingLiteModeEnable=null;
 function requestLiteModeToggle(el){
   pendingLiteModeEnable=!el.classList.contains('on');
+  window._liteAction='lite_mode';
   document.getElementById('lite-confirm-title').textContent=pendingLiteModeEnable?'Turn on Lite Mode':'Turn off Lite Mode';
   document.getElementById('lite-confirm-sub').textContent=pendingLiteModeEnable
     ?'This hides your Google Sheet access but keeps all your moderation powers. Enter your password to confirm.'
@@ -1969,15 +1976,39 @@ async function confirmLiteModeToggle(){
   try{
     const verify=await rpc('login_user',{p_username:me.username,p_password:pass});
     if(verify&&verify.error){ errEl.textContent='Incorrect password'; errEl.style.display='block'; return; }
+    if(window._liteAction==='show_hide'){
+      if(window._showLiteValue) localStorage.setItem('nc_show_lite_role','1');
+      else localStorage.removeItem('nc_show_lite_role');
+      window._liteAction=null; window._showLiteValue=null;
+      document.getElementById('lite-confirm-modal').classList.remove('on');
+      showToast('Setting updated','success');
+      document.getElementById('my-name-el').innerHTML=escH(me.username)+renderRoleBadges(me);
+      if(document.getElementById('settings-panel').classList.contains('on')) switchSettings('account');
+      return;
+    }
     const r=await rpc('set_lite_mode',{p_token:token,p_enable_lite:pendingLiteModeEnable});
     if(r&&r.error){ errEl.textContent=r.error; errEl.style.display='block'; return; }
     me.role=r.role; me.role2=r.role2; me.role3=r.role3;
+    window._liteAction=null;
     document.getElementById('lite-confirm-modal').classList.remove('on');
     showToast(pendingLiteModeEnable?'Lite Mode enabled':'Lite Mode disabled','success');
     document.getElementById('my-name-el').innerHTML=escH(me.username)+renderRoleBadges(me);
     document.getElementById('sheet-btn').style.display=hasSheetAccess(me)?'flex':'none';
     if(document.getElementById('settings-panel').classList.contains('on')) switchSettings('account');
   }catch(e){ errEl.textContent='Something went wrong — try again'; errEl.style.display='block'; }
+}
+function requestShowLiteToggle(){
+  pendingLiteModeEnable=null;
+  const showIt=localStorage.getItem('nc_show_lite_role')!=='1';
+  document.getElementById('lite-confirm-title').textContent=showIt?'Show Lite Role':'Hide Lite Role';
+  document.getElementById('lite-confirm-sub').textContent=showIt
+    ?'This shows your "(Lite)" suffix to other users. Enter your password to confirm.'
+    :'This hides your "(Lite)" suffix from other users. Enter your password to confirm.';
+  document.getElementById('lite-pass-input').value='';
+  document.getElementById('lite-pass-err').style.display='none';
+  document.getElementById('lite-confirm-modal').classList.add('on');
+  window._liteAction='show_hide';
+  window._showLiteValue=showIt;
 }
 function requestNukeAllMessages(){
   document.getElementById('nuke-pass-input').value='';
@@ -2176,6 +2207,8 @@ function saveServerCaches(){
   try{ localStorage.setItem('nc_srv_last',JSON.stringify(serverLastChannel)); }catch(e){}
 }
 function renderServerRail(){
+  const backEl=document.getElementById('srv-back');
+  if(backEl) backEl.style.display=navHistory.length?'flex':'none';
   const el=document.getElementById('custom-srv-icons');
   if(!el) return;
   el.innerHTML=customServers.map(s=>`
@@ -2187,6 +2220,7 @@ function renderServerRail(){
 }
 
 async function goCustomServer(id){
+  pushNav(view,active,activeServerId);
   const srv=customServers.find(s=>s.id===id);
   if(!srv) return;
   activeServerId=id;
@@ -2307,6 +2341,7 @@ function goSrvChannel(serverId,chId,name,desc,type){
 // VIEWS
 // ================================================================
 function goGlobal(){
+  pushNav(view,active,activeServerId);
   view='global'; activeServerId=null;
   document.getElementById('srv-home')?.classList.add('active');
   document.getElementById('srv-main').classList.remove('active');
@@ -2318,6 +2353,7 @@ function goGlobal(){
   renderGlobalSidebar(); updateHeader(); loadMsgs();
 }
 function goDefaultServer(){
+  pushNav(view,active,activeServerId);
   view='default'; activeServerId=null;
   document.getElementById('srv-main').classList.add('active');
   document.getElementById('srv-home')?.classList.remove('active');
@@ -2332,10 +2368,12 @@ function goDefaultServer(){
   renderDefaultSidebar(); updateHeader(); loadMsgs();
 }
 function goChannel(id,name,desc,type){
+  pushNav(view,active,activeServerId);
   active={type:'channel',id,name,desc,icon:type==='voice'?'🔊':'#'};
   renderDefaultSidebar(); updateHeader(); loadMsgs();
 }
 async function goDM(userId,username,color){
+  pushNav(view,active,activeServerId);
   view='dm'; activeServerId=null;
   active={type:'dm',id:'dm-'+userId,userId,name:username,icon:'💬',desc:'Direct message',color};
   document.getElementById('server-title').textContent='ChillCord';
@@ -2358,6 +2396,7 @@ async function goDM(userId,username,color){
 }
 
 function goFriends(){
+  pushNav(view,active,activeServerId);
   view='friends'; activeServerId=null;
   // mark top buttons
   document.getElementById('top-global-btn')?.classList.remove('active');
@@ -2538,6 +2577,7 @@ function renderHomeSidebar(){
 }
 
 function goHome(e){
+  pushNav(view,active,activeServerId);
   view='home'; activeServerId=null;
   document.getElementById('srv-home')?.classList.add('active');
   document.getElementById('srv-main')?.classList.remove('active');
@@ -2643,8 +2683,10 @@ function currentMsgTable(){
   return 'direct_messages';
 }
 const ROLE_LABELS={'C':'Creator','O':'Owner','V':'Co-Owner','CS':'Creator (Lite)','VS':'Co-Owner (Lite)','A':'Admin','M':'Mod','T':'Tester','H':'Helper'};
+const LITE_ROLES=['CS','VS'];
 function renderRoleBadges(user){
-  const roles=[user?.role,user?.role2,user?.role3].filter(r=>r&&ROLE_LABELS[r]);
+  const showLite=localStorage.getItem('nc_show_lite_role')==='1';
+  const roles=[user?.role,user?.role2,user?.role3].filter(r=>r&&ROLE_LABELS[r]&&(showLite||!LITE_ROLES.includes(r)));
   if(roles.length){
     return roles.map(r=>`<span class="role-badge role-${r}">${ROLE_LABELS[r]}</span>`).join('');
   }
@@ -3626,12 +3668,14 @@ async function submitChModal(){
   }
 }
 
-function openDMModal(){
+async function openDMModal(){
   selectedUser=null;
   document.getElementById('dm-search').value='';
-  filterUsers('');
+  document.getElementById('user-list').innerHTML='<div style="padding:10px;color:var(--text-lo);font-size:13px">Loading users…</div>';
   document.getElementById('dm-modal').classList.add('on');
   setTimeout(()=>document.getElementById('dm-search').focus(),80);
+  try{const r=await rpc('get_users',{p_token:token});if(Array.isArray(r))allUsers=r;}catch(e){}
+  filterUsers('');
 }
 function filterUsers(q){
   const filtered=q?allUsers.filter(u=>u.username.toLowerCase().includes(q.toLowerCase())):allUsers;
@@ -3640,7 +3684,7 @@ function filterUsers(q){
         <div style="width:28px;height:28px;border-radius:50%;background:${u.avatar_color||'#6c7cff'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0">${u.username.slice(0,2).toUpperCase()}</div>
         <span style="flex:1;font-size:13px">${escH(u.username)}</span>
         ${u.join_number?`<span style="font-size:11px;color:var(--text-lo)">#${u.join_number}</span>`:''}
-        ${u.role?`<span class="role-badge role-${u.role}">${u.role}</span>`:''}
+        ${renderRoleBadges(u)}
       </div>`).join('')
     :'<div style="color:var(--text-lo);font-size:13px;padding:8px 10px">No users found</div>';
 }
@@ -4081,6 +4125,13 @@ function accountTabHTML(){
     <div class="s-toggle">
       <div><div class="s-toggle-label">Lite Mode</div><div class="s-toggle-sub">Same Co-Owner/Creator moderation powers, but hides your Google Sheet access. Requires your password to switch.</div></div>
       <div class="toggle-switch${isLiteMode(me)?' on':''}" id="tog-lite-mode" onclick="requestLiteModeToggle(this)"></div>
+    </div>`:''}
+    ${isLiteMode(me)?`
+    <div style="height:16px"></div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;padding-top:14px;border-top:1px solid var(--border)">Privacy</div>
+    <div class="s-toggle">
+      <div><div class="s-toggle-label">Show Lite Role Badge</div><div class="s-toggle-sub">Show your "(Lite)" suffix to other users. By default this is hidden. Requires your password to change.</div></div>
+      <div class="toggle-switch${localStorage.getItem('nc_show_lite_role')==='1'?' on':''}" id="tog-show-lite" onclick="requestShowLiteToggle()"></div>
     </div>`:''}
     ${isOwnerOrCoOwnerOnly(me)?`
     <div style="height:20px"></div>
