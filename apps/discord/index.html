@@ -1054,7 +1054,7 @@ function playNotificationSound(){
       <div class="snav-item active" id="snav-account" onclick="switchSettings('account')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">person</span><span class="ic-emoji">👤</span></span> Account</div>
       <div class="snav-item" id="snav-profile" onclick="switchSettings('profile')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">palette</span><span class="ic-emoji">🎨</span></span> Profile</div>
       <div class="snav-item" id="snav-notifs" onclick="switchSettings('notifs')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">notifications</span><span class="ic-emoji">🔔</span></span> Notifications</div>
-      <div class="snav-item" id="snav-privacy" onclick="switchSettings('privacy')" style="display:none"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">shield</span><span class="ic-emoji">🛡️</span></span> Privacy</div>
+      <div class="snav-item" id="snav-privacy" onclick="switchSettings('privacy')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">shield</span><span class="ic-emoji">🛡️</span></span> Privacy</div>
       <div class="snav-divider"></div>
       <div class="settings-nav-title">App</div>
       <div class="snav-item" id="snav-appearance" onclick="switchSettings('appearance')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">desktop_windows</span><span class="ic-emoji">🖥️</span></span> Appearance</div>
@@ -1865,9 +1865,11 @@ async function bootApp(){
   await loadAllUsers();
   await loadFriendsData();
   myDMs=JSON.parse(localStorage.getItem('nc_dms')||'[]');
-  await loadMyServers();
+  loadMyServers();  // fire-and-forget: renders from cache instantly, refreshes API async
   goGlobal();
   hideLoading();
+  // Re-render servers once API responds in background
+  setTimeout(()=>{renderServerRail();},1500);
   // Home menu wiring: ensure the button responds and menu is pre-rendered
   try{
     const home=document.getElementById('srv-home');
@@ -1891,7 +1893,6 @@ async function bootApp(){
       document.getElementById('my-name-el').innerHTML=escH(me.username)+renderRoleBadges(me);
       document.getElementById('sheet-btn').style.display=hasSheetAccess(me)?'flex':'none';
       document.getElementById('modlist-btn').style.display=isMod(me)?'flex':'none';
-      if(isLiteMode(me)) document.getElementById('snav-privacy').style.display='';
     }
   }).catch(()=>{});
   checkMyModStatus(null).then(banStatus=>{
@@ -2244,7 +2245,11 @@ function saveServerCaches(){
 }
 function renderServerRail(){
   const backEl=document.getElementById('srv-back');
-  if(backEl) backEl.style.display='flex';
+  if(backEl){
+    const instantBack=localStorage.getItem('nc_instant_back')==='1';
+    if(instantBack) backEl.style.display='flex';
+    else backEl.style.display=navHistory.length?'flex':'none';
+  }
   const el=document.getElementById('custom-srv-icons');
   if(!el) return;
   el.innerHTML=customServers.map(s=>`
@@ -4254,6 +4259,10 @@ function privacyTabHTML(){
     <div class="s-toggle" style="margin-top:12px">
       <div><div class="s-toggle-label">Show Full Role</div><div class="s-toggle-sub">Show "Co-Owner"/"Creator" instead of "Co-Owner (Lite)"/"Creator (Lite)" to others.</div></div>
       <div class="toggle-switch${localStorage.getItem('nc_show_full_role')!=='0'?' on':''}" id="tog-show-full" onclick="requestShowFullToggle()"></div>
+    </div>
+    <div class="s-toggle" style="margin-top:12px">
+      <div><div class="s-toggle-label">Instant Back to Apricity</div><div class="s-toggle-sub">Always show the back button to exit ChillCord instantly, even with no navigation history.</div></div>
+      <div class="toggle-switch${localStorage.getItem('nc_instant_back')==='1'?' on':''}" id="tog-instant-back" onclick="this.classList.toggle('on');localStorage.setItem('nc_instant_back',this.classList.contains('on')?'1':'0');renderServerRail()"></div>
     </div>`;
 }
 
