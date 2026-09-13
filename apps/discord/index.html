@@ -1866,7 +1866,7 @@ async function bootApp(){
   await loadFriendsData();
   myDMs=JSON.parse(localStorage.getItem('nc_dms')||'[]');
   await loadMyServers();
-  goFriends();
+  goGlobal();
   hideLoading();
   // Home menu wiring: ensure the button responds and menu is pre-rendered
   try{
@@ -2244,7 +2244,7 @@ function saveServerCaches(){
 }
 function renderServerRail(){
   const backEl=document.getElementById('srv-back');
-  if(backEl) backEl.style.display=navHistory.length?'flex':'none';
+  if(backEl) backEl.style.display='flex';
   const el=document.getElementById('custom-srv-icons');
   if(!el) return;
   el.innerHTML=customServers.map(s=>`
