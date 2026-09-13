@@ -1084,11 +1084,6 @@ function playNotificationSound(){
     </div>
     <div class="msub">Click emoji to cycle • click a color swatch to change</div>
     <div id="srv-set-error" style="color:#f87171;font-size:13px;display:none"></div>
-    <!-- Join Requests -->
-    <div id="srv-join-requests-section" style="display:none;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px;padding-top:14px;border-top:1px solid var(--border)">Join Requests</div>
-      <div id="srv-join-requests-list" style="max-height:200px;overflow-y:auto"></div>
-    </div>
     <!-- Danger zone -->
     <div class="danger-zone">
       <div class="danger-zone-title"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">warning</span><span class="ic-emoji">⚠️</span></span> Danger Zone</div>
@@ -2365,6 +2360,11 @@ function renderCustomSidebar(srv, chList){
     ${isCreator?`<div class="ch-item" onclick="openServerSettings('${esc(srv.id)}')">
       <span class="ch-ico">${icon('settings','⚙️')}</span><span class="ch-name">Server settings</span>
     </div>`:''}
+    ${isCreator?`<div class="ch-item" onclick="toggleJoinRequests('${esc(srv.id)}')">
+      <span class="ch-ico">${icon('how_to_reg','📋')}</span><span class="ch-name">Join requests</span>
+      <span class="ch-mute-btn" id="join-req-badge" style="display:none;background:var(--red);color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700"></span>
+    </div>`:''}
+    <div id="join-requests-panel" style="display:none;padding:0 4px 8px"></div>
     ${!isCreator?`<div class="ch-item" style="color:var(--red);opacity:.8" onclick="leaveServer('${esc(srv.id)}')">
       <span class="ch-ico">${icon('logout','🚪')}</span><span class="ch-name">Leave server</span>
     </div>`:''}
@@ -4042,7 +4042,6 @@ function openServerSettings(serverId){
     <div class="swatch${srv.color===c?' sel':''}" style="background:${c}" onclick="setSrvSetColor(${i})"></div>`).join('');
   document.getElementById('srv-set-error').style.display='none';
   document.getElementById('srv-settings-modal').classList.add('on');
-  loadJoinRequests(serverId);
   setTimeout(()=>document.getElementById('srv-set-name').focus(),80);
 }
 function cycleSrvSetEmoji(){
@@ -4106,29 +4105,37 @@ async function leaveServer(serverId){
 // ----------------------------------------------------------------
 // JOIN REQUESTS (server creator approval)
 // ----------------------------------------------------------------
+let joinRequestsOpen=null;
+function toggleJoinRequests(serverId){
+  const panel=document.getElementById('join-requests-panel');
+  if(!panel) return;
+  if(joinRequestsOpen===serverId){
+    panel.style.display='none'; joinRequestsOpen=null; return;
+  }
+  joinRequestsOpen=serverId;
+  panel.style.display='block';
+  panel.innerHTML='<div style="padding:8px;color:var(--text-lo);font-size:12px">Loading…</div>';
+  loadJoinRequests(serverId);
+}
 async function loadJoinRequests(serverId){
-  const section=document.getElementById('srv-join-requests-section');
-  const list=document.getElementById('srv-join-requests-list');
-  section.style.display='none';
-  list.innerHTML='';
+  const panel=document.getElementById('join-requests-panel');
+  if(!panel) return;
   try{
     const r=await rpc('get_server_join_requests',{p_token:token,p_server_id:serverId});
     const rows=Array.isArray(r)?r:[];
-    if(!rows.length) return;
-    section.style.display='block';
-    list.innerHTML=rows.map(rq=>{
+    const badge=document.getElementById('join-req-badge');
+    if(badge){badge.textContent=rows.length;badge.style.display=rows.length?'inline-block':'none';}
+    if(!rows.length){panel.innerHTML='<div style="padding:8px;color:var(--text-lo);font-size:12px">No pending requests</div>';return;}
+    panel.innerHTML=rows.map(rq=>{
       const u=rq.user||{};
-      return `<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:var(--bg-input);margin-bottom:6px">
-        <div style="width:30px;height:30px;border-radius:50%;background:${u.avatar_color||'#6c7cff'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0">${(u.username||'?').slice(0,2).toUpperCase()}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600">${escH(u.username||'Unknown')}</div>
-          <div style="font-size:11px;color:var(--text-lo)">${rq.created_at?new Date(rq.created_at).toLocaleDateString():''}</div>
-        </div>
-        <button class="s-btn" style="background:#22c55e;color:#fff;font-size:12px;padding:4px 10px" onclick="handleJoinRequest('${esc(rq.id)}','approve','${esc(serverId)}')">Approve</button>
-        <button class="s-btn danger" style="font-size:12px;padding:4px 10px" onclick="handleJoinRequest('${esc(rq.id)}','deny','${esc(serverId)}')">Deny</button>
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bg-input);margin-bottom:4px">
+        <div style="width:26px;height:26px;border-radius:50%;background:${u.avatar_color||'#6c7cff'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0">${(u.username||'?').slice(0,2).toUpperCase()}</div>
+        <div style="flex:1;min-width:0;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(u.username||'Unknown')}</div>
+        <button style="background:#22c55e;color:#fff;border:none;border-radius:4px;font-size:11px;padding:3px 8px;cursor:pointer;font-weight:600" onclick="handleJoinRequest('${esc(rq.id)}','approve','${esc(serverId)}')">✓</button>
+        <button style="background:var(--red);color:#fff;border:none;border-radius:4px;font-size:11px;padding:3px 8px;cursor:pointer;font-weight:600" onclick="handleJoinRequest('${esc(rq.id)}','deny','${esc(serverId)}')">✕</button>
       </div>`;
     }).join('');
-  }catch(e){}
+  }catch(e){panel.innerHTML='<div style="padding:8px;color:var(--text-lo);font-size:12px">Failed to load</div>';}
 }
 async function handleJoinRequest(requestId,decision,serverId){
   try{
