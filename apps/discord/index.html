@@ -1054,7 +1054,7 @@ function playNotificationSound(){
       <div class="snav-item active" id="snav-account" onclick="switchSettings('account')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">person</span><span class="ic-emoji">👤</span></span> Account</div>
       <div class="snav-item" id="snav-profile" onclick="switchSettings('profile')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">palette</span><span class="ic-emoji">🎨</span></span> Profile</div>
       <div class="snav-item" id="snav-notifs" onclick="switchSettings('notifs')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">notifications</span><span class="ic-emoji">🔔</span></span> Notifications</div>
-      ${isLiteMode(me)?`<div class="snav-item" id="snav-privacy" onclick="switchSettings('privacy')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">shield</span><span class="ic-emoji">🛡️</span></span> Privacy</div>`:''}
+      <div class="snav-item" id="snav-privacy" onclick="switchSettings('privacy')" style="display:none"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">shield</span><span class="ic-emoji">🛡️</span></span> Privacy</div>
       <div class="snav-divider"></div>
       <div class="settings-nav-title">App</div>
       <div class="snav-item" id="snav-appearance" onclick="switchSettings('appearance')"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">desktop_windows</span><span class="ic-emoji">🖥️</span></span> Appearance</div>
@@ -1865,7 +1865,7 @@ async function bootApp(){
   await loadAllUsers();
   await loadFriendsData();
   myDMs=JSON.parse(localStorage.getItem('nc_dms')||'[]');
-  loadMyServers();  // don't await — loads from cache instantly, refreshes API in background
+  await loadMyServers();
   goFriends();
   hideLoading();
   // Home menu wiring: ensure the button responds and menu is pre-rendered
@@ -1891,6 +1891,7 @@ async function bootApp(){
       document.getElementById('my-name-el').innerHTML=escH(me.username)+renderRoleBadges(me);
       document.getElementById('sheet-btn').style.display=hasSheetAccess(me)?'flex':'none';
       document.getElementById('modlist-btn').style.display=isMod(me)?'flex':'none';
+      if(isLiteMode(me)) document.getElementById('snav-privacy').style.display='';
     }
   }).catch(()=>{});
   checkMyModStatus(null).then(banStatus=>{
