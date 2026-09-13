@@ -3397,6 +3397,7 @@ async function renderMsgs(msgs,expectKey){
   if(wasNearBottom) el.scrollTop=el.scrollHeight;
   else el.scrollTop=prevScrollTop;
 }
+let pollCount=0;
 async function poll(){
   if(!active||!token) return;
   const key=activeMessageCacheKey();
@@ -3407,6 +3408,17 @@ async function poll(){
     messageCache[key]=msgs;
     await renderMsgs(msgs,key);
   }catch(e){}
+  // Refresh server list every ~30 polls (~30s) so approved joins show up
+  pollCount++;
+  if(pollCount%30===0){
+    try{
+      const r=await rpc('get_my_servers',{p_token:token});
+      if(Array.isArray(r)){
+        const changed=JSON.stringify(r)!==JSON.stringify(customServers);
+        if(changed){customServers=r;try{localStorage.setItem('nc_servers',JSON.stringify(r));}catch(e){}renderServerRail();}
+      }
+    }catch(e){}
+  }
 }
 async function sendMsg(){
   const inp=document.getElementById('msg-in');
@@ -4142,6 +4154,10 @@ async function handleJoinRequest(requestId,decision,serverId){
     const r=await rpc(decision==='approve'?'approve_server_join':'deny_server_join',{p_token:token,p_request_id:requestId});
     if(r&&r.error){showToast(r.error,'error');return;}
     showToast(decision==='approve'?'Join approved':'Request denied','success');
+    if(decision==='approve'){
+      await loadMyServers();
+      renderServerRail();
+    }
     loadJoinRequests(serverId);
   }catch(e){showToast('Failed to process request','error');}
 }
