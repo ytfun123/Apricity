@@ -2216,13 +2216,14 @@ async function callFriend(uid,username,color){
 // CUSTOM SERVERS
 // ================================================================
 async function loadMyServers(){
+  renderServerRail();  // render from cache immediately
   try{
     const r=await rpc('get_my_servers',{p_token:token});
     if(Array.isArray(r)){
       customServers=r;
       try{localStorage.setItem('nc_servers',JSON.stringify(r));}catch(e){}
     }
-    renderServerRail();
+    renderServerRail();  // re-render with fresh API data
   }catch(e){
     if(!customServers.length){
       try{customServers=JSON.parse(localStorage.getItem('nc_servers')||'[]')||[];}catch(e2){customServers=[];}
@@ -2242,7 +2243,7 @@ function saveServerCaches(){
 }
 function renderServerRail(){
   const backEl=document.getElementById('srv-back');
-  if(backEl) backEl.style.display='flex';
+  if(backEl) backEl.style.display=navHistory.length?'flex':'none';
   const el=document.getElementById('custom-srv-icons');
   if(!el) return;
   el.innerHTML=customServers.map(s=>`
