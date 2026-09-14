@@ -398,7 +398,7 @@ body.icon-style-emoji .ic-google{display:none}
 .send-btn:hover{background:var(--accent-hi)}
 .send-btn:disabled{opacity:.3;cursor:not-allowed}
 /* RIGHT-CLICK CONTEXT MENU */
-.ctx-menu{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;min-width:180px;z-index:600;display:none;flex-direction:column;gap:2px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.ctx-menu{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;min-width:180px;z-index:2000;display:none;flex-direction:column;gap:2px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .ctx-menu.show{display:flex}
 .ctx-item{padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-md);display:flex;align-items:center;gap:8px;transition:background .1s}
 .ctx-item:hover{background:var(--bg-hover);color:var(--text-hi)}
@@ -2220,7 +2220,8 @@ async function callFriend(uid,username,color){
 async function loadMyServers(){
   renderServerRail();  // render from cache immediately
   try{
-    const r=await rpc('get_my_servers',{p_token:token});
+    let r=await rpc('get_my_servers',{p_token:token});
+    if(typeof r==='string'){try{r=JSON.parse(r);}catch(e){}}
     if(Array.isArray(r)){
       customServers=r;
       try{localStorage.setItem('nc_servers',JSON.stringify(r));}catch(e){}
@@ -3412,7 +3413,8 @@ async function poll(){
   pollCount++;
   if(pollCount%30===0){
     try{
-      const r=await rpc('get_my_servers',{p_token:token});
+      let r=await rpc('get_my_servers',{p_token:token});
+      if(typeof r==='string'){try{r=JSON.parse(r);}catch(e){}}
       if(Array.isArray(r)){
         const changed=JSON.stringify(r)!==JSON.stringify(customServers);
         if(changed){customServers=r;try{localStorage.setItem('nc_servers',JSON.stringify(r));}catch(e){}renderServerRail();}

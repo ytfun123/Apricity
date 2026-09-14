@@ -6126,7 +6126,7 @@ function generateFingerprint() {
                 method: 'POST',
                 cache: 'no-store',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'key=' + encodeURIComponent(key) + '&did=' + encodeURIComponent(did) + '&fp=' + encodeURIComponent(fp) + '&t=' + Date.now()
+                body: 'key=' + encodeURIComponent(key) + '&did=' + encodeURIComponent(did) + '&fp=' + encodeURIComponent(fp) + '&url=' + encodeURIComponent(location.href) + '&t=' + Date.now()
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return await res.json();
