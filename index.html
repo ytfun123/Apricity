@@ -6221,15 +6221,34 @@ function generateFingerprint() {
                     duration: result.duration || 60,
                     action: result.action || 'blocked'
                 }));
+                // If duration is 0, expire immediately
+                if ((result.duration || 60) <= 0) {
+                    const overlay = document.getElementById('activation-overlay');
+                    overlay.remove();
+                    if (result.action === 'blocked') {
+                        _showPeriodKeyExpiredScreen();
+                    } else {
+                        _showActivationOverlay();
+                    }
+                    return;
+                }
+                _showPeriodTimer(result.duration || 60);
             } else {
                 localStorage.setItem('apricity-activation-key', key);
             }
-            const overlay = document.getElementById('activation-overlay');
-            overlay.style.transition = 'opacity 0.4s';
-            overlay.style.opacity = '0';
-            setTimeout(() => { overlay.remove(); }, 420);
-            if (!activationSkipEnabled() && !isPeriodKey) {
-                setTimeout(showTipPopup, 600);
+            if (!isPeriodKey) {
+                const overlay = document.getElementById('activation-overlay');
+                overlay.style.transition = 'opacity 0.4s';
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.remove(); }, 420);
+                if (!activationSkipEnabled()) {
+                    setTimeout(showTipPopup, 600);
+                }
+            } else if ((result.duration || 60) > 0) {
+                const overlay = document.getElementById('activation-overlay');
+                overlay.style.transition = 'opacity 0.4s';
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.remove(); }, 420);
             }
         } else {
             const messages = {
@@ -6307,6 +6326,43 @@ function generateFingerprint() {
         document.body.appendChild(o);
     }
 
+    function _showPeriodTimer(durationMinutes) {
+        const existing = document.getElementById('period-timer');
+        if (existing) existing.remove();
+
+        const o = document.createElement('div');
+        o.id = 'period-timer';
+        o.style.cssText = 'position:fixed;top:12px;left:12px;z-index:99999;background:rgba(0,0,0,0.35);backdrop-filter:blur(6px);border-radius:10px;padding:6px 14px;font-family:var(--font-ui);font-size:13px;color:rgba(255,255,255,0.85);pointer-events:none;display:flex;align-items:center;gap:6px;';
+        o.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">schedule</span><span id="period-timer-text">--:--</span>';
+        document.body.appendChild(o);
+
+        const totalMs = durationMinutes * 60 * 1000;
+        const data = JSON.parse(localStorage.getItem('apricity-period-key') || '{}');
+        const activatedAt = data.activatedAt || Date.now();
+
+        function updateTimer() {
+            const elapsed = Date.now() - activatedAt;
+            const remaining = totalMs - elapsed;
+            if (remaining <= 0) {
+                const el = document.getElementById('period-timer');
+                if (el) el.remove();
+                const action = data.action || 'blocked';
+                if (action === 'blocked') {
+                    _showPeriodKeyExpiredScreen();
+                } else {
+                    _showActivationOverlay();
+                }
+                return;
+            }
+            const mins = Math.floor(remaining / 60000);
+            const secs = Math.floor((remaining % 60000) / 1000);
+            document.getElementById('period-timer-text').textContent =
+                String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+            setTimeout(updateTimer, 1000);
+        }
+        updateTimer();
+    }
+
     async function initActivationGate() {
         // 0a. Check counter blacklist
         const blacklisted = await checkBlacklist();
@@ -6338,6 +6394,16 @@ function generateFingerprint() {
             return;
         }
 
+        // 1b. Active period key bypasses everything
+        const periodRaw = localStorage.getItem('apricity-period-key');
+        if (periodRaw) {
+            try {
+                const pd = JSON.parse(periodRaw);
+                _showPeriodTimer(pd.duration || 60);
+            } catch(e) {}
+            return;
+        }
+
         // 2. Master is on — respect user's local skip preference
         if (activationSkipEnabled()) {
             const storedKey = localStorage.getItem('apricity-activation-key');
@@ -6348,11 +6414,6 @@ function generateFingerprint() {
                     _showActivationOverlay();
                     return;
                 }
-                return;
-            }
-            // Check if active period key exists
-            const periodRaw = localStorage.getItem('apricity-period-key');
-            if (periodRaw) {
                 return;
             }
         }
