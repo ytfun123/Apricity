@@ -6150,7 +6150,8 @@ function generateFingerprint() {
         if (!raw) return null;
         try {
             const data = JSON.parse(raw);
-            const elapsed = Date.now() - data.activatedAt;
+            const activatedAtMs = typeof data.activatedAt === 'number' ? data.activatedAt : new Date(data.activatedAt).getTime();
+            const elapsed = Date.now() - activatedAtMs;
             const totalMs = data.duration * 60 * 1000;
             if (elapsed >= totalMs) {
                 localStorage.removeItem('apricity-period-key');
@@ -6217,7 +6218,7 @@ function generateFingerprint() {
             if (isPeriodKey) {
                 localStorage.setItem('apricity-period-key', JSON.stringify({
                     key: key,
-                    activatedAt: Date.now(),
+                    activatedAt: result.activatedAt || new Date().toISOString(),
                     duration: result.duration ?? 60,
                     action: result.action || 'blocked'
                 }));
@@ -6338,10 +6339,10 @@ function generateFingerprint() {
 
         const totalMs = durationMinutes * 60 * 1000;
         const data = JSON.parse(localStorage.getItem('apricity-period-key') || '{}');
-        const activatedAt = data.activatedAt || Date.now();
+        const activatedAtMs = typeof data.activatedAt === 'number' ? data.activatedAt : new Date(data.activatedAt).getTime();
 
         function updateTimer() {
-            const elapsed = Date.now() - activatedAt;
+            const elapsed = Date.now() - activatedAtMs;
             const remaining = totalMs - elapsed;
             if (remaining <= 0) {
                 const el = document.getElementById('period-timer');
