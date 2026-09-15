@@ -6311,7 +6311,7 @@ function generateFingerprint() {
 
         const o = document.createElement('div');
         o.id = 'period-expired-overlay';
-        o.style.cssText = 'position:fixed;inset:0;z-index:9999999;background:var(--md-sys-color-surface);display:flex;align-items:center;justify-content:center;font-family:var(--font-ui);';
+        o.style.cssText = 'position:fixed;inset:0;z-index:9999999;background:#ffffff;display:flex;align-items:center;justify-content:center;font-family:var(--font-ui);';
         o.innerHTML = `
             <div style="text-align:center;max-width:400px;width:90%;padding:40px 32px;">
                 <div style="width:72px;height:72px;margin:0 auto 20px;background:color-mix(in srgb,#fdd835 20%,transparent);border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(253,216,53,0.25);">
@@ -6346,9 +6346,6 @@ function generateFingerprint() {
                 if (el) el.remove();
                 localStorage.removeItem('apricity-period-key');
                 _showActivationOverlay();
-                } else {
-                    _showActivationOverlay();
-                }
                 return;
             }
             const mins = Math.floor(remaining / 60000);
@@ -6420,7 +6417,7 @@ function generateFingerprint() {
         if (document.getElementById('activation-overlay')) return;
         const o = document.createElement('div');
         o.id = 'activation-overlay';
-        o.style.cssText = 'position:fixed;inset:0;z-index:999999;background:var(--md-sys-color-surface);display:flex;align-items:center;justify-content:center;font-family:var(--font-ui);';
+        o.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#ffffff;display:flex;align-items:center;justify-content:center;font-family:var(--font-ui);';
         o.innerHTML = `
             <div style="background:var(--md-sys-color-surface-container);border:1px solid var(--yt-border2);border-radius:24px;padding:40px 36px 32px;max-width:420px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,0.18);text-align:center;">
                 <div style="width:72px;height:72px;margin:0 auto 20px;background:color-mix(in srgb,var(--md-sys-color-primary-container) 80%,transparent);border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px color-mix(in srgb,var(--md-sys-color-primary) 22%,transparent);">
