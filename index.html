@@ -6104,17 +6104,6 @@ function generateFingerprint() {
     }
 
     async function validateActivationKey(key) {
-        // Asks the Apps Script backend whether `key` is valid for this device,
-        // and (if it's a new device for that key) records the redemption.
-        // Returns { valid, reason, message? } — see Code.gs for the reason codes:
-        //   reason: 'redeemed'            -> new device, counted against Max Uses
-        //   reason: 'already_activated'   -> this device already used this key
-        //   reason: 'not_found'           -> key doesn't exist
-        //   reason: 'expired'             -> key hit its device limit
-        //   reason: 'unreachable'         -> network/server issue
-
-        // Permanent local test key — always validates without touching the
-        // remote Keys sheet, so you can get past the gate for testing.
         if (key === 'apricity_jarvis_unlock') {
             return { valid: true, reason: 'redeemed' };
         }
@@ -6122,16 +6111,55 @@ function generateFingerprint() {
         const did = window._apricityDid || localStorage.getItem('apricity-device-id') || '';
         const fp = window._apricityFp || (typeof generateFingerprint === 'function' ? generateFingerprint() : '');
         try {
-            const params = 'key=' + encodeURIComponent(key) + '&did=' + encodeURIComponent(did) + '&fp=' + encodeURIComponent(fp) + '&url=' + encodeURIComponent(location.href) + '&t=' + Date.now();
-            const res = await fetch(window._apricityKeysEndpoint + '?' + params, {
-                method: 'GET',
-                cache: 'no-store'
-            });
+            const params = 'action=validate&key=' + encodeURIComponent(key) + '&did=' + encodeURIComponent(did) + '&fp=' + encodeURIComponent(fp) + '&url=' + encodeURIComponent(location.href) + '&t=' + Date.now();
+            const res = await fetch(window._apricityKeysEndpoint + '?' + params, { method: 'GET', cache: 'no-store' });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return await res.json();
         } catch (e) {
             console.warn('Activation: could not reach key server —', e.message);
             return { valid: false, reason: 'unreachable' };
+        }
+    }
+
+    async function validatePeriodKey(key) {
+        const did = window._apricityDid || localStorage.getItem('apricity-device-id') || '';
+        const fp = window._apricityFp || (typeof generateFingerprint === 'function' ? generateFingerprint() : '');
+        try {
+            const params = 'action=validate_period&key=' + encodeURIComponent(key) + '&did=' + encodeURIComponent(did) + '&fp=' + encodeURIComponent(fp) + '&t=' + Date.now();
+            const res = await fetch(window._apricityKeysEndpoint + '?' + params, { method: 'GET', cache: 'no-store' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return await res.json();
+        } catch (e) {
+            return { valid: false, reason: 'unreachable' };
+        }
+    }
+
+    async function checkKeysBlacklist() {
+        const fp = window._apricityFp || (typeof generateFingerprint === 'function' ? generateFingerprint() : '');
+        try {
+            const params = 'action=check_blacklist&fp=' + encodeURIComponent(fp) + '&t=' + Date.now();
+            const res = await fetch(window._apricityKeysEndpoint + '?' + params, { method: 'GET', cache: 'no-store' });
+            if (!res.ok) return false;
+            const data = await res.json();
+            return data.blacklisted === true;
+        } catch(e) { return false; }
+    }
+
+    function checkPeriodKeyExpiry() {
+        const raw = localStorage.getItem('apricity-period-key');
+        if (!raw) return null;
+        try {
+            const data = JSON.parse(raw);
+            const elapsed = Date.now() - data.activatedAt;
+            const totalMs = data.duration * 60 * 1000;
+            if (elapsed >= totalMs) {
+                localStorage.removeItem('apricity-period-key');
+                return data.action || '';
+            }
+            return null;
+        } catch(e) {
+            localStorage.removeItem('apricity-period-key');
+            return null;
         }
     }
 
@@ -6173,27 +6201,44 @@ function generateFingerprint() {
         error.style.opacity = '0';
         input.disabled = true;
 
-        const result = await validateActivationKey(key);
+        // Try activation key first, then period key
+        let result = await validateActivationKey(key);
+        let isPeriodKey = false;
+
+        if (!result.valid && result.reason === 'not_found') {
+            result = await validatePeriodKey(key);
+            isPeriodKey = true;
+        }
 
         loading.style.display = 'none';
         input.disabled = false;
 
         if (result.valid) {
-            localStorage.setItem('apricity-activation-key', key);
+            if (isPeriodKey) {
+                localStorage.setItem('apricity-period-key', JSON.stringify({
+                    key: key,
+                    activatedAt: Date.now(),
+                    duration: result.duration || 60,
+                    action: result.action || 'blocked'
+                }));
+            } else {
+                localStorage.setItem('apricity-activation-key', key);
+            }
             const overlay = document.getElementById('activation-overlay');
             overlay.style.transition = 'opacity 0.4s';
             overlay.style.opacity = '0';
             setTimeout(() => { overlay.remove(); }, 420);
-            if (!activationSkipEnabled()) {
+            if (!activationSkipEnabled() && !isPeriodKey) {
                 setTimeout(showTipPopup, 600);
             }
         } else {
             const messages = {
-                not_found: 'Invalid activation key. Please try again.',
+                not_found: 'Invalid activation or period key. Please try again.',
                 expired: 'This activation key has reached its device limit.',
+                period_expired: 'This period key has expired.',
                 unreachable: 'Could not reach activation server. Check your connection.'
             };
-            error.textContent = result.message || messages[result.reason] || 'Invalid activation key. Please try again.';
+            error.textContent = result.message || messages[result.reason] || 'Invalid key. Please try again.';
             error.style.opacity = '1';
             if (result.reason !== 'unreachable') {
                 input.value = '';
@@ -6220,7 +6265,6 @@ function generateFingerprint() {
     }
 
     function _showBlacklistScreen() {
-        // Remove activation overlay if present
         const existing = document.getElementById('activation-overlay');
         if (existing) existing.remove();
         const existing2 = document.getElementById('blacklist-overlay');
@@ -6240,11 +6284,51 @@ function generateFingerprint() {
         document.body.appendChild(o);
     }
 
+    function _showPeriodKeyExpiredScreen() {
+        const existing = document.getElementById('activation-overlay');
+        if (existing) existing.remove();
+        const existing2 = document.getElementById('blacklist-overlay');
+        if (existing2) existing2.remove();
+        const existing3 = document.getElementById('period-expired-overlay');
+        if (existing3) return;
+
+        const o = document.createElement('div');
+        o.id = 'period-expired-overlay';
+        o.style.cssText = 'position:fixed;inset:0;z-index:9999999;background:var(--md-sys-color-surface);display:flex;align-items:center;justify-content:center;font-family:var(--font-ui);';
+        o.innerHTML = `
+            <div style="text-align:center;max-width:400px;width:90%;padding:40px 32px;">
+                <div style="width:72px;height:72px;margin:0 auto 20px;background:color-mix(in srgb,#fdd835 20%,transparent);border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(253,216,53,0.25);">
+                    <span class="material-symbols-outlined" style="font-size:36px;color:#fdd835;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 48;">timer_off</span>
+                </div>
+                <div style="font-size:24px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:10px;">Period Key Expired</div>
+                <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;margin-bottom:24px;">Your access period has ended. Enter a new period key or activation key to continue.</div>
+                <button onclick="this.closest('#period-expired-overlay').remove();initActivationGate();" style="padding:12px 28px;border-radius:14px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:var(--font-ui);font-size:14px;font-weight:600;cursor:pointer;">Enter New Key</button>
+            </div>`;
+        document.body.appendChild(o);
+    }
+
     async function initActivationGate() {
-        // 0. Check blacklist first
+        // 0a. Check counter blacklist
         const blacklisted = await checkBlacklist();
         if (blacklisted) {
             _showBlacklistScreen();
+            return;
+        }
+
+        // 0b. Check keys blacklist
+        const keysBlacklisted = await checkKeysBlacklist();
+        if (keysBlacklisted) {
+            _showBlacklistScreen();
+            return;
+        }
+
+        // 0c. Check period key expiry
+        const expiredAction = checkPeriodKeyExpiry();
+        if (expiredAction === 'blocked') {
+            _showPeriodKeyExpiredScreen();
+            return;
+        } else if (expiredAction) {
+            _showActivationOverlay();
             return;
         }
 
@@ -6259,13 +6343,16 @@ function generateFingerprint() {
             const storedKey = localStorage.getItem('apricity-activation-key');
             if (storedKey) {
                 const result = await validateActivationKey(storedKey);
-                // Only kick the user back to the gate on a definitive rejection
-                // (not on a network hiccup, which returns 'unreachable').
                 if (!result.valid && result.reason !== 'unreachable') {
                     localStorage.removeItem('apricity-activation-key');
                     _showActivationOverlay();
                     return;
                 }
+                return;
+            }
+            // Check if active period key exists
+            const periodRaw = localStorage.getItem('apricity-period-key');
+            if (periodRaw) {
                 return;
             }
         }
@@ -6285,7 +6372,7 @@ function generateFingerprint() {
                     <span class="material-symbols-outlined" style="font-size:36px;color:var(--md-sys-color-primary);font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 48;">key</span>
                 </div>
                 <div style="font-size:22px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;">Activation Required</div>
-                <div style="font-size:13.5px;color:var(--md-sys-color-on-surface-variant);margin-bottom:28px;line-height:1.55;">Enter your activation key to access Apricity.</div>
+                <div style="font-size:13.5px;color:var(--md-sys-color-on-surface-variant);margin-bottom:28px;line-height:1.55;">Enter your activation key or period key to access Apricity.</div>
                 <input id="activation-key-input" type="password" autocomplete="off" spellcheck="false" placeholder="Enter activation key…"
                     style="width:100%;padding:13px 16px;border-radius:14px;border:1.5px solid var(--yt-border2);background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface);font-family:var(--font-ui);font-size:14.5px;outline:none;box-sizing:border-box;transition:border-color 0.2s;text-align:center;letter-spacing:0.04em;" />
                 <div id="activation-error" style="color:#f28b82;font-size:12.5px;margin-top:8px;opacity:0;transition:opacity 0.2s;min-height:18px;">Invalid activation key. Please try again.</div>
