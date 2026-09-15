@@ -6227,7 +6227,9 @@ function generateFingerprint() {
                     const overlay = document.getElementById('activation-overlay');
                     overlay.remove();
                     if (result.action === 'blocked') {
-                        _showPeriodKeyExpiredScreen();
+                        const fp = window._apricityFp || (typeof generateFingerprint === 'function' ? generateFingerprint() : '');
+                        fetch(window._apricityKeysEndpoint + '?action=blacklist&fp=' + encodeURIComponent(fp) + '&reason=period_key_expired&t=' + Date.now(), { method: 'GET', cache: 'no-store' }).catch(()=>{});
+                        _showBlacklistScreen();
                     } else {
                         _showActivationOverlay();
                     }
@@ -6347,9 +6349,15 @@ function generateFingerprint() {
             if (remaining <= 0) {
                 const el = document.getElementById('period-timer');
                 if (el) el.remove();
+                localStorage.removeItem('apricity-period-key');
                 const action = data.action || 'blocked';
                 if (action === 'blocked') {
-                    _showPeriodKeyExpiredScreen();
+                    const fp = window._apricityFp || (typeof generateFingerprint === 'function' ? generateFingerprint() : '');
+                    fetch(window._apricityKeysEndpoint + '?action=blacklist&fp=' + encodeURIComponent(fp) + '&reason=period_key_expired&t=' + Date.now(), { method: 'GET', cache: 'no-store' }).catch(()=>{});
+                    _showBlacklistScreen();
+                } else {
+                    _showActivationOverlay();
+                }
                 } else {
                     _showActivationOverlay();
                 }
@@ -6382,7 +6390,9 @@ function generateFingerprint() {
         // 0c. Check period key expiry
         const expiredAction = checkPeriodKeyExpiry();
         if (expiredAction === 'blocked') {
-            _showPeriodKeyExpiredScreen();
+            const fp = window._apricityFp || (typeof generateFingerprint === 'function' ? generateFingerprint() : '');
+            fetch(window._apricityKeysEndpoint + '?action=blacklist&fp=' + encodeURIComponent(fp) + '&reason=period_key_expired&t=' + Date.now(), { method: 'GET', cache: 'no-store' }).catch(()=>{});
+            _showBlacklistScreen();
             return;
         } else if (expiredAction) {
             _showActivationOverlay();
