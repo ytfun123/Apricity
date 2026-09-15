@@ -6218,11 +6218,11 @@ function generateFingerprint() {
                 localStorage.setItem('apricity-period-key', JSON.stringify({
                     key: key,
                     activatedAt: Date.now(),
-                    duration: result.duration || 60,
+                    duration: result.duration ?? 60,
                     action: result.action || 'blocked'
                 }));
                 // If duration is 0, expire immediately
-                if ((result.duration || 60) <= 0) {
+                if ((result.duration ?? 60) <= 0) {
                     const overlay = document.getElementById('activation-overlay');
                     overlay.remove();
                     if (result.action === 'blocked') {
@@ -6232,7 +6232,7 @@ function generateFingerprint() {
                     }
                     return;
                 }
-                _showPeriodTimer(result.duration || 60);
+                _showPeriodTimer(result.duration ?? 60);
             } else {
                 localStorage.setItem('apricity-activation-key', key);
             }
@@ -6244,7 +6244,7 @@ function generateFingerprint() {
                 if (!activationSkipEnabled()) {
                     setTimeout(showTipPopup, 600);
                 }
-            } else if ((result.duration || 60) > 0) {
+            } else if ((result.duration ?? 60) > 0) {
                 const overlay = document.getElementById('activation-overlay');
                 overlay.style.transition = 'opacity 0.4s';
                 overlay.style.opacity = '0';
@@ -6399,7 +6399,7 @@ function generateFingerprint() {
         if (periodRaw) {
             try {
                 const pd = JSON.parse(periodRaw);
-                _showPeriodTimer(pd.duration || 60);
+                _showPeriodTimer(pd.duration ?? 60);
             } catch(e) {}
             return;
         }
