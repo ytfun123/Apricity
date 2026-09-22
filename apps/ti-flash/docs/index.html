@@ -92,6 +92,7 @@
           <button class="cat-tab active" data-model="all">All</button>
           <button class="cat-tab" data-model="ce">TI-84 Plus CE</button>
           <button class="cat-tab" data-model="84">TI-84 Plus (still in beta testing)</button>
+          <button class="cat-tab" data-model="python">Python / Evo</button>
         </div>
         <div class="cat-grid" id="our-apps-grid">
           <p class="empty-note">Our own apps and games aren&rsquo;t here yet &mdash; check back soon! Everything currently available lives in <strong>Other Apps/Games</strong>.</p>
@@ -105,6 +106,7 @@
           <button class="cat-tab active" data-model="all">All</button>
           <button class="cat-tab" data-model="ce">TI-84 Plus CE</button>
           <button class="cat-tab" data-model="84">TI-84 Plus</button>
+          <button class="cat-tab" data-model="python">Python / Evo</button>
         </div>
         <p class="empty-note" id="page-other-apps-empty" style="display:none;">No apps or games here yet — check back soon!</p>
         <section id="games">
@@ -212,7 +214,8 @@
             var m = c.getAttribute('data-model') || 'ce';
             var show = (active === 'all' || active === m ||
               (active === 'ce' && m === 'both') ||
-              (active === '84' && m === 'both'));
+              (active === '84' && m === 'both') ||
+              (active === 'python' && m === 'python'));
             c.style.display = show ? '' : 'none';
             if (show) visible++;
           });

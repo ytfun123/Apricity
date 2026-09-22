@@ -57,7 +57,22 @@ const GAME_CATEGORIES = [
   { key: 'pokemon-topaze', label: 'Pokemon Topaze', dir: 'games/ti-84 plus/pokemon-topaze', model: 'plus', desc: 'Catch and battle Pokemon.', plusImg: 'games/ti-84 plus/pokemon-topaze/plus.png' },
   { key: 'racer3d', label: 'Racer 3D', dir: 'games/ti-84 plus/racer3d', model: 'plus', desc: '3D racing game.', plusImg: 'games/ti-84 plus/racer3d/plus.png' },
   { key: 'tag', label: 'Tag', dir: 'games/ti-84 plus/tag', model: 'plus', desc: 'Chase and tag across levels.', plusImg: 'games/ti-84 plus/tag/plus.png' },
-  { key: 'worlds-hardest-game', label: "The World's Hardest Game", dir: 'games/ti-84 plus/worlds-hardest-game', model: 'plus', desc: '30 brutal levels of precision platforming.', plusImg: 'games/ti-84 plus/worlds-hardest-game/plus.png' }
+  { key: 'worlds-hardest-game', label: "The World's Hardest Game", dir: 'games/ti-84 plus/worlds-hardest-game', model: 'plus', desc: '30 brutal levels of precision platforming.', plusImg: 'games/ti-84 plus/worlds-hardest-game/plus.png' },
+
+  // ---- Python games (TI-84 Plus CE Python / TI-84 Evo) ----
+  { key: 'py-breakout', label: 'Breakout', dir: 'games/python/breakout', model: 'python', desc: 'Classic brick-breaking arcade game.', ceImg: 'games/python/breakout/python.svg' },
+  { key: 'py-connect4', label: 'Connect 4', dir: 'games/python/connect4', model: 'python', desc: 'Drop discs and connect four in a row.', ceImg: 'games/python/connect4/python.svg' },
+  { key: 'py-2048', label: '2048', dir: 'games/python/evo2048', model: 'python', desc: 'Slide and merge tiles to reach 2048.', ceImg: 'games/python/evo2048/python.svg' },
+  { key: 'py-flappy', label: 'Flappy Bird', dir: 'games/python/flappy', model: 'python', desc: 'The bird-flapping game in Python.', ceImg: 'games/python/flappy/python.svg' },
+  { key: 'py-gems', label: 'Gems', dir: 'games/python/gems', model: 'python', desc: 'Match gems in this puzzle game.', ceImg: 'games/python/gems/python.svg' },
+  { key: 'py-hangman', label: 'Hangman', dir: 'games/python/hangman', model: 'python', desc: 'Guess the word before the man hangs.', ceImg: 'games/python/hangman/python.svg' },
+  { key: 'py-mines', label: 'Minesweeper', dir: 'games/python/mines', model: 'python', desc: 'Classic minesweeper in Python.', ceImg: 'games/python/mines/python.svg' },
+  { key: 'py-pacman', label: 'Pac-Man', dir: 'games/python/pacman', model: 'python', desc: 'Navigate the maze and eat all the dots.', ceImg: 'games/python/pacman/python.svg' },
+  { key: 'py-snake', label: 'Snake', dir: 'games/python/snake', model: 'python', desc: 'Grow your snake and avoid the walls.', ceImg: 'games/python/snake/python.svg' },
+  { key: 'py-sudoku', label: 'Sudoku', dir: 'games/python/sudoku', model: 'python', desc: 'Fill the grid with numbers 1-9.', ceImg: 'games/python/sudoku/python.svg' },
+  { key: 'py-tanks', label: 'Tanks', dir: 'games/python/tanks', model: 'python', desc: 'Battle tank warfare.', ceImg: 'games/python/tanks/python.svg' },
+  { key: 'py-tetris', label: 'Tetris', dir: 'games/python/tetris', model: 'python', desc: 'Stack blocks and clear lines.', ceImg: 'games/python/tetris/python.svg' },
+  { key: 'py-wordle', label: 'Wordle', dir: 'games/python/wordle', model: 'python', desc: 'Guess the 5-letter word in 6 tries.', ceImg: 'games/python/wordle/python.svg' }
 ];
 
 // ---------------------------------------------------------------------------
@@ -554,11 +569,12 @@ async function initGameCategories() {
   for ( const category of GAME_CATEGORIES ) {
     const hasCE = !category.model || category.model === 'ce';
     const hasPlus = category.plusDir || category.model === 'plus';
+    const isPython = category.model === 'python';
     const isDual = hasCE && hasPlus;
 
     const card = document.createElement('section');
     card.className = 'game-category';
-    card.setAttribute('data-model', hasCE ? (hasPlus ? 'both' : 'ce') : 'plus');
+    card.setAttribute('data-model', isPython ? 'python' : (hasCE ? (hasPlus ? 'both' : 'ce') : 'plus'));
 
     const inner = document.createElement('div');
     inner.className = 'game-card-inner';
