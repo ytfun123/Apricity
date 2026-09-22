@@ -246,6 +246,13 @@
         setupTabs('page-our-apps');
         setupTabs('page-other-apps');
 
+        // Re-apply filter when bundle populates #game-categories (runs after DOMContentLoaded)
+        var gcObserver = new MutationObserver(function() {
+          tagCECards();
+        });
+        var gcEl = document.getElementById('game-categories');
+        if (gcEl) gcObserver.observe(gcEl, { childList: true });
+
         // ---- "Our Apps/Games" — NetChat card ----
         function initOurApps() {
           var grid = document.getElementById('our-apps-grid');
