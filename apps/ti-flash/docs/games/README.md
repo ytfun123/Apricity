@@ -4,6 +4,10 @@ Each subfolder here is one game/category shown in the "Games library" section
 of the site. To add a new category (say, `docs/games/portal/`):
 
 1. Create the folder and drop your `.8xp`/`.8xg`/etc. files in it.
+   For Python games (TI-84 Plus CE Python / TI-84 Evo), drop the `.py` source in
+   the folder and run `node scripts/py2appvar.js` from `apps/ti-flash/` — it
+   generates the matching Python AppVar (`.8xv`) files and rewrites the
+   manifest. Only the `.8xv` files are sent; the `.py` files stay as source.
 2. Add a `manifest.json` in that same folder listing the files:
 
 ```json
