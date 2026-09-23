@@ -58,6 +58,7 @@ const GAME_CATEGORIES = [
   { key: 'dino', label: 'Dino Run', dir: 'games/dino', desc: 'Run, jump, and dodge obstacles.', ceImg: 'games/dino/ce.png' },
   { key: 'swipe', label: 'SwipeCE', dir: 'games/swipe', desc: 'Fast-paced swipe puzzle game.', ceImg: 'games/swipe/ce.png' },
   { key: 'falldown', label: 'Falldown', dir: 'games/falldown', desc: 'Keep the ball falling through gaps.', ceImg: 'games/falldown/ce.png' },
+  { key: 'oiram', label: 'Oiram', dir: 'games/oiram', desc: 'A Mario-style platformer for CE \u2014 run, jump, and throw fireballs.', ceImg: 'games/oiram/ce.svg' },
   { key: '256snake', label: '256 Snake', dir: 'games/ti-84 plus/256snake', model: 'plus', desc: 'Tiny 256-byte snake game.', plusImg: 'games/ti-84 plus/256snake/plus.png' },
   { key: 'alien-breed', label: 'Alien Breed 5', dir: 'games/ti-84 plus/alien-breed', model: 'plus', desc: '54 levels of alien-shooting action.', plusImg: 'games/ti-84 plus/alien-breed/plus.png' },
   { key: 'centipede', label: 'Centipede', dir: 'games/ti-84 plus/centipede', model: 'plus', desc: 'Classic arcade shooter.', plusImg: 'games/ti-84 plus/centipede/plus.png' },
