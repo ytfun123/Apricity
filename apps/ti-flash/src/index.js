@@ -13,19 +13,29 @@ const ASM_LOCK_VERSION_TEXT = '5.5.1 (EU) / 5.5.5 (US)';
 
 // Drop the actual calculator files into docs/files/ (see docs/files/README.md)
 // and they'll show up here as one-click additions to the queue once we know
-// the connected calculator's OS needs them.
+// the connected calculator's OS needs them. family: 'ce' = TI-84 Plus CE line,
+// 'plus' = classic TI-84 Plus (Z80) line.
 const BUILTIN_FILES = [
   {
     key: 'jailbreak',
     label: 'arTIfiCE (jailbreak)',
     path: 'files/arTIfiCE_v2_1.8xp',
-    required: true
+    required: true,
+    family: 'ce'
   },
   {
     key: 'cesium',
     label: 'Cesium (shell)',
     path: 'files/cesium_english_zx0.8xp',
-    required: false
+    required: false,
+    family: 'ce'
+  },
+  {
+    key: 'ion',
+    label: 'ION (shell)',
+    path: 'files/ion.8xg',
+    required: true,
+    family: 'plus'
   }
 ];
 
@@ -80,8 +90,10 @@ const GAME_CATEGORIES = [
 // ---------------------------------------------------------------------------
 
 let calculator = null;
+let calcFamily = null;    // 'ce' | 'plus' | null once a calculator is identified
 let asmLocked = null;      // null = not asked yet, true/false once answered
 let jailbreakReady = false; // true once the jailbreak step is resolved (not needed, already had it, or installed)
+let ionReady = false;       // true once ION is confirmed/installed on a Plus
 let queue = [];             // { id, name, tiFile, status, message, builtin, key }
 let nextId = 1;
 
@@ -169,7 +181,13 @@ function updateButtons() {
 
   const osButton = document.querySelector('#os');
   const osLabel = osButton.querySelector('.label');
-  if ( asmLocked !== null ) {
+  if ( calcFamily === 'plus' ) {
+    osButton.classList.toggle('complete', ionReady);
+    osButton.classList.toggle('active', calculator && !ionReady);
+    osLabel.textContent = ionReady
+      ? 'Calculator check \u00b7 ION ready'
+      : 'Calculator check \u00b7 ION needed';
+  } else if ( asmLocked !== null ) {
     osButton.classList.add('complete');
     osLabel.textContent = asmLocked
       ? (jailbreakReady ? 'OS check \u00b7 jailbreak sorted' : 'OS check \u00b7 jailbreak needed')
@@ -193,8 +211,10 @@ function attachConnectionListeners() {
   ticalc.addEventListener('disconnect', calc => {
     if ( calc != calculator ) return;
     calculator = null;
+    calcFamily = null;
     asmLocked = null;
     jailbreakReady = false;
+    ionReady = false;
     updateButtons();
   });
 
@@ -209,9 +229,19 @@ function attachConnectionListeners() {
   });
 }
 
+// 'ce' for the TI-84 Plus CE / TI-83 Premium CE line (color screens), 'plus'
+// for the classic monochrome TI-84 Plus / SE (Z80) line. ION is the shell used
+// on the Plus line, while CE uses arTIfiCE + Cesium.
+function detectFamily(calc) {
+  const name = (calc && calc.name) || '';
+  if ( /CE/i.test(name) ) return 'ce';
+  return 'plus';
+}
+
 async function connect(calc) {
   if ( await calc.isReady() ) {
     calculator = calc;
+    calcFamily = detectFamily(calc);
     updateButtons();
   } else {
     alert('Sorry!', 'The connected device does not seem to be responding.');
@@ -232,10 +262,14 @@ function attachClickListeners() {
           .addEventListener('click', () => addFiles());
 }
 
-// Same ASM + jailbreak questions the #os button asks, as a re-usable sequence.
+// Same ASM + jailbreak (or ION) questions the #os button asks, as a re-usable sequence.
 async function osButtonFlow() {
-  if ( asmLocked === null ) await askOsVersion();
-  if ( asmLocked && !jailbreakReady ) await askJailbreakStatus();
+  if ( calcFamily === 'ce' ) {
+    if ( asmLocked === null ) await askOsVersion();
+    if ( asmLocked && !jailbreakReady ) await askJailbreakStatus();
+  } else if ( calcFamily === 'plus' ) {
+    if ( !ionReady ) await askIonStatus();
+  }
   updateButtons();
 }
 
@@ -255,8 +289,8 @@ function waitForCalculator() {
   });
 }
 
-// Makes sure we have a connected calculator and that the ASM/jailbreak
-// questions have been answered, so files can be sent right away.
+// Makes sure we have a connected calculator and that the ASM/jailbreak (or
+// ION) questions have been answered, so files can be sent right away.
 async function ensureSendReady() {
   if ( !calculator ) {
     try {
@@ -267,8 +301,12 @@ async function ensureSendReady() {
     if ( !(await waitForCalculator()) ) return false;
   }
 
-  if ( asmLocked === null ) await askOsVersion();
-  if ( asmLocked && !jailbreakReady ) await askJailbreakStatus();
+  if ( calcFamily === 'ce' ) {
+    if ( asmLocked === null ) await askOsVersion();
+    if ( asmLocked && !jailbreakReady ) await askJailbreakStatus();
+  } else if ( calcFamily === 'plus' ) {
+    if ( !ionReady ) await askIonStatus();
+  }
   updateButtons();
   return true;
 }
@@ -356,6 +394,7 @@ async function installJailbreak() {
   }
 
   for ( const entry of BUILTIN_FILES ) {
+    if ( entry.family !== 'ce' ) continue;
     const item = await addFileFromPath(entry.label, entry.path, { builtin: true, key: entry.key });
     updateButtons();
     if ( item && item.tiFile ) {
@@ -368,7 +407,82 @@ async function installJailbreak() {
 
   alert(
     'Almost done!',
-    'Now open the CabriJr app on your calculator and follow its on-screen steps to finish jailbreaking. Once that\u2019s done you can install games below.'
+    'Now finish on your calculator: open arTIfiCE and set up Cesium.'
+  );
+
+  alert(
+    'Set up arTIfiCE',
+    `On your calculator:
+1. Press PRGM, open \u201CTI-Basics\u201D and select A.
+2. Once it loads, it will ask what to launch \u2014 choose Cesium and press ENTER.
+3. Cesium will be installed \u2014 press ENTER.
+4. It will ask if you want to delete the Cesium file \u2014 it only deletes the transfer file; Cesium stays in APPS > Cesium. Press DEL to remove it, and confirm if asked.
+5. Press MODE to exit. Games will show up in Cesium (APPS).`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Plus (Z80) ION flow
+// ---------------------------------------------------------------------------
+
+function askIonStatus() {
+  const popup = setPopup(
+    'ION needed',
+    'To run games on your TI-84 Plus, they need the ION shell. Do you have ION installed already?'
+  );
+
+  return new Promise(async resolve => {
+    const haveItBtn = popupButton('yes', 'I already have it', () => {
+      ionReady = true;
+      popup.classList.remove('active');
+      updateButtons();
+      resolve();
+    });
+
+    const installBtn = popupButton('no', 'Install it now', async () => {
+      popup.classList.remove('active');
+      await installIon();
+      resolve();
+    });
+
+    popup.querySelector('.buttons').innerHTML = '';
+    popup.querySelector('.buttons').appendChild(haveItBtn);
+    popup.querySelector('.buttons').appendChild(installBtn);
+    popup.classList.add('active');
+  });
+}
+
+async function installIon() {
+  if ( !calculator ) {
+    await alert('Connect your calculator first', 'Please select your calculator (step 1) before installing ION.');
+    ionReady = false;
+    updateButtons();
+    return;
+  }
+
+  for ( const entry of BUILTIN_FILES ) {
+    if ( entry.family !== 'plus' ) continue;
+    const item = await addFileFromPath(entry.label, entry.path, { builtin: true, key: entry.key });
+    updateButtons();
+    if ( item && item.tiFile ) {
+      await sendQueueItem(item.id);
+    }
+  }
+
+  ionReady = true;
+  updateButtons();
+
+  alert(
+    'Almost done!',
+    'Now finish on your calculator: launch ION and check APPS.'
+  );
+
+  alert(
+    'Set up ION',
+    `On your calculator:
+1. Press PRGM, open \u201CTI-Basics\u201D and launch the ION file.
+2. Once it runs it will say DONE.
+3. Press APPS \u2014 you\u2019ll see your games there.`
   );
 }
 
