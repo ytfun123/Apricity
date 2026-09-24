@@ -18,6 +18,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':V('This program needs ti_draw,');V('which your calculator is');V('missing. 2-minute fix:');V('calcplex.com/ti-draw-fix');raise SystemExit
 	Q=H
+__poll=1
+try:N.get_key
+except AttributeError:
+	def __key(w=0):return N.wait_key()
+	N.get_key=__key
+	__poll=0
 B,L=7,6
 E,I,F=1,2,0
 def e():return[[F]*B for A in G(L)]
@@ -61,11 +67,11 @@ def f(b):
 P,Z,a,T=44,28,8,34
 p={F:(235,235,245),E:(210,40,40),I:(235,200,40)}
 def M():
-	while N.get_key(0)!=0:pass
+	while __poll and N.get_key(0)!=0:pass
 	while D:
 		A=N.get_key(0)
 		if A!=0:
-			while N.get_key(0)!=0:pass
+			while __poll and N.get_key(0)!=0:pass
 			return A
 def c(b,r,c):B=p[b[r][c]];A.set_color(B[0],B[1],B[2]);A.fill_rect(a+c*P+4,T+r*Z+3,P-8,Z-6)
 def J(cur,on,col=(0,0,0)):

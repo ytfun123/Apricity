@@ -38,6 +38,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':r('This program needs ti_draw,');r('which your calculator is');r('missing. 2-minute fix:');r('calcplex.com/ti-draw-fix');raise SystemExit
 	l=X
+__poll=1
+try:O.get_key
+except AttributeError:
+	def __key(w=0):return O.wait_key()
+	O.get_key=__key
+	__poll=0
 C,d,W=319,209,24
 e,S=7,5
 u,f,A0,a=45,14,2,30
@@ -81,11 +87,11 @@ def D(r,g,b):
 def A5():global h;B.clear();h=None
 AO=[(225,80,80),(235,160,70),(235,215,80),(96,186,84),(70,150,200)]
 def A6():
-	while O.get_key(0)!=0:pass
+	while __poll and O.get_key(0)!=0:pass
 	while U:
 		A=O.get_key(0)
 		if A!=0:
-			while O.get_key(0)!=0:pass
+			while __poll and O.get_key(0)!=0:pass
 			return A
 def v(r,c):return A0+c*u,a+r*f,u-2,f-2
 def A7(st,r,c):
@@ -169,7 +175,7 @@ def AQ():
 			w(A)
 			if A[t]:
 				D(90,160,235);M(110,'LEVEL '+T(A[K])+' CLEAR!');y=c.monotonic()
-				while c.monotonic()-y<1.2:O.get_key(0)
+				while __poll and c.monotonic()-y<1.2:O.get_key(0)
 				AM(A);A8(A);S,V=E(A[F]),E(A[H]);X=E(A[J])
 		N=O.get_key(0)
 		if N==45:return k,A[Q],A[K]

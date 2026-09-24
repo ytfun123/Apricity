@@ -23,6 +23,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':U('This program needs ti_draw,');U('which your calculator is');U('missing. 2-minute fix:');U('calcplex.com/ti-draw-fix');raise SystemExit
 	R=G
+__poll=1
+try:Q.get_key
+except AttributeError:
+	def __key(w=0):return Q.wait_key()
+	Q.get_key=__key
+	__poll=0
 D=10
 L=30
 I=31

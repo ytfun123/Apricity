@@ -23,6 +23,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':Z('This program needs ti_draw,');Z('which your calculator is');Z('missing. 2-minute fix:');Z('calcplex.com/ti-draw-fix');raise SystemExit
 	W=L
+__poll=1
+try:Q.get_key
+except AttributeError:
+	def __key(w=0):return Q.wait_key()
+	Q.get_key=__key
+	__poll=0
 C,q=319,209
 E=196
 D=20
@@ -57,11 +63,11 @@ def A7(st,flap,randint,scale=1.):
 	if P:return H
 	return'flap'if flap else'ok'
 def t():
-	while Q.get_key(0)!=0:pass
+	while __poll and Q.get_key(0)!=0:pass
 	while J:
 		A=Q.get_key(0)
 		if A!=0:
-			while Q.get_key(0)!=0:pass
+			while __poll and Q.get_key(0)!=0:pass
 			return A
 S=110,185,232
 g=222,200,120

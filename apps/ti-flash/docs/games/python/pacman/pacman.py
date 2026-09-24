@@ -62,6 +62,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':AB('This program needs ti_draw,');AB('which your calculator is');AB('missing. 2-minute fix:');AB('calcplex.com/ti-draw-fix');raise SystemExit
 	A1=b
+__poll=1
+try:AF.get_key
+except AttributeError:
+	def __key(w=0):return AF.wait_key()
+	AF.get_key=__key
+	__poll=0
 A2=At,'#         #         #',Au,Av,Aw,'# ## #  ##D##  # ## #','        #   #        ','# ## #  #####  # ## #',Aw,Au,'#    #    #    #    #',Av,At
 T,A3=21,13
 C=14
@@ -378,11 +384,11 @@ def AO(st,R,now,eaten=P,poll=P):
 	if G[N]!=R.get(N)and now-R['sd']>.4:Ao(G);R[N]=G[N];R['sd']=now
 def s():return AF.get_key(0)
 def Aq():
-	while s()!=0:pass
+	while __poll and s()!=0:pass
 	while V:
 		A=s()
 		if A!=0:
-			while s()!=0:pass
+			while __poll and s()!=0:pass
 			return A
 def BW():
 	if not A1:return 0
@@ -395,7 +401,7 @@ def BX(v):
 def AA(secs):
 	A=f.monotonic()
 	while f.monotonic()-A<secs:
-		if s()==45:return b
+		if __poll and s()==45:return b
 	return V
 Ar={25:(0,-1),34:(0,1),24:(-1,0),26:(1,0)}
 def BY(st,R):

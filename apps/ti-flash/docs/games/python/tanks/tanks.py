@@ -31,6 +31,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':A2('This program needs ti_draw,');A2('which your calculator is');A2('missing. 2-minute fix:');A2('calcplex.com/ti-draw-fix');raise SystemExit
 	Y=p
+__poll=1
+try:f.get_key
+except AttributeError:
+	def __key(w=0):return f.wait_key()
+	f.get_key=__key
+	__poll=0
 C,D=319,209
 M=26
 I=5
@@ -158,11 +164,11 @@ Q=4
 Az=5
 def A(c):B.set_color(c[0],c[1],c[2])
 def o():
-	while f.get_key(0)!=0:pass
+	while __poll and f.get_key(0)!=0:pass
 	while O:
 		A=f.get_key(0)
 		if A!=0:
-			while f.get_key(0)!=0:pass
+			while __poll and f.get_key(0)!=0:pass
 			return A
 def G(y,txt):B.draw_text((C-(len(txt)*10-2))//2,y,txt)
 def A_(top):
@@ -291,7 +297,7 @@ def BF(g,tank,angle,power):
 			G=F
 		if i:A(AS);B.fill_rect(V,S,Q,Q);G=V,S
 		if I is not F:b();return I
-		if f.get_key(0)==45:b();return e,Y,h,F
+		if __poll and f.get_key(0)==45:b();return e,Y,h,F
 BG=.28
 def BH(g,tank):
 	A=tank;I=g[P];y(g,A);C=0;D=0;E=X.monotonic()

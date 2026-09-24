@@ -24,6 +24,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':Y('This program needs ti_draw,');Y('which your calculator is');Y('missing. 2-minute fix:');Y('calcplex.com/ti-draw-fix');raise SystemExit
 	V=J
+__poll=1
+try:Q.get_key
+except AttributeError:
+	def __key(w=0):return Q.wait_key()
+	Q.get_key=__key
+	__poll=0
 R,S,k=9,15,25
 W=[('EASY',15),('NORMAL',25),('HARD',40)]
 def l(mines=k):return{F:R,G:S,c:mines,H:[[J]*S for A in B(R)],O:[[0]*S for A in B(R)],I:[[J]*S for A in B(R)],N:[[J]*S for A in B(R)],K:D,L:J,d:D}
@@ -72,11 +78,11 @@ C=20
 s,f=4,28
 t={1:(0,0,220),2:(0,140,0),3:(220,0,0),4:(0,0,120),5:(140,0,0),6:(0,150,150),7:(0,0,0),8:(110,110,110)}
 def a():
-	while Q.get_key(0)!=0:pass
+	while __poll and Q.get_key(0)!=0:pass
 	while D:
 		A=Q.get_key(0)
 		if A!=0:
-			while Q.get_key(0)!=0:pass
+			while __poll and Q.get_key(0)!=0:pass
 			return A
 def X(st,secs=P,newbest=J):
 	A.set_color(255,255,255);A.fill_rect(-1,-1,321,f-2+1);A.set_color(0,0,0);A.draw_text(6,22,'MINES '+U(st[c]-q(st)))

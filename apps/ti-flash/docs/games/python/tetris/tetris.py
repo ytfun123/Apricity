@@ -29,6 +29,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':j('This program needs ti_draw,');j('which your calculator is');j('missing. 2-minute fix:');j('calcplex.com/ti-draw-fix');raise SystemExit
 	a=U
+__poll=1
+try:Q.get_key
+except AttributeError:
+	def __key(w=0):return Q.wait_key()
+	Q.get_key=__key
+	__poll=0
 D,E=10,20
 b='IOTSZJL'
 c={w:[[(0,1),(1,1),(2,1),(3,1)],[(2,0),(2,1),(2,2),(2,3)]],x:[[(1,0),(2,0),(1,1),(2,1)]],y:[[(1,0),(0,1),(1,1),(2,1)],[(1,0),(1,1),(2,1),(1,2)],[(0,1),(1,1),(2,1),(1,2)],[(1,0),(0,1),(1,1),(1,2)]],z:[[(1,0),(2,0),(0,1),(1,1)],[(1,0),(1,1),(2,1),(2,2)]],'Z':[[(0,0),(1,0),(1,1),(2,1)],[(2,0),(1,1),(2,1),(1,2)]],'J':[[(0,0),(0,1),(1,1),(2,1)],[(1,0),(2,0),(1,1),(1,2)],[(0,1),(1,1),(2,1),(2,2)],[(1,0),(1,1),(0,2),(1,2)]],'L':[[(2,0),(0,1),(1,1),(2,1)],[(1,0),(1,1),(1,2),(2,2)],[(0,1),(1,1),(2,1),(0,2)],[(0,0),(1,0),(1,1),(1,2)]]}
@@ -87,11 +93,11 @@ i=235,200,70
 F,N=319,209
 def C(col):A=col;B.set_color(A[0],A[1],A[2])
 def A7():
-	while Q.get_key(0)!=0:pass
+	while __poll and Q.get_key(0)!=0:pass
 	while G:
 		A=Q.get_key(0)
 		if A!=0:
-			while Q.get_key(0)!=0:pass
+			while __poll and Q.get_key(0)!=0:pass
 			return A
 def A8(x,y,col):C(col);B.fill_rect(x,y,A-1,A-1)
 def AJ(st):

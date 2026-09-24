@@ -15,6 +15,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':P('This program needs ti_draw,');P('which your calculator is');P('missing. 2-minute fix:');P('calcplex.com/ti-draw-fix');raise SystemExit
 	M=Q
+__poll=1
+try:L.get_key
+except AttributeError:
+	def __key(w=0):return L.wait_key()
+	L.get_key=__key
+	__poll=0
 A=8
 n='EASY','NORMAL','HARD'
 Y=5,6,7
@@ -84,11 +90,11 @@ def C(col):A=col;B.set_color(A[0],A[1],A[2])
 def F(y,txt):B.draw_text((319-(N(txt)*10-2))//2,y,txt)
 def V(y,txt,col):C(I);B.fill_rect(-1,y-18,321,22);C(col);F(y,txt)
 def O():
-	while L.get_key(0)!=0:pass
+	while __poll and L.get_key(0)!=0:pass
 	while G:
 		A=L.get_key(0)
 		if A!=0:
-			while L.get_key(0)!=0:pass
+			while __poll and L.get_key(0)!=0:pass
 			return A
 def i(t):
 	if not M:return

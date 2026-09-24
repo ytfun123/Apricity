@@ -18,6 +18,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':Q('This program needs ti_draw,');Q('which your calculator is');Q('missing. 2-minute fix:');Q('calcplex.com/ti-draw-fix');raise SystemExit
 	L=R
+__poll=1
+try:J.get_key
+except AttributeError:
+	def __key(w=0):return J.wait_key()
+	J.get_key=__key
+	__poll=0
 C=4
 def k(row):
 	B=[A for A in row if A];D,E,A=[],0,0
@@ -55,11 +61,11 @@ d,V=3,30
 O,W,G=72,37,5
 n={0:(214,205,196),2:(238,228,218),4:(237,224,200),8:(242,177,121),16:(245,149,99),32:(246,124,95),64:(246,94,59),128:(237,207,114),256:(237,204,97),512:(237,200,80),1024:(237,197,63),2048:(237,194,46)}
 def P():
-	while J.get_key(0)!=0:pass
+	while __poll and J.get_key(0)!=0:pass
 	while E:
 		A=J.get_key(0)
 		if A!=0:
-			while J.get_key(0)!=0:pass
+			while __poll and J.get_key(0)!=0:pass
 			return A
 def c(score,best):A.set_color(255,255,255);A.fill_rect(-1,-1,321,V-2+1);A.set_color(0,0,0);A.draw_text(6,22,'SCORE '+I(score));A.draw_text(180,22,'BEST '+I(best))
 def e(grid,r,c):

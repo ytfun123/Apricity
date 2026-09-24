@@ -29,6 +29,12 @@ except ImportError:
 	import sys
 	if sys.implementation.name=='tipython':h('This program needs ti_draw,');h('which your calculator is');h('missing. 2-minute fix:');h('calcplex.com/ti-draw-fix');raise SystemExit
 	u=L
+__poll=1
+try:k.get_key
+except AttributeError:
+	def __key(w=0):return k.wait_key()
+	k.get_key=__key
+	__poll=0
 def AE(i):
 	C,D=I(i,9);F,G=C//3*3,D//3*3;B=[]
 	for E in A(9):B.append(C*9+E);B.append(E*9+D)
