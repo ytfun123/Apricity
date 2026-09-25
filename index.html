@@ -5762,7 +5762,7 @@ function generateFingerprint() {
                 role: m.role === 'model' ? 'assistant' : 'user',
                 content: m.parts[0].text
             }));
-            const data = await proxyFetch('groq', null, { model: 'llama-3.3-70b-versatile', messages });
+            const data = await proxyFetch('groq', null, { model: 'openai/gpt-oss-120b', messages });
             typing.remove();
             if (data.error) {
                 appendGeminiMsg('model', 'Error: ' + data.error.message);

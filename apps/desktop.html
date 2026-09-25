@@ -1120,7 +1120,7 @@
         const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DESKTOP_GROQ_KEY },
-          body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: history })
+          body: JSON.stringify({ model: 'openai/gpt-oss-120b', messages: history })
         });
         const data = await res.json();
         const bubble = view.querySelector('#' + typingId);
