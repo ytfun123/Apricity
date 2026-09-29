@@ -1,0 +1,9 @@
+[
+  { "file": "clibs.8xg", "label": "C libraries (graphx + friends)" },
+  { "file": "HILLCLMB.8xp", "label": "Hill Climb Racing (main program)" },
+  { "file": "HILLJP0.8xv", "label": "Jeep graphics (part 1)" },
+  { "file": "HILLJP1.8xv", "label": "Jeep graphics (part 2)" },
+  { "file": "HILLMN0.8xv", "label": "Map graphics (part 1)" },
+  { "file": "HILLMN1.8xv", "label": "Map graphics (part 2)" },
+  { "file": "HILLUI.8xv", "label": "UI graphics" }
+]

@@ -1,0 +1,4 @@
+[
+  { "file": "clibs.8xg", "label": "C libraries (graphx + friends)" },
+  { "file": "DKONG.8xp", "label": "Donkey Kong (main program)" }
+]

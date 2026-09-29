@@ -1,0 +1,5 @@
+[
+  { "file": "clibs.8xg", "label": "C libraries (graphx + friends)" },
+  { "file": "DOODLEJP.8xp", "label": "Doodle Jump (main program)" },
+  { "file": "DOODLEGX.8xv", "label": "Graphics data" }
+]

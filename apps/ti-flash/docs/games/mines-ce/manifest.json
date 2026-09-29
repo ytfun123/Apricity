@@ -1,0 +1,5 @@
+[
+  { "file": "clibs.8xg", "label": "C libraries (graphx + friends)" },
+  { "file": "MINES.8xp", "label": "Minesweeper (main program)" },
+  { "file": "graphc.8xv", "label": "Graphics data" }
+]
