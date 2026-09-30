@@ -17,3 +17,5 @@
 07/29/2026: Chillcord was fully fixed, was added capctha, but still chillcord doesnt collect emails and phone numbers.
 
 08/29/2026: Added ti_flash, netchat , fixed and added some things to desktop app.
+
+09/30/2026: Radical Simplifier updated to v2.10 in ti-flash.
