@@ -1,16 +1,16 @@
 # Apricity
-This is a web proxy. It uses a wisp-based backend.
-Feel free to make contributions and report issues, if you want to make fork you can, as long as you respect the terms of the **LICENSE-ADDITIONS** .
+Apricity is an all-in-one web proxy. It uses a WISP-based backend.
+PRs and forks are welcome as long as you respect the terms of the licence additions. Issue reports are appreciated.
 
 ## Features
 - Many different built in games and apps
-- Desktop window manager
+- Desktop window manager included as an app
 - Many different customisation options
-- Built in chat and YouTube client
+- Built in Chat and YouTube client
 
 ## Acknowledgements
-- Hollow Knight: https://github.com/aukak/hollow-knight
+- Web-based Hollow Knight: https://github.com/aukak/hollow-knight
 
 ## Licence
 Apricity is licenced under the AGPL-3.0 licence.
-This software is provided AS IS with ABSOLUTELY NO WARRANTY, and we do not take responsibility for your uses of it.
+This software is provided AS IS with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law. We do not take responsibility for your use of it.
