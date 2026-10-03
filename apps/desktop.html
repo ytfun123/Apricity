@@ -1646,10 +1646,12 @@
         if (style === 'pastel') computedValue = 'pastel-gradient';
         else if (style === 'classic') computedValue = '#008080';
         else if (style === 'luna') computedValue = 'luna-blue';
-        else computedValue = 'gradient';
+        else computedValue = 'default-image';
       }
 
-      if(computedValue === 'gradient') {
+      if (computedValue === 'default-image') {
+        overlay.style.background = "url('/icons/wall.png') center / cover no-repeat";
+      } else if(computedValue === 'gradient') {
         overlay.style.background = "linear-gradient(135deg, #1f4068 0%, #162447 100%)";
       } else if(computedValue === 'pastel-gradient') {
         overlay.style.background = "linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)";
@@ -2289,10 +2291,15 @@
         if (systemStyleDesign === 'pastel') effectiveMode = 'pastel-gradient';
         else if (systemStyleDesign === 'classic') effectiveMode = 'classic-teal';
         else if (systemStyleDesign === 'luna') effectiveMode = 'luna-blue';
-        else effectiveMode = 'gradient';
+        else effectiveMode = 'default-image';
       }
 
-      if (effectiveMode === 'custom-gradient') {
+      if (effectiveMode === 'default-image') {
+        document.body.style.backgroundImage = "url('/icons/wall.png')";
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
+        document.body.style.backgroundRepeat = 'no-repeat';
+      } else if (effectiveMode === 'custom-gradient') {
         document.body.style.backgroundImage = `linear-gradient(135deg, ${gradientColor1} 0%, ${gradientColor2} 100%)`;
       } else if ((effectiveMode === 'image' || effectiveMode === 'custom-image') && activeWallpaperUrl) { 
         document.body.style.backgroundImage = `url('${activeWallpaperUrl}')`; 
