@@ -1,6 +1,6 @@
 # Additional Terms Under GNU AGPLv3 Section 7
 
-Copyright (C) 2026 Apricity_proxies
+Copyright (C) 2026 Apricity Proxies
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -21,11 +21,11 @@ following in any copy, fork, or modified version of this software,
 including any publicly accessible instance of it made available over
 a network:
 
-- The name of the original project: **Apricity**
+- The name of the original project: Apricity
 - A visible link to the original repository:
-  **https://github.com/ytfun123/Apricity**
-- A visible statement that the software is "Based on Apricity
-  by Apricity_proxies"
+  https://github.com/ytfun123/Apricity
+- A visible statement that states that the
+  software is based on Apricity by Apricity Proxies
 
 This notice must be reasonably visible to end users of the software
 — for example, in a footer, an "About" page, a settings/credits
