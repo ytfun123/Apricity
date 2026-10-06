@@ -2615,6 +2615,9 @@ function generateFingerprint() {
         <h2>All Games</h2>
         <div style="flex:1"></div>
         <input type="search" id="mainGamesSearch" name="gfs" placeholder="Search games..." autocomplete="off" data-1p-ignore="true" oninput="renderGamesFullscreenGrid()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;width:200px;margin-right:12px;">
+        <button onclick="exportGameSaves()" title="Download all game saves as a backup file" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;margin-right:12px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+            <span class="material-symbols-outlined" style="font-size:16px;">download</span> Export saves
+        </button>
         <button class="games-fs-close" onclick="toggleGamesFullscreen()">
             <span class="material-symbols-outlined">close</span>
         </button>
@@ -4658,6 +4661,39 @@ function generateFingerprint() {
                     <div class="games-fs-name">${g.name}</div>
                 </div>`;
         }).join('');
+    }
+
+    // Back up every game's saved progress in one click. All games share this
+    // origin, so their saves live in this page's localStorage + cookies --
+    // dump both to a JSON file the player can restore later if the browser
+    // clears site data (cookies/localStorage periodically delete themselves
+    // in some setups).
+    function exportGameSaves() {
+        const ls = {};
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                ls[k] = localStorage.getItem(k);
+            }
+        } catch (e) {
+            alert('Could not read saved data: ' + e.message);
+            return;
+        }
+        const payload = {
+            app: 'Apricity',
+            exportedAt: new Date().toISOString(),
+            localStorage: ls,
+            cookies: document.cookie
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'apricity-saves-' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
     }
 
     // ── Utopia games sub-view ──
