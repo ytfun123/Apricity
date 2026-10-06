@@ -2615,8 +2615,11 @@ function generateFingerprint() {
         <h2>All Games</h2>
         <div style="flex:1"></div>
         <input type="search" id="mainGamesSearch" name="gfs" placeholder="Search games..." autocomplete="off" data-1p-ignore="true" oninput="renderGamesFullscreenGrid()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;width:200px;margin-right:12px;">
-        <button onclick="exportGameSaves()" title="Download all game saves as a backup file" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;margin-right:12px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+        <button onclick="exportGameSaves()" title="Download all game saves as a backup file" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;margin-right:8px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
             <span class="material-symbols-outlined" style="font-size:16px;">download</span> Export saves
+        </button>
+        <button onclick="importGameSaves()" title="Restore game saves from a backup file" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;margin-right:12px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+            <span class="material-symbols-outlined" style="font-size:16px;">upload</span> Import saves
         </button>
         <button class="games-fs-close" onclick="toggleGamesFullscreen()">
             <span class="material-symbols-outlined">close</span>
@@ -4694,6 +4697,63 @@ function generateFingerprint() {
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
+
+    // Load a previously exported saves file back. Overwrites only the keys
+    // present in the backup (anything newer that isn't in it is kept).
+    // Cookies are restored with a 10-year max-age because document.cookie
+    // doesn't expose the original expiry dates, and session cookies would
+    // vanish on the next browser close -- exactly the data loss we're
+    // trying to protect against.
+    function importGameSaves() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.onchange = () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                let data;
+                try {
+                    data = JSON.parse(reader.result);
+                } catch (e) {
+                    alert('That file is not valid JSON.');
+                    return;
+                }
+                const ls = data && data.localStorage;
+                const ck = data && typeof data.cookies === 'string' ? data.cookies : '';
+                if (!ls || typeof ls !== 'object') {
+                    alert('That file does not look like an Apricity saves export.');
+                    return;
+                }
+                let n = 0;
+                try {
+                    Object.keys(ls).forEach(k => {
+                        localStorage.setItem(k, String(ls[k]));
+                        n++;
+                    });
+                } catch (e) {
+                    alert('Could not restore saved data: ' + e.message);
+                    return;
+                }
+                let m = 0;
+                ck.split(';').forEach(part => {
+                    const s = part.indexOf('=');
+                    if (s < 1) return;
+                    const name = part.slice(0, s).trim();
+                    const value = part.slice(s + 1);
+                    if (!name) return;
+                    document.cookie = name + '=' + value + '; path=/; max-age=315360000';
+                    m++;
+                });
+                alert('Imported ' + n + ' saved value' + (n === 1 ? '' : 's') +
+                    ' and ' + m + ' cookie' + (m === 1 ? '' : 's') +
+                    '. Reload the page so games pick them up.');
+            };
+            reader.readAsText(file);
+        };
+        input.click();
     }
 
     // ── Utopia games sub-view ──
