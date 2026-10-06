@@ -2614,11 +2614,11 @@ function generateFingerprint() {
     <div class="games-fs-header">
         <h2>All Games</h2>
         <div style="flex:1"></div>
-        <input type="search" id="mainGamesSearch" name="gfs" placeholder="Search games..." autocomplete="off" data-1p-ignore="true" oninput="renderGamesFullscreenGrid()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;width:200px;margin-right:12px;">
-        <button onclick="exportGameSaves()" title="Download all game saves as a backup file" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;margin-right:8px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+        <input type="search" id="mainGamesSearch" name="gfs" placeholder="Search games..." autocomplete="off" data-1p-ignore="true" oninput="renderGamesFullscreenGrid()" style="background:var(--md-sys-color-surface-container);border:1px solid var(--yt-border2);border-radius:8px;padding:6px 12px;color:var(--md-sys-color-on-surface);font-size:14px;width:200px;margin-right:12px;">
+        <button onclick="exportGameSaves()" title="Download all game saves as a backup file" style="background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:8px;padding:6px 12px;color:var(--md-sys-color-on-surface);font-size:13px;margin-right:8px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
             <span class="material-symbols-outlined" style="font-size:16px;">download</span> Export saves
         </button>
-        <button onclick="importGameSaves()" title="Restore game saves from a backup file" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;margin-right:12px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+        <button onclick="importGameSaves()" title="Restore game saves from a backup file" style="background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:8px;padding:6px 12px;color:var(--md-sys-color-on-surface);font-size:13px;margin-right:12px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
             <span class="material-symbols-outlined" style="font-size:16px;">upload</span> Import saves
         </button>
         <button class="games-fs-close" onclick="toggleGamesFullscreen()">
@@ -2638,7 +2638,7 @@ function generateFingerprint() {
         </button>
         <h2>Utopia Games</h2>
         <div style="flex:1"></div>
-        <input type="search" id="utopiaGamesSearch" name="ufs" placeholder="Search games..." autocomplete="off" data-1p-ignore="true" oninput="renderUtopiaGamesGrid()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;width:200px;margin-right:12px;">
+        <input type="search" id="utopiaGamesSearch" name="ufs" placeholder="Search games..." autocomplete="off" data-1p-ignore="true" oninput="renderUtopiaGamesGrid()" style="background:var(--md-sys-color-surface-container);border:1px solid var(--yt-border2);border-radius:8px;padding:6px 12px;color:var(--md-sys-color-on-surface);font-size:14px;width:200px;margin-right:12px;">
         <button class="games-fs-close" onclick="toggleUtopiaIconMode()" id="utopiaIconToggle" style="margin-right:8px;font-size:12px;padding:4px 10px;" title="Toggle icons/images">
             <span class="material-symbols-outlined">image</span>
         </button>
