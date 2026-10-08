@@ -305,6 +305,14 @@
         <button class="toggle" id="zoomIn" onclick="zoom(2)">+</button>
       </div>
 
+      <div class="label">Touch screen</div>
+      <div class="row" style="margin-top:0">
+        <button class="toggle on" id="touchDrawToggle" onclick="toggleTouchDraw()" style="flex:1">Touch Draw: On</button>
+      </div>
+      <div class="row">
+        <button class="toggle" id="lockScreenToggle" onclick="toggleLockScreen()" style="flex:1">Lock Screen: Off</button>
+      </div>
+
       <div class="label">Layers</div>
       <div id="layerList" class="layer-list"></div>
       <div class="row" style="margin-top:6px">
@@ -366,6 +374,8 @@
     brush: 1,
     grid: true,
     pattern: true,
+    touchDraw: true,
+    lockScreen: false,
     shapeFill: false,
     width: 32,
     height: 32,
@@ -856,15 +866,27 @@
     drawing = false;
   }
 
+  let activePointerId = null;
+
   wrap.addEventListener("pointerdown", e => {
     e.preventDefault();
+    if (e.pointerType !== "mouse" && !state.touchDraw) return;
     if (e.pointerType === "mouse" && e.button === 1) return;
+    if (activePointerId !== null) return;
+    activePointerId = e.pointerId;
     wrap.setPointerCapture(e.pointerId);
     beginDraw(e);
   });
-  wrap.addEventListener("pointermove", moveDraw);
-  wrap.addEventListener("pointerup", endDraw);
-  wrap.addEventListener("pointercancel", endDraw);
+  wrap.addEventListener("pointermove", e => {
+    if (e.pointerId === activePointerId) moveDraw(e);
+  });
+  const endPointer = e => {
+    if (activePointerId !== null && e.pointerId !== activePointerId) return;
+    activePointerId = null;
+    endDraw();
+  };
+  wrap.addEventListener("pointerup", endPointer);
+  wrap.addEventListener("pointercancel", endPointer);
   wrap.addEventListener("contextmenu", e => e.preventDefault());
 
   wrap.addEventListener("wheel", e => {
@@ -899,6 +921,60 @@
     const btn = document.getElementById("solidToggle");
     btn.textContent = state.shapeFill ? "Solid: On" : "Solid: Off";
     btn.classList.toggle("on", state.shapeFill);
+  }
+
+  function syncTouchButtons() {
+    const td = document.getElementById("touchDrawToggle");
+    td.textContent = state.touchDraw ? "Touch Draw: On" : "Touch Draw: Off";
+    td.classList.toggle("on", state.touchDraw);
+    const ls = document.getElementById("lockScreenToggle");
+    ls.textContent = state.lockScreen ? "Lock Screen: On" : "Lock Screen: Off";
+    ls.classList.toggle("on", state.lockScreen);
+  }
+
+  function applyTouch() {
+    // touchDraw: gestures that start on the canvas never scroll/zoom the
+    // page, so the browser can't steal the stroke after a few pixels.
+    wrap.style.touchAction = state.touchDraw ? "none" : "";
+    // lockScreen: no touch anywhere can pan/zoom the screen.
+    document.documentElement.style.touchAction = state.lockScreen ? "none" : "";
+    document.body.style.touchAction = state.lockScreen ? "none" : "";
+  }
+
+  function toggleTouchDraw() {
+    state.touchDraw = !state.touchDraw;
+    syncTouchButtons();
+    applyTouch();
+    saveTouchPrefs();
+    statusMsg(state.touchDraw
+      ? "Finger/stylus now draws on the canvas"
+      : "Touch drawing off — mouse only; touch can scroll again");
+  }
+
+  function toggleLockScreen() {
+    state.lockScreen = !state.lockScreen;
+    syncTouchButtons();
+    applyTouch();
+    saveTouchPrefs();
+    statusMsg(state.lockScreen
+      ? "Screen locked — fingers can't move it"
+      : "Screen unlocked — fingers can scroll");
+  }
+
+  function loadTouchPrefs() {
+    try {
+      const td = localStorage.getItem("pixelart_touchDraw");
+      const ls = localStorage.getItem("pixelart_lockScreen");
+      if (td !== null) state.touchDraw = td === "1";
+      if (ls !== null) state.lockScreen = ls === "1";
+    } catch (err) { }
+  }
+
+  function saveTouchPrefs() {
+    try {
+      localStorage.setItem("pixelart_touchDraw", state.touchDraw ? "1" : "0");
+      localStorage.setItem("pixelart_lockScreen", state.lockScreen ? "1" : "0");
+    } catch (err) { }
   }
 
   function brushSize() {
@@ -1142,6 +1218,9 @@
     document.getElementById("patternToggle").textContent = state.pattern ? "Pattern: On" : "Pattern: Off";
     document.getElementById("patternToggle").classList.toggle("on", state.pattern);
     wrap.classList.toggle("pattern", state.pattern);
+    loadTouchPrefs();
+    syncTouchButtons();
+    applyTouch();
     loadProjects();
     showGallery();
   }
@@ -1162,6 +1241,8 @@
   window.toggleGrid = toggleGrid;
   window.togglePattern = togglePattern;
   window.toggleSolid = toggleSolid;
+  window.toggleTouchDraw = toggleTouchDraw;
+  window.toggleLockScreen = toggleLockScreen;
   window.zoom = zoom;
   window.setColor = setColor;
   window.newLayer = newLayer;
