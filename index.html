@@ -4869,6 +4869,7 @@ function generateFingerprint() {
         { id: 'discord',   name: 'Chillcord',     icon: 'forum',        open: 'openDiscordApp' },
         { id: 'ti-flash', name: 'Ti Flash',     icon: 'usb',          open: 'openTiFlash' },
         { id: 'netchat',  name: 'NetChat',      icon: './apps/netchat/icon.png', open: 'openNetChat' },
+        { id: 'pixelart', name: 'Pixel Art',    icon: 'palette',      open: 'openPixelArt' },
     ];
 
     function toggleAppsFullscreen() {
@@ -4919,6 +4920,11 @@ function generateFingerprint() {
         closeAppsPanel();
         _gameReturnTo = 'apps';
         openGameFullscreen('./apps/netchat/index.html', 'NetChat');
+    }
+    function openPixelArt() {
+        closeAppsPanel();
+        _gameReturnTo = 'apps';
+        openGameFullscreen('./apps/pixelart.html', 'Pixel Art');
     }
 
 

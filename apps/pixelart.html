@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PixelArt Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cell: 16px;
+    --bg: #1e2126;
+    --panel: #262a31;
+    --panel-2: #2e333b;
+    --border: #3a404a;
+    --text: #e8eaed;
+    --text-dim: #9aa0a8;
+    --accent: #4f9cf9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
+    overflow: hidden;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .logo { font-family: "Press Start 2P", monospace; font-size: 15px; letter-spacing: .5px; margin-right: 6px; color: var(--text); }
+  .logo span { color: var(--accent); }
+  .btn {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .btn:hover { background: #3a414b; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #6babff; }
+  .btn.danger { background: #7a2a2a; border-color: #a13a3a; color: #fff; }
+  .btn.danger:hover { background: #8f3333; }
+  .btn.small { padding: 4px 9px; font-size: 12px; }
+  .spacer { flex: 1; }
+  #status { font-size: 12px; color: var(--text-dim); }
+  select {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+  }
+
+  #galleryView { height: 100%; display: flex; flex-direction: column; }
+  .gallery {
+    flex: 1;
+    overflow-y: auto;
+    padding: 26px;
+    background: #14161a;
+    background-image: radial-gradient(circle, #22262c 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .gallery h2 { font-family: "Press Start 2P", monospace; font-size: 14px; margin-bottom: 22px; color: var(--text); }
+  #projectGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 20px;
+    max-width: 1200px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    display: flex;
+    flex-direction: column;
+  }
+  .card .thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: block;
+    cursor: pointer;
+    background-color: #ffffff;
+    background-image: repeating-conic-gradient(#ffffff 0% 25%, #d0d0d0 0% 50%);
+    background-size: 12px 12px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    object-fit: contain;
+  }
+  .card .card-body { padding: 10px 12px 12px; }
+  .card-name {
+    font-weight: 600;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .card-name:hover { color: var(--accent); }
+  .card-date { font-size: 11px; color: var(--text-dim); margin: 2px 0 10px; }
+  .card-actions { display: flex; gap: 6px; }
+  .card-actions .btn { flex: 1; }
+  #emptyState {
+    text-align: center;
+    margin-top: 70px;
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+  #emptyState .big { font-size: 40px; margin-bottom: 12px; color: var(--text-dim); }
+
+  #editorView { height: 100%; display: none; flex-direction: column; }
+  .main { flex: 1; display: flex; overflow: hidden; }
+  .panel {
+    width: 190px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 12px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .panel.right { border-right: none; border-left: 1px solid var(--border); }
+  .panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 8px; }
+  .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .tool-btn {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 8px 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .tool-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .label { font-size: 12px; color: var(--text-dim); margin-top: 14px; margin-bottom: 6px; }
+  .row { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+  .num-input {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 5px 8px;
+    width: 56px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .toggle {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .toggle.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .layer-list { display: flex; flex-direction: column; gap: 4px; }
+  .layer-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .layer-row.active { border-color: var(--accent); background: #333a44; }
+  .layer-row .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .layer-row button { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 12px; padding: 0 2px; }
+  .layer-row button:hover { color: var(--text); }
+  .layer-row input[type=checkbox] { cursor: pointer; accent-color: var(--accent); }
+  .palette { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+  .swatch {
+    aspect-ratio: 1 / 1;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,.15);
+    cursor: pointer;
+    position: relative;
+  }
+  .swatch.current { outline: 2px solid #fff; }
+  .color-line { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  #currentColor {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+  }
+  #colorInput { width: 100%; height: 34px; border: 1px solid var(--border); border-radius: 6px; background: none; cursor: pointer; }
+  .canvas-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: 20px;
+    background: #14161a;
+    background-image: radial-gradient(circle, #22262c 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .canvas-wrap { position: relative; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+  canvas.art, canvas.grid { image-rendering: pixelated; image-rendering: crisp-edges; }
+  .canvas-wrap { background: #ffffff; }
+  .canvas-wrap.pattern {
+    background-color: #d0d0d0;
+    background-image: repeating-conic-gradient(#ffffff 0% 25%, #d0d0d0 0% 50%);
+    background-size: 16px 16px;
+  }
+  canvas.art { display: block; width: var(--cell); height: var(--cell); }
+  canvas.grid {
+    position: absolute;
+    inset: 0;
+    width: var(--cell);
+    height: var(--cell);
+    pointer-events: none;
+  }
+  #hint { margin-top: 14px; font-size: 12px; color: var(--text-dim); text-align: center; }
+  .recent { display: flex; flex-wrap: wrap; gap: 4px; }
+  .recent .swatch { width: 22px; height: 22px; }
+</style>
+</head>
+<body>
+
+<div id="galleryView">
+  <header>
+    <div class="logo">Pixel<span>Art</span></div>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="newProject()">+ New Project</button>
+  </header>
+  <main class="gallery">
+    <h2>My Gallery</h2>
+    <div id="projectGrid"></div>
+    <div id="emptyState" style="display:none">
+      <div class="big">&#127912;</div>
+      No projects yet.<br>Click <b>+ New Project</b> to make your first drawing!
+    </div>
+  </main>
+</div>
+
+<div id="editorView">
+  <header>
+    <button class="btn" onclick="goBack()">&#8592; Gallery</button>
+    <div class="logo" id="projectTitle">Untitled</div>
+    <button class="btn" onclick="savePng()">Save PNG</button>
+    <select id="sizeSelect" onchange="resizeCanvas()">
+      <option value="16">16 x 16</option>
+      <option value="32" selected>32 x 32</option>
+      <option value="48">48 x 48</option>
+      <option value="64">64 x 64</option>
+      <option value="96">96 x 96</option>
+      <option value="128">128 x 128</option>
+    </select>
+    <button class="btn" onclick="clearCanvas()">New Canvas</button>
+    <div class="spacer"></div>
+    <span id="status"></span>
+  </header>
+
+  <div class="main">
+    <aside class="panel">
+      <h3>Tools</h3>
+      <div class="tool-grid">
+        <button class="tool-btn active" data-tool="pencil" onclick="setTool('pencil')">Pencil</button>
+        <button class="tool-btn" data-tool="eraser" onclick="setTool('eraser')">Eraser</button>
+        <button class="tool-btn" data-tool="fill" onclick="setTool('fill')">Fill</button>
+        <button class="tool-btn" data-tool="picker" onclick="setTool('picker')">Pick</button>
+        <button class="tool-btn" data-tool="line" onclick="setTool('line')">Line</button>
+        <button class="tool-btn" data-tool="rect" onclick="setTool('rect')">Rect</button>
+        <button class="tool-btn" data-tool="circle" onclick="setTool('circle')">Circle</button>
+        <button class="tool-btn" data-tool="triangle" onclick="setTool('triangle')">Triangle</button>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <button class="toggle" id="solidToggle" onclick="toggleSolid()">Solid: Off</button>
+      </div>
+
+      <div class="label">Brush size</div>
+      <input class="num-input" id="brushInput" type="number" min="1" max="16" value="1" onchange="brushSize()">
+
+      <div class="row">
+        <button class="toggle on" id="gridToggle" onclick="toggleGrid()">Grid: On</button>
+        <button class="toggle on" id="patternToggle" onclick="togglePattern()">Pattern: On</button>
+      </div>
+      <div class="row">
+        <button class="toggle" id="zoomOut" onclick="zoom(-2)">-</button>
+        <button class="toggle" id="zoomIn" onclick="zoom(2)">+</button>
+      </div>
+
+      <div class="label">Layers</div>
+      <div id="layerList" class="layer-list"></div>
+      <div class="row" style="margin-top:6px">
+        <button class="toggle" onclick="newLayer()">+ Add</button>
+        <button class="toggle" onclick="dupLayer()">Copy</button>
+        <button class="toggle" onclick="delLayer()">Del</button>
+      </div>
+
+      <div class="label">Shortcuts</div>
+      <div style="font-size:11px;color:var(--text-dim);line-height:1.7">
+        B Pencil &middot; E Eraser &middot; F Fill &middot; I Pick<br>
+        L Line &middot; R Rect &middot; C Circle &middot; T Triangle<br>
+        S Solid fill &middot; [ ] brush size<br>
+        Ctrl+Z undo &middot; Ctrl+Y redo<br>
+        Right-click erases
+      </div>
+    </aside>
+
+    <main class="canvas-area">
+      <div class="canvas-wrap" id="wrap">
+        <canvas class="art" id="art"></canvas>
+        <canvas class="grid" id="gridCanvas"></canvas>
+      </div>
+      <div id="hint"></div>
+    </main>
+
+    <aside class="panel right">
+      <h3>Color</h3>
+      <div class="color-line">
+        <div class="swatch current" id="currentColor"></div>
+        <input type="color" id="colorInput" value="#000000" oninput="setColor(this.value)">
+      </div>
+      <h3>Palette</h3>
+      <div class="palette" id="palette"></div>
+      <h3 style="margin-top:14px">Recent</h3>
+      <div class="recent" id="recent"></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:16px;line-height:1.6">
+        Everything is stored only in this browser. Nothing is uploaded, no account needed.
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function () {
+  const PROJ_KEY = "pixelart_projects";
+
+  const art = document.getElementById("art");
+  const gridCanvas = document.getElementById("gridCanvas");
+  const wrap = document.getElementById("wrap");
+  const gctx = gridCanvas.getContext("2d");
+  let ctx = art.getContext("2d");
+
+  const state = {
+    projects: [],
+    currentId: null,
+    tool: "pencil",
+    color: "#000000",
+    brush: 1,
+    grid: true,
+    pattern: true,
+    shapeFill: false,
+    width: 32,
+    height: 32,
+    zoom: 16,
+    history: [],
+    historyIndex: -1
+  };
+
+  let layers = [];
+  let activeIndex = 0;
+
+  const PALETTE = ["#000000","#ffffff","#4c4c4c","#9b9b9b","#d2d2d2",
+    "#ff0000","#ff6a00","#ffc000","#ffee00","#8fff00","#00ff00","#00ffa0","#00ffff","#00a0ff","#0060ff","#3f00ff",
+    "#8f00ff","#ff00ff","#ff0090","#ff6a90","#a52a2a","#7b4a12","#4d3a1a","#8b5a2b","#d2a679","#f0dcc0",
+    "#800000","#7f3300","#4d4d00","#7f4d00","#336600","#004d00","#00332d","#00334d","#001f66","#1f0033",
+    "#660033","#7f004d","#4d0000","#9966cc","#c46aff","#a0a0a0","#3b7dd8","#5fb9e8","#98d8f0","#f7f7d8"];
+
+  function loadProjects() {
+    try { state.projects = JSON.parse(localStorage.getItem(PROJ_KEY)) || []; }
+    catch (err) { state.projects = []; }
+  }
+  function saveProjects() {
+    try { localStorage.setItem(PROJ_KEY, JSON.stringify(state.projects)); } catch (err) { }
+  }
+  function findProject(id) {
+    return state.projects.find(p => p.id === id);
+  }
+
+  function mkBtn(text, fn, kind) {
+    const b = document.createElement("button");
+    b.className = "btn small" + (kind ? " " + kind : "");
+    b.textContent = text;
+    b.onclick = fn;
+    return b;
+  }
+
+  function renderGallery() {
+    state.projects.sort((a, b) => b.updated - a.updated);
+    const grid = document.getElementById("projectGrid");
+    grid.innerHTML = "";
+    document.getElementById("emptyState").style.display = state.projects.length ? "none" : "block";
+    state.projects.forEach(p => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const img = document.createElement("img");
+      img.className = "thumb";
+      img.src = p.data;
+      img.alt = p.name;
+      img.onclick = () => openProject(p.id);
+
+      const body = document.createElement("div");
+      body.className = "card-body";
+      const name = document.createElement("div");
+      name.className = "card-name";
+      name.textContent = p.name;
+      name.title = p.name;
+      name.onclick = () => openProject(p.id);
+      const date = document.createElement("div");
+      date.className = "card-date";
+      date.textContent = new Date(p.updated).toLocaleString();
+      const actions = document.createElement("div");
+      actions.className = "card-actions";
+      actions.append(mkBtn("Edit", () => openProject(p.id), "primary"));
+      actions.append(mkBtn("Rename", () => renameProject(p.id)));
+      actions.append(mkBtn("Delete", () => deleteProject(p.id), "danger"));
+      body.append(name, date, actions);
+      card.append(img, body);
+      grid.appendChild(card);
+    });
+  }
+
+  function showGallery() {
+    document.getElementById("galleryView").style.display = "flex";
+    document.getElementById("editorView").style.display = "none";
+    renderGallery();
+  }
+  function showEditor() {
+    document.getElementById("galleryView").style.display = "none";
+    document.getElementById("editorView").style.display = "flex";
+  }
+
+  function newProject() {
+    const raw = prompt("Name your project:", "Untitled");
+    if (raw === null) return;
+    const proj = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      name: (raw && raw.trim()) || "Untitled",
+      w: 32,
+      h: 32,
+      data: null,
+      layers: null,
+      updated: Date.now()
+    };
+    state.projects.push(proj);
+    saveProjects();
+    openProject(proj.id);
+  }
+
+  function openProject(id) {
+    const p = findProject(id);
+    if (!p) return;
+    state.currentId = id;
+    document.getElementById("projectTitle").textContent = p.name;
+    showEditor();
+    if (p.layers && p.layers.length) {
+      let remaining = p.layers.length;
+      const imgs = new Array(p.layers.length);
+      p.layers.forEach((ly, i) => {
+        const img = new Image();
+        img.onload = () => finish();
+        img.onerror = () => finish();
+        img.src = ly.data;
+        function finish() {
+          imgs[i] = img.naturalWidth ? img : null;
+          remaining--;
+          if (remaining === 0) buildLayers(p.layers, imgs, p.w || 32, p.h || 32);
+        }
+      });
+    } else if (p.data) {
+      const img = new Image();
+      img.onload = () => {
+        initLayers(p.w || img.width, p.h || img.height);
+        layers[0].ctx.drawImage(img, 0, 0);
+        composite();
+        renderLayerList();
+        pushHistory();
+        document.getElementById("sizeSelect").value = String(p.w || img.width);
+        statusMsg("Opened: " + p.name);
+      };
+      img.src = p.data;
+    } else {
+      initLayers(p.w || 32, p.h || 32);
+      statusMsg("New project: " + p.name);
+    }
+  }
+
+  function buildLayers(meta, imgs, w, h) {
+    state.width = w;
+    state.height = h;
+    art.width = w;
+    art.height = h;
+    gridCanvas.width = w;
+    gridCanvas.height = h;
+    ctx = art.getContext("2d");
+    layers = meta.map((m, i) => {
+      const cv = document.createElement("canvas");
+      cv.width = w;
+      cv.height = h;
+      const c = cv.getContext("2d");
+      if (imgs[i]) c.drawImage(imgs[i], 0, 0);
+      return { name: m.name || ("Layer " + (i + 1)), visible: m.visible !== false, canvas: cv, ctx: c };
+    });
+    activeIndex = layers.length - 1;
+    applyZoom();
+    drawGrid();
+    composite();
+    renderLayerList();
+    state.history = [];
+    state.historyIndex = -1;
+    pushHistory();
+    document.getElementById("sizeSelect").value = String(state.width);
+    statusMsg("Opened: " + (findProject(state.currentId) ? findProject(state.currentId).name : ""));
+  }
+
+  function renameProject(id) {
+    const p = findProject(id);
+    if (!p) return;
+    const raw = prompt("Rename project:", p.name);
+    if (raw === null) return;
+    const name = (raw && raw.trim()) || p.name;
+    p.name = name;
+    p.updated = Date.now();
+    saveProjects();
+    if (state.currentId === id) document.getElementById("projectTitle").textContent = name;
+    renderGallery();
+  }
+
+  function deleteProject(id) {
+    const p = findProject(id);
+    if (!p) return;
+    if (!confirm('Delete "' + p.name + '"? This cannot be undone.')) return;
+    state.projects = state.projects.filter(x => x.id !== id);
+    saveProjects();
+    if (state.currentId === id) {
+      state.currentId = null;
+      showGallery();
+    } else {
+      renderGallery();
+    }
+  }
+
+  function goBack() {
+    saveNow();
+    state.currentId = null;
+    showGallery();
+  }
+
+  function activeCtx() {
+    return layers[activeIndex].ctx;
+  }
+
+  function addLayer(name, fillWhite) {
+    const cv = document.createElement("canvas");
+    cv.width = state.width;
+    cv.height = state.height;
+    const c = cv.getContext("2d");
+    if (fillWhite) {
+      c.fillStyle = "#ffffff";
+      c.fillRect(0, 0, state.width, state.height);
+    }
+    const l = { name: name || ("Layer " + (layers.length + 1)), visible: true, canvas: cv, ctx: c };
+    layers.push(l);
+    activeIndex = layers.length - 1;
+    composite();
+    renderLayerList();
+    return l;
+  }
+
+  function initLayers(w, h) {
+    state.width = w;
+    state.height = h;
+    art.width = w;
+    art.height = h;
+    gridCanvas.width = w;
+    gridCanvas.height = h;
+    ctx = art.getContext("2d");
+    layers = [];
+    addLayer("Layer 1", false);
+    activeIndex = 0;
+    applyZoom();
+    drawGrid();
+    state.history = [];
+    state.historyIndex = -1;
+    pushHistory();
+  }
+
+  function composite() {
+    ctx.clearRect(0, 0, state.width, state.height);
+    layers.forEach(l => {
+      if (l.visible) ctx.drawImage(l.canvas, 0, 0);
+    });
+  }
+
+  function applyZoom() {
+    const px = state.zoom * state.width;
+    document.documentElement.style.setProperty("--cell", px + "px");
+  }
+
+  function drawGrid() {
+    gctx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+    if (!state.grid) return;
+    gctx.fillStyle = "rgba(0,0,0,0.35)";
+    for (let x = 1; x < state.width; x++) gctx.fillRect(x - 0.5, 0, 1, state.height);
+    for (let y = 1; y < state.height; y++) gctx.fillRect(0, y - 0.5, state.width, 1);
+  }
+
+  function hexToRgb(hex) {
+    hex = hex.replace("#", "");
+    if (hex.length === 3) hex = hex.split("").map(c => c + c).join("");
+    const n = parseInt(hex, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+
+  function paintCell(cx, cy) {
+    const c = activeCtx();
+    const b = state.brush;
+    if (state.tool === "eraser") {
+      c.clearRect(cx - Math.floor(b / 2), cy - Math.floor(b / 2), b, b);
+      return;
+    }
+    c.fillStyle = state.color;
+    c.fillRect(cx - Math.floor(b / 2), cy - Math.floor(b / 2), b, b);
+  }
+
+  function lineCells(x0, y0, x1, y1, fn) {
+    let dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+    const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+    let err = dx - dy;
+    while (true) {
+      fn(x0, y0);
+      if (x0 === x1 && y0 === y1) break;
+      const e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; x0 += sx; }
+      if (e2 < dx) { err += dx; y0 += sy; }
+    }
+  }
+
+  function floodFill(x, y, color) {
+    const c = activeCtx();
+    const img = c.getImageData(0, 0, state.width, state.height);
+    const data = img.data;
+    const i = (y * state.width + x) * 4;
+    const tr = data[i], tg = data[i + 1], tb = data[i + 2], ta = data[i + 3];
+    const fill = hexToRgb(color);
+    if (tr === fill[0] && tg === fill[1] && tb === fill[2] && ta === 255) return;
+    const stack = [[x, y]];
+    const seen = new Uint8Array(state.width * state.height);
+    while (stack.length) {
+      const [cx, cy] = stack.pop();
+      if (cx < 0 || cy < 0 || cx >= state.width || cy >= state.height) continue;
+      const s = cy * state.width + cx;
+      if (seen[s]) continue;
+      seen[s] = 1;
+      const j = s * 4;
+      if (data[j] === tr && data[j + 1] === tg && data[j + 2] === tb && data[j + 3] === ta) {
+        data[j] = fill[0]; data[j + 1] = fill[1]; data[j + 2] = fill[2]; data[j + 3] = 255;
+        stack.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]);
+      }
+    }
+    c.putImageData(img, 0, 0);
+  }
+
+  function historySnapshot() {
+    return layers.map(l => ({
+      name: l.name,
+      visible: l.visible,
+      img: l.ctx.getImageData(0, 0, state.width, state.height)
+    }));
+  }
+
+  function applyHistorySnapshot(snap) {
+    layers = snap.map(s => {
+      const cv = document.createElement("canvas");
+      cv.width = state.width;
+      cv.height = state.height;
+      const c = cv.getContext("2d");
+      c.putImageData(s.img, 0, 0);
+      return { name: s.name, visible: s.visible, canvas: cv, ctx: c };
+    });
+    activeIndex = Math.min(activeIndex, layers.length - 1);
+    composite();
+    renderLayerList();
+  }
+
+  function pushHistory() {
+    state.history = state.history.slice(0, state.historyIndex + 1);
+    state.history.push(historySnapshot());
+    if (state.history.length > 60) state.history.shift();
+    state.historyIndex = state.history.length - 1;
+    scheduleSave();
+  }
+
+  function previewSnapshot() {
+    return layers.map(l => l.ctx.getImageData(0, 0, state.width, state.height));
+  }
+  function restorePreview(snaps) {
+    layers.forEach((l, i) => l.ctx.putImageData(snaps[i], 0, 0));
+    composite();
+  }
+
+  function undo() {
+    if (state.historyIndex > 0) {
+      state.historyIndex--;
+      applyHistorySnapshot(state.history[state.historyIndex]);
+      scheduleSave();
+    }
+  }
+  function redo() {
+    if (state.historyIndex < state.history.length - 1) {
+      state.historyIndex++;
+      applyHistorySnapshot(state.history[state.historyIndex]);
+      scheduleSave();
+    }
+  }
+
+  function cellFromEvent(e) {
+    const rect = art.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / rect.width * state.width);
+    const y = Math.floor((e.clientY - rect.top) / rect.height * state.height);
+    return { x, y };
+  }
+
+  let drawing = false;
+  let startCell = null;
+  let lastCell = null;
+  let baseSnap = null;
+
+  function beginDraw(e) {
+    const c = cellFromEvent(e);
+    drawing = true;
+    startCell = lastCell = c;
+    if (e.button === 2) {
+      const prev = state.tool;
+      state.tool = "eraser";
+      pushHistory();
+      paintCell(c.x, c.y);
+      composite();
+      state.tool = prev;
+      return;
+    }
+    switch (state.tool) {
+      case "pencil":
+      case "eraser":
+        pushHistory();
+        paintCell(c.x, c.y);
+        composite();
+        break;
+      case "picker": {
+        const d = ctx.getImageData(c.x, c.y, 1, 1).data;
+        setColor(rgbToHex(d[0], d[1], d[2]));
+        drawing = false;
+        break;
+      }
+      case "fill":
+        pushHistory();
+        floodFill(c.x, c.y, state.color);
+        composite();
+        drawing = false;
+        break;
+      case "line":
+      case "rect":
+      case "circle":
+      case "triangle":
+        baseSnap = previewSnapshot();
+        drawShape(c);
+        break;
+    }
+  }
+
+  function drawShape(c) {
+    restorePreview(baseSnap);
+    if (state.tool === "line") {
+      lineCells(startCell.x, startCell.y, c.x, c.y, paintCell);
+      composite();
+      return;
+    }
+    const x0 = Math.min(startCell.x, c.x), xm = Math.max(startCell.x, c.x);
+    const y0 = Math.min(startCell.y, c.y), ym = Math.max(startCell.y, c.y);
+    if (state.tool === "rect") {
+      if (state.shapeFill) {
+        for (let y = y0; y <= ym; y++) for (let x = x0; x <= xm; x++) paintCell(x, y);
+      } else {
+        for (let xx = x0; xx <= xm; xx++) { paintCell(xx, y0); paintCell(xx, ym); }
+        for (let yy = y0; yy <= ym; yy++) { paintCell(x0, yy); paintCell(xm, yy); }
+      }
+      composite();
+      return;
+    }
+    if (state.tool === "circle") {
+      const cx = (x0 + xm) / 2, cy = (y0 + ym) / 2;
+      const rx = Math.max(0.5, (xm - x0) / 2), ry = Math.max(0.5, (ym - y0) / 2);
+      const inside = (x, y) => {
+        const nx = (x - cx) / rx, ny = (y - cy) / ry;
+        return nx * nx + ny * ny <= 1;
+      };
+      for (let y = y0; y <= ym; y++) for (let x = x0; x <= xm; x++) {
+        const inShape = inside(x, y);
+        if (state.shapeFill ? inShape : (inShape && (!inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1)))) paintCell(x, y);
+      }
+      composite();
+      return;
+    }
+    if (state.tool === "triangle") {
+      const ax = (x0 + xm) / 2, ay = y0, bx = x0, by = ym, cx = xm, cy = ym;
+      const inTri = (px, py) => {
+        const d1 = (px - bx) * (ay - by) - (ax - bx) * (py - by);
+        const d2 = (px - cx) * (by - cy) - (bx - cx) * (py - cy);
+        const d3 = (px - ax) * (cy - ay) - (cx - ax) * (py - ay);
+        const neg = d1 < 0 || d2 < 0 || d3 < 0;
+        const pos = d1 > 0 || d2 > 0 || d3 > 0;
+        return !(neg && pos);
+      };
+      for (let y = y0; y <= ym; y++) for (let x = x0; x <= xm; x++) {
+        const inShape = inTri(x, y);
+        if (state.shapeFill ? inShape : (inShape && (!inTri(x - 1, y) || !inTri(x + 1, y) || !inTri(x, y - 1) || !inTri(x, y + 1)))) paintCell(x, y);
+      }
+      composite();
+    }
+  }
+
+  function moveDraw(e) {
+    if (!drawing) return;
+    const c = cellFromEvent(e);
+    if (state.tool === "line" || state.tool === "rect" || state.tool === "circle" || state.tool === "triangle") {
+      drawShape(c);
+      return;
+    }
+    if (c.x === lastCell.x && c.y === lastCell.y) return;
+    lineCells(lastCell.x, lastCell.y, c.x, c.y, paintCell);
+    lastCell = c;
+    composite();
+  }
+
+  function endDraw() {
+    if (!drawing) return;
+    if (state.tool === "line" || state.tool === "rect" || state.tool === "circle" || state.tool === "triangle") pushHistory();
+    drawing = false;
+  }
+
+  wrap.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    if (e.pointerType === "mouse" && e.button === 1) return;
+    wrap.setPointerCapture(e.pointerId);
+    beginDraw(e);
+  });
+  wrap.addEventListener("pointermove", moveDraw);
+  wrap.addEventListener("pointerup", endDraw);
+  wrap.addEventListener("pointercancel", endDraw);
+  wrap.addEventListener("contextmenu", e => e.preventDefault());
+
+  wrap.addEventListener("wheel", e => {
+    e.preventDefault();
+    zoom(e.deltaY < 0 ? 2 : -2);
+  }, { passive: false });
+
+  function zoom(delta) {
+    const old = state.zoom;
+    state.zoom = Math.max(3, Math.min(48, state.zoom + delta));
+    if (state.zoom !== old) applyZoom();
+  }
+
+  function toggleGrid() {
+    state.grid = !state.grid;
+    const btn = document.getElementById("gridToggle");
+    btn.textContent = state.grid ? "Grid: On" : "Grid: Off";
+    btn.classList.toggle("on", state.grid);
+    drawGrid();
+  }
+
+  function togglePattern() {
+    state.pattern = !state.pattern;
+    const btn = document.getElementById("patternToggle");
+    btn.textContent = state.pattern ? "Pattern: On" : "Pattern: Off";
+    btn.classList.toggle("on", state.pattern);
+    wrap.classList.toggle("pattern", state.pattern);
+  }
+
+  function toggleSolid() {
+    state.shapeFill = !state.shapeFill;
+    const btn = document.getElementById("solidToggle");
+    btn.textContent = state.shapeFill ? "Solid: On" : "Solid: Off";
+    btn.classList.toggle("on", state.shapeFill);
+  }
+
+  function brushSize() {
+    let v = parseInt(document.getElementById("brushInput").value, 10);
+    if (isNaN(v)) v = 1;
+    state.brush = Math.max(1, Math.min(16, v));
+    document.getElementById("brushInput").value = state.brush;
+  }
+
+  function setTool(t) {
+    state.tool = t;
+    document.querySelectorAll(".tool-btn").forEach(b =>
+      b.classList.toggle("active", b.dataset.tool === t));
+  }
+
+  function setColor(hex) {
+    state.color = hex;
+    document.getElementById("currentColor").style.background = hex;
+    document.getElementById("colorInput").value = hex;
+    addRecent(hex);
+  }
+
+  function rgbToHex(r, g, b) {
+    return "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
+  }
+
+  const recent = [];
+  function addRecent(hex) {
+    if (recent[recent.length - 1] === hex) return;
+    const i = recent.indexOf(hex);
+    if (i > -1) recent.splice(i, 1);
+    recent.push(hex);
+    if (recent.length > 12) recent.shift();
+    const box = document.getElementById("recent");
+    box.innerHTML = "";
+    recent.forEach(h => {
+      const s = document.createElement("div");
+      s.className = "swatch";
+      s.style.background = h;
+      s.onclick = () => setColor(h);
+      box.appendChild(s);
+    });
+  }
+
+  function buildPalette() {
+    const box = document.getElementById("palette");
+    box.innerHTML = "";
+    PALETTE.forEach(h => {
+      const s = document.createElement("div");
+      s.className = "swatch";
+      s.style.background = h;
+      s.onclick = () => setColor(h);
+      box.appendChild(s);
+    });
+  }
+
+  function statusMsg(msg) {
+    const el = document.getElementById("status");
+    el.textContent = msg;
+    clearTimeout(statusMsg._t);
+    statusMsg._t = setTimeout(() => el.textContent = "", 2500);
+  }
+
+  function saveNow() {
+    if (!state.currentId) return;
+    const p = findProject(state.currentId);
+    if (!p) return;
+    try {
+      p.data = art.toDataURL("image/png");
+      p.w = state.width;
+      p.h = state.height;
+      p.layers = layers.map(l => ({ name: l.name, visible: l.visible, data: l.canvas.toDataURL("image/png") }));
+      p.updated = Date.now();
+      saveProjects();
+    } catch (err) { }
+  }
+
+  function scheduleSave() {
+    clearTimeout(scheduleSave._t);
+    scheduleSave._t = setTimeout(saveNow, 400);
+  }
+
+  function savePng() {
+    const cur = state.currentId ? findProject(state.currentId) : null;
+    const a = document.createElement("a");
+    a.download = (cur ? cur.name : "pixelart") + ".png";
+    a.href = art.toDataURL("image/png");
+    a.click();
+    statusMsg("PNG saved to your device");
+  }
+
+  function clearCanvas() {
+    if (!confirm("Start a new transparent canvas? (Your current art is saved in the browser.)")) return;
+    initLayers(state.width, state.height);
+    statusMsg("New transparent canvas");
+  }
+
+  function resizeCanvas() {
+    const v = parseInt(document.getElementById("sizeSelect").value, 10);
+    if (v === state.width) return;
+    if (v < state.width && !confirm("Shrink the canvas? This may cut off part of your art.")) {
+      document.getElementById("sizeSelect").value = String(state.width);
+      return;
+    }
+    state.width = v;
+    state.height = v;
+    art.width = v;
+    art.height = v;
+    gridCanvas.width = v;
+    gridCanvas.height = v;
+    ctx = art.getContext("2d");
+    layers.forEach(l => {
+      const cv = document.createElement("canvas");
+      cv.width = v;
+      cv.height = v;
+      cv.getContext("2d").drawImage(l.canvas, 0, 0);
+      l.canvas = cv;
+      l.ctx = cv.getContext("2d");
+    });
+    applyZoom();
+    drawGrid();
+    composite();
+    state.history = [];
+    state.historyIndex = -1;
+    pushHistory();
+    statusMsg("Canvas resized");
+  }
+
+  function renderLayerList() {
+    const box = document.getElementById("layerList");
+    box.innerHTML = "";
+    layers.forEach((l, i) => {
+      const row = document.createElement("div");
+      row.className = "layer-row" + (i === activeIndex ? " active" : "");
+
+      const vis = document.createElement("input");
+      vis.type = "checkbox";
+      vis.checked = l.visible;
+      vis.title = "Show / hide layer";
+      vis.onclick = e => {
+        e.stopPropagation();
+        toggleLayerVis(i);
+      };
+
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = l.name;
+      name.title = l.name;
+
+      const up = document.createElement("button");
+      up.textContent = "\u2191";
+      up.title = "Move up";
+      up.onclick = e => { e.stopPropagation(); moveLayer(i, -1); };
+
+      const dn = document.createElement("button");
+      dn.textContent = "\u2193";
+      dn.title = "Move down";
+      dn.onclick = e => { e.stopPropagation(); moveLayer(i, 1); };
+
+      row.append(vis, name, up, dn);
+      row.onclick = () => selectLayer(i);
+      box.appendChild(row);
+    });
+  }
+
+  function selectLayer(i) {
+    activeIndex = i;
+    renderLayerList();
+  }
+
+  function toggleLayerVis(i) {
+    layers[i].visible = !layers[i].visible;
+    pushHistory();
+    composite();
+    renderLayerList();
+  }
+
+  function moveLayer(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= layers.length) return;
+    pushHistory();
+    const [l] = layers.splice(i, 1);
+    layers.splice(j, 0, l);
+    activeIndex = j;
+    composite();
+    renderLayerList();
+  }
+
+  function newLayer() {
+    pushHistory();
+    addLayer("Layer " + (layers.length + 1), false);
+    scheduleSave();
+  }
+
+  function dupLayer() {
+    pushHistory();
+    const src = layers[activeIndex];
+    const cv = document.createElement("canvas");
+    cv.width = state.width;
+    cv.height = state.height;
+    cv.getContext("2d").drawImage(src.canvas, 0, 0);
+    const l = { name: src.name + " copy", visible: src.visible, canvas: cv, ctx: cv.getContext("2d") };
+    layers.splice(activeIndex + 1, 0, l);
+    activeIndex++;
+    composite();
+    renderLayerList();
+    scheduleSave();
+  }
+
+  function delLayer() {
+    if (layers.length <= 1) {
+      statusMsg("Can't delete the last layer");
+      return;
+    }
+    pushHistory();
+    layers.splice(activeIndex, 1);
+    activeIndex = Math.min(activeIndex, layers.length - 1);
+    composite();
+    renderLayerList();
+    scheduleSave();
+  }
+
+  document.addEventListener("keydown", e => {
+    const t = e.target.tagName;
+    if (t === "INPUT" || t === "SELECT" || t === "TEXTAREA") return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) { e.preventDefault(); undo(); return; }
+    if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey))) { e.preventDefault(); redo(); return; }
+    const map = { b: "pencil", e: "eraser", f: "fill", i: "picker", l: "line", r: "rect", c: "circle", t: "triangle" };
+    if (map[e.key.toLowerCase()]) setTool(map[e.key.toLowerCase()]);
+    else if (e.key.toLowerCase() === "s") toggleSolid();
+    else if (e.key === "[") { document.getElementById("brushInput").value = Math.max(1, state.brush - 1); brushSize(); }
+    else if (e.key === "]") { document.getElementById("brushInput").value = state.brush + 1; brushSize(); }
+    else if (e.key === "g") toggleGrid();
+  });
+
+  function boot() {
+    buildPalette();
+    setColor("#000000");
+    document.getElementById("hint").textContent =
+      "Pick a color and draw on the active layer. Add layers for backgrounds and foregrounds, hide or reorder them in the Layers panel. Everything autosaves — no login.";
+    document.getElementById("patternToggle").textContent = state.pattern ? "Pattern: On" : "Pattern: Off";
+    document.getElementById("patternToggle").classList.toggle("on", state.pattern);
+    wrap.classList.toggle("pattern", state.pattern);
+    loadProjects();
+    showGallery();
+  }
+
+  window.addEventListener("beforeunload", saveNow);
+  boot();
+
+  window.newProject = newProject;
+  window.openProject = openProject;
+  window.renameProject = renameProject;
+  window.deleteProject = deleteProject;
+  window.goBack = goBack;
+  window.savePng = savePng;
+  window.resizeCanvas = resizeCanvas;
+  window.clearCanvas = clearCanvas;
+  window.setTool = setTool;
+  window.brushSize = brushSize;
+  window.toggleGrid = toggleGrid;
+  window.togglePattern = togglePattern;
+  window.toggleSolid = toggleSolid;
+  window.zoom = zoom;
+  window.setColor = setColor;
+  window.newLayer = newLayer;
+  window.dupLayer = dupLayer;
+  window.delLayer = delLayer;
+})();
+</script>
+</body>
+</html>
