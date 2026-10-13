@@ -8293,7 +8293,7 @@ function generateFingerprint() {
     };
 
     var css = [
-        '#apricity-socials{position:fixed;right:14px;bottom:16px;z-index:10000000;display:flex;flex-direction:column;gap:8px;font-family:var(--font-ui);}',
+        '#apricity-socials{position:fixed;left:14px;bottom:16px;z-index:10000000;display:flex;flex-direction:row;gap:8px;font-family:var(--font-ui);}',
         '.soc-btn{display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;border:1px solid var(--yt-border2);background:var(--md-sys-color-surface-container-high);color:var(--md-sys-color-on-surface);font-family:var(--font-ui);font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.14);transition:opacity 0.15s,transform 0.15s;white-space:nowrap;}',
         '.soc-btn:hover{opacity:0.88;}',
         '.soc-btn:active{transform:scale(0.97);}',
@@ -8310,7 +8310,7 @@ function generateFingerprint() {
         '.social-popup-hint{font-size:11.5px;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px;}',
         '.social-popup-open{width:100%;padding:12px;border-radius:14px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:var(--font-ui);font-size:14px;font-weight:600;cursor:pointer;}',
         '.social-popup-open:hover{opacity:0.9;}',
-        '@media (max-width:600px){#apricity-socials{right:10px;bottom:10px;}.soc-btn{padding:7px 11px;font-size:11.5px;}}',
+        '@media (max-width:600px){#apricity-socials{left:10px;bottom:10px;}.soc-btn{padding:7px 11px;font-size:11.5px;}}',
         'body:has(#sunlit-page.active, #desktop-page.active, #discord-page.active, #hollow-knight-page.active, #snow-rider-page.active, #search-page.active, #gemini-page.active, #meet-stable-page.active, #spotify-page.active, #youtube-page.yt-overlay-mode, #movies-page.mv-overlay-mode, #discord-page.discord-overlay-mode, #game-fullscreen-overlay.active, #gamesFsOverlay.active, #appsFsOverlay.active, #mv-player-overlay.active, #mv-detail-overlay.active) #apricity-socials,',
         'body:has(#sunlit-page.active, #desktop-page.active, #discord-page.active, #hollow-knight-page.active, #snow-rider-page.active, #search-page.active, #gemini-page.active, #meet-stable-page.active, #spotify-page.active, #youtube-page.yt-overlay-mode, #movies-page.mv-overlay-mode, #discord-page.discord-overlay-mode, #game-fullscreen-overlay.active, #gamesFsOverlay.active, #appsFsOverlay.active, #mv-player-overlay.active, #mv-detail-overlay.active) #social-popup{display:none !important;}'
     ].join('\n');
