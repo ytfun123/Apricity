@@ -19,3 +19,5 @@
 08/29/2026: Added ti_flash, netchat , fixed and added some things to desktop app.
 
 09/30/2026: Radical Simplifier updated to v2.10 in ti-flash.
+
+10/12/2026: Added GTA V (in dev), social links (Discord + TikTok) with QR codes, and Retro Bowl.
