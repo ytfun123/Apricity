@@ -424,6 +424,22 @@
       background: var(--window-bg); border: 1px solid var(--panel-border); border-radius: var(--window-radius);
       box-shadow: 0 20px 50px rgba(0,0,0,0.15); display: flex; flex-direction: column; resize: both; overflow: hidden; 
     }
+    .window.physics-grabbed { transition: transform 90ms ease-out; }
+    .window.falling-away { transition: left 700ms cubic-bezier(0.2, 0.75, 0.3, 1), top 700ms cubic-bezier(0.2, 0.75, 0.3, 1), transform 700ms cubic-bezier(0.2, 0.75, 0.3, 1), opacity 700ms ease-in; }
+    #desktop-message-overlay {
+      position: fixed; inset: 0; z-index: 300000; display: none; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+    }
+    #desktop-message-overlay.visible { display: flex; }
+    .desktop-message-box {
+      width: min(360px, calc(100vw - 40px)); padding: 18px; color: var(--text-color);
+      background: var(--window-bg); border: 1px solid var(--panel-border); border-radius: var(--window-radius);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; gap: 16px;
+    }
+    .desktop-message-title { font-weight: 700; }
+    .desktop-message-body { line-height: 1.45; }
+    .desktop-message-box button { align-self: flex-end; min-width: 76px; }
+    [data-system-style="classic"] .desktop-message-box { border-radius: 0; }
     [data-system-style="classic"] .window {
       border-top: 2px solid var(--classic-border-light); border-left: 2px solid var(--classic-border-light);
       border-right: 2px solid var(--classic-border-dark); border-bottom: 2px solid var(--classic-border-dark);
@@ -820,6 +836,10 @@
   <script>
     let zIndexCounter = 10;
     let windowIdCounter = 0;
+    let windowPhysicsEnabled = localStorage.getItem('cfg_windowPhysics') !== 'false';
+    let desktopMessageQueue = [];
+    localStorage.removeItem('cfg_windowPhysicsDespawns');
+    localStorage.removeItem('cfg_desktopLockedDown');
     
     let isSetupCompleted = localStorage.getItem('cfg_setupCompleted') === 'true';
     let profileUsername = localStorage.getItem('cfg_profileName') || 'Guest';
@@ -859,7 +879,6 @@
       { id: 'meet', title: 'Meet Stable', icon: '📹', run: () => openMeetApp() },
       { id: 'settings', title: 'Settings', icon: '⚙️', run: () => openSettingsWindow() }
     ];
-
     function escHtml(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
     }
@@ -1929,6 +1948,64 @@
       if (win) win.remove();
       if (document.getElementById('task-' + id)) document.getElementById('task-' + id).remove();
     }
+    function getOverlappingWindows(win) {
+      const rect = win.getBoundingClientRect();
+      return new Set(Array.from(document.querySelectorAll('#desktop > .window')).filter(other => {
+        if (other === win || other.style.display === 'none' || other.classList.contains('falling-away')) return false;
+        const otherRect = other.getBoundingClientRect();
+        return rect.left < otherRect.right && rect.right > otherRect.left && rect.top < otherRect.bottom && rect.bottom > otherRect.top;
+      }));
+    }
+    function launchWindowOffscreen(win, velocityX, velocityY) {
+      if (!windowPhysicsEnabled || !win.isConnected || win.classList.contains('falling-away')) return;
+      const speed = Math.hypot(velocityX, velocityY) || 1;
+      const travel = Math.max(window.innerWidth, window.innerHeight) * 2.25;
+      win.classList.add('falling-away');
+      win.style.left = (win.offsetLeft + velocityX / speed * travel) + 'px';
+      win.style.top = (win.offsetTop + velocityY / speed * travel) + 'px';
+      win.style.transform = `rotate(${velocityX >= 0 ? 45 : -45}deg)`;
+      win.style.opacity = '0';
+      setTimeout(() => {
+        if (!win.isConnected) return;
+        closeWindow(win.id);
+        showDesktopMessage('Error', 'This window fell off of the plane.');
+      }, 720);
+    }
+    function showDesktopMessage(title, message) {
+      desktopMessageQueue.push({ title, message });
+      if (document.getElementById('desktop-message-overlay')) return;
+      const showNextMessage = () => {
+        const nextMessage = desktopMessageQueue.shift();
+        if (!nextMessage) return;
+        const overlay = document.createElement('div');
+        overlay.id = 'desktop-message-overlay';
+        overlay.className = 'visible';
+        const dialog = document.createElement('div');
+        dialog.className = 'desktop-message-box';
+        dialog.setAttribute('role', 'alertdialog');
+        dialog.setAttribute('aria-modal', 'true');
+        dialog.setAttribute('aria-labelledby', 'desktop-message-title');
+        const heading = document.createElement('div');
+        heading.className = 'desktop-message-title';
+        heading.id = 'desktop-message-title';
+        heading.textContent = nextMessage.title;
+        const body = document.createElement('div');
+        body.className = 'desktop-message-body';
+        body.textContent = nextMessage.message;
+        const button = document.createElement('button');
+        button.className = 'panel-btn';
+        button.type = 'button';
+        button.textContent = 'OK';
+        const closeMessage = () => { overlay.remove(); showNextMessage(); };
+        button.addEventListener('click', closeMessage);
+        overlay.addEventListener('click', e => { if (e.target === overlay) closeMessage(); });
+        dialog.append(heading, body, button);
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+        button.focus();
+      };
+      showNextMessage();
+    }
     function toggleMinimize(id) { const win = document.getElementById(id); const taskItem = document.getElementById('task-' + id); if (win.style.display === 'none') { win.style.display = 'flex'; focusWindow(id); } else { win.style.display = 'none'; taskItem.classList.remove('active'); } }
     function toggleMaximize(id) {
       const win = document.getElementById(id); if (!win) return;
@@ -1952,10 +2029,54 @@
     function focusWindow(id) { const win = document.getElementById(id); if(win) win.style.zIndex = zIndexCounter++; document.querySelectorAll('.taskbar-item').forEach(el => el.classList.remove('active')); const taskItem = document.getElementById('task-' + id); if(taskItem) taskItem.classList.add('active'); }
 
     function makeDraggable(win, handle) {
-      let isDragging = false, startX, startY, initialX, initialY;
-      handle.addEventListener('mousedown', (e) => { if(e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; isDragging = true; startX = e.clientX; startY = e.clientY; initialX = win.offsetLeft; initialY = win.offsetTop; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp); });
-      function onMouseMove(e) { if (!isDragging) return; win.style.left = (initialX + (e.clientX - startX)) + 'px'; win.style.top = (initialY + (e.clientY - startY)) + 'px'; }
-      function onMouseUp() { isDragging = false; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); }
+      let isDragging = false, startX, startY, initialX, initialY, previousX, previousY, previousTime, velocityX = 0, velocityY = 0, overlappingWindows = new Set();
+      handle.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || win.classList.contains('maximized')) return;
+        isDragging = true;
+        startX = previousX = e.clientX; startY = previousY = e.clientY;
+        initialX = win.offsetLeft; initialY = win.offsetTop; previousTime = performance.now();
+        velocityX = velocityY = 0;
+        overlappingWindows = windowPhysicsEnabled ? getOverlappingWindows(win) : new Set();
+        if (windowPhysicsEnabled) win.classList.add('physics-grabbed');
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+      function onMouseMove(e) {
+        if (!isDragging) return;
+        const now = performance.now();
+        if (windowPhysicsEnabled) {
+          const elapsed = Math.max(1, now - previousTime);
+          const instantVelocityX = (e.clientX - previousX) / elapsed;
+          const instantVelocityY = (e.clientY - previousY) / elapsed;
+          velocityX = velocityX * 0.35 + instantVelocityX * 0.65;
+          velocityY = velocityY * 0.35 + instantVelocityY * 0.65;
+        }
+        previousX = e.clientX; previousY = e.clientY; previousTime = now;
+        win.style.left = (initialX + (e.clientX - startX)) + 'px';
+        win.style.top = (initialY + (e.clientY - startY)) + 'px';
+        if (!windowPhysicsEnabled) return;
+        const speed = Math.hypot(velocityX, velocityY);
+        const tilt = Math.max(-12, Math.min(12, velocityX * 8));
+        const wobble = Math.sin(now / 24) * Math.min(3, speed * 2);
+        win.style.transform = `rotate(${tilt + wobble}deg)`;
+        const currentOverlaps = getOverlappingWindows(win);
+        currentOverlaps.forEach(other => {
+          if (!overlappingWindows.has(other)) launchWindowOffscreen(other, velocityX, velocityY);
+        });
+        overlappingWindows = currentOverlaps;
+      }
+      function onMouseUp() {
+        if (!isDragging) return;
+        isDragging = false;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        win.classList.remove('physics-grabbed');
+        if (windowPhysicsEnabled && Math.hypot(velocityX, velocityY) >= 1.75) {
+          launchWindowOffscreen(win, velocityX, velocityY);
+        } else {
+          win.style.transform = '';
+        }
+      }
     }
 
     /* Firefox Multi-Tab Engine (address bar and bookmarks removed) */
@@ -2188,8 +2309,9 @@
             </div>
             <div class="gnome-card">
               <div class="gnome-row" style="flex-direction: column; align-items: flex-start;"><label>Browser Details</label><span class="ua-string">${navigator.userAgent}</span></div>
-              <div class="gnome-row"><label>Kernel</label><span style="opacity:0.65; font-family:monospace;">4.20.69-apricity</span></div>
-              <div class="gnome-row"><label>Window Manager</label><span style="opacity:0.65; font-family:monospace;">ApricityWM v1.1</span></div>
+              <div class="gnome-row"><label>Kernel Version</label><button type="button" id="gnome-kernel-version" onclick="revealWindowPhysicsToggle()" style="opacity:0.65; font-family:monospace; color:inherit; background:none; border:none; padding:0; cursor:pointer;">0.0.1-apricity</button></div>
+              <div class="gnome-row"><label>Window Manager</label><span style="opacity:0.65; font-family:monospace;">ApricityWM v2.0b1</span></div>
+              <div class="gnome-row" id="gnome-window-physics-row" style="display:none;"><label>Window Physics</label><input type="checkbox" id="gnome-chk-window-physics" onchange="toggleWindowPhysics(this.checked)"></div>
               <div class="gnome-row"><label>Sleep affects real device</label><input type="checkbox" id="gnome-chk-sleep-real" onchange="toggleSleepRealDevice(this.checked)"></div>
               <div class="gnome-row"><label>Big sleep icon</label><input type="checkbox" id="gnome-chk-sleep-big" onchange="toggleSleepBigIcon(this.checked)"></div>
               <div class="gnome-row" style="background: rgba(255,0,0,0.05);"><label style="color: #c0392b;">System Maintenance</label><button class="panel-btn" style="background:#e74c3c; color:white; border:none;" onclick="triggerSystemHardReset()">Reset Desktop</button></div>
@@ -2201,10 +2323,25 @@
       document.getElementById('gnome-chk-date').checked = showDateInPanel;
       document.getElementById('gnome-chk-fullscreen').checked = fullScreenPanel;
       document.getElementById('gnome-chk-fullscreen-app').checked = forceFullscreenMode;
+      document.getElementById('gnome-chk-window-physics').checked = windowPhysicsEnabled;
       const sleepRealChk = document.getElementById('gnome-chk-sleep-real');
       if (sleepRealChk) sleepRealChk.checked = localStorage.getItem('cfg_sleepRealDevice') === 'true';
       const sleepBigChk = document.getElementById('gnome-chk-sleep-big');
       if (sleepBigChk) sleepBigChk.checked = localStorage.getItem('cfg_sleepBigIcon') === 'true';
+    }
+
+    function toggleWindowPhysics(checked) {
+      windowPhysicsEnabled = checked;
+      localStorage.setItem('cfg_windowPhysics', checked ? 'true' : 'false');
+    }
+
+    function revealWindowPhysicsToggle() {
+      const versionButton = document.getElementById('gnome-kernel-version');
+      const physicsRow = document.getElementById('gnome-window-physics-row');
+      if (!versionButton || !physicsRow || physicsRow.style.display !== 'none') return;
+      const clicks = Number(versionButton.dataset.clicks || 0) + 1;
+      versionButton.dataset.clicks = clicks;
+      if (clicks >= 5) physicsRow.style.display = 'flex';
     }
 
     function toggleSleepRealDevice(checked) {
