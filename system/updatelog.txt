@@ -21,3 +21,5 @@
 09/30/2026: Radical Simplifier updated to v2.10 in ti-flash.
 
 10/12/2026: Added GTA V (in dev), social links (Discord + TikTok) with QR codes, and Retro Bowl.
+
+10/28/2026: Geometry Dash now launches the full web port; the previous version is kept as Geometry Dash Lite.
