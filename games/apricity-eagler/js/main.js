@@ -18,7 +18,7 @@ import {
   itemStackLimit,
   loadItems,
 } from './registry.js';
-import { canHarvest, dropsFor, harvestNeed } from './drops.js';
+import { canHarvest, dropsFor, harvestNeed, toolInfo } from './drops.js';
 import { craftOnce, emptyGrid, gridIds, putMany, putOne, takeAt } from './crafting.js';
 import { matchRecipe } from './recipes.js';
 import { playBlockSound, playClick, playHurt, playPickup } from './sound.js';
@@ -1160,8 +1160,7 @@ function miningSpeed(id, heldKey) {
 }
 
 function itemToolInfo(key) {
-  const info = toolInfoFromKey(key);
-  return info;
+  return toolInfo(key);
 }
 
 function heldToolKey() {
