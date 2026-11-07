@@ -147,7 +147,7 @@ colours, with a warning on the title screen.
 | Singleplayer commands behind the T key: `/help`, `/seed`, `/tp`, `/spawn`, `/kill`, `/setblock`, `/fill`, `/give <block\|item> [count]`, `/clear`, `/gamemode`, `/heal`, `/feed` | done |
 | Every block id 1.12.2 has, with the pack's textures, its hardness and the tool tier it needs | done |
 | Items: the pack's whole item set as real stacks — 412 items named out of `en_us.lang` | done |
-| Crafting: the inventory's 2x2 and a crafting table's 3x3, 50 shaped and shapeless 1.12.2 recipes | done |
+| Crafting: the inventory's 2x2 and a crafting table's 3x3, 59 shaped and 15 shapeless 1.12.2 recipes | done |
 | Drops: ores give their mineral, leaves give saplings/apples/sticks, stone needs a pickaxe, shears cut plants | done |
 | Mining: hold to break, speed follows hardness and tool tier, progress bar under the crosshair | done |
 | Creative menu: Blocks and Items tabs with a search box, one click to the held slot | done |
