@@ -44,7 +44,7 @@ export class Drops {
   }
 
   /** Throw one stack into the world. Returns the entity, or null for air. */
-  spawn(itemId, x, y, z, { count = 1, vx = 0, vy = 2.2, vz = 0, spread = 0.6 } = {}) {
+  spawn(itemId, x, y, z, { count = 1, vx = 0, vy = 2.2, vz = 0, spread = 0.6, pickupDelay = PICKUP_DELAY } = {}) {
     if (!itemId) return null;
     const drop = {
       id: this.nextId++,
@@ -57,6 +57,7 @@ export class Drops {
       vy,
       vz: vz || (Math.random() - 0.5) * spread * 2,
       age: 0,
+      pickupDelay,
       onGround: false,
     };
     this.list.push(drop);
@@ -105,7 +106,7 @@ export class Drops {
       drop.vz *= drag;
       if (drop.y < -8) drop.age = Infinity; // fell out of the world
 
-      if (player && drop.age >= PICKUP_DELAY) {
+      if (player && drop.age >= (drop.pickupDelay ?? PICKUP_DELAY)) {
         const dx = player.x - drop.x;
         const dy = player.y + 0.9 - drop.y;
         const dz = player.z - drop.z;

@@ -30,13 +30,15 @@ node games/apricity-eagler/serve.mjs   # static server, then open the printed UR
 | Space | jump, swim up, or fly up |
 | Shift | sprint, or fly down while flying |
 | F | toggle flight (creative and spectator only) |
-| E | inventory |
+| E | open or close the inventory, a crafting table or the palette |
+| / or T | chat line; `/` arrives with the slash already typed, so commands are one key away |
+| Q | drop the held stack, or what the cursor carries (Ctrl+Q drops one item) |
 | Mouse | look (click the canvas to capture the mouse) |
 | Left click | break block (singleplayer and servers) |
 | Right click | place selected block (singleplayer and servers) |
 | 1–9, mouse wheel | pick hotbar slot |
 | T | chat / command input |
-| Escape | pause menu, save and quit |
+| Escape | close a container, else the pause menu (save and quit) |
 
 ## Textures and GUI — all of it from the pack
 
@@ -46,7 +48,7 @@ into `assets/`:
 
 | File | What it is |
 | --- | --- |
-| `assets/atlas.png` | 69 block tiles (16×16) in one 256×80 sheet — every tile decoded from the pack |
+| `assets/atlas.png` | 164 block and 412 item tiles (16×16) in one 256×576 sheet — every tile decoded from the pack |
 | `assets/atlas.json` | tile size, sheet size, and every texture key → `[column, row]` |
 | `assets/gui-widgets.png` | the pack's complete `widgets.png` GUI sheet |
 | `assets/gui-hotbar.png` / `gui-hotbar-select.png` | hotbar strip and slot highlight |

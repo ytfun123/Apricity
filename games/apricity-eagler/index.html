@@ -525,6 +525,32 @@
     background-repeat: no-repeat;
     image-rendering: pixelated;
   }
+
+  /* ── the stack on the cursor while a container is open ─────────────── */
+  #carry {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translate(-50%, -50%);
+    width: calc(18px * var(--gui));
+    height: calc(18px * var(--gui));
+    display: none;
+    place-items: center;
+    pointer-events: none;
+    z-index: 70;
+  }
+  #carry.visible { display: grid; }
+  #carry .icon {
+    width: calc(16px * var(--gui));
+    height: calc(16px * var(--gui));
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+  #carry .count {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+  }
   #screen-crafting { background: none; }
   #screen-crafting::before { display: none; }
   #crafting-panel {
@@ -745,6 +771,8 @@
     <div id="creative-hotbar"></div>
   </div>
 </section>
+
+<div id="carry"></div>
 
 <script type="module" src="./js/main.js"></script>
 </body>

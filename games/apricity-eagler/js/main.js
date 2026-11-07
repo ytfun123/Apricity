@@ -18,7 +18,7 @@ import {
   loadItems,
 } from './registry.js';
 import { canHarvest, dropsFor, harvestNeed } from './drops.js';
-import { craftOnce, emptyGrid, gridIds, putOne, takeAt } from './crafting.js';
+import { craftOnce, emptyGrid, gridIds, putMany, putOne, takeAt } from './crafting.js';
 import { matchRecipe } from './recipes.js';
 import { playBlockSound, playClick, playHurt, playPickup } from './sound.js';
 import { isCommand, runCommand } from './commands.js';
@@ -59,6 +59,8 @@ const state = {
   selectedSlot: 0,
   // Survival starts with an empty hotbar; creative fills it from the palette.
   hotbar: emptyHotbar(),
+  // The stack on the cursor while the inventory or a crafting table is open.
+  cursor: slot(0, 0),
   gamemode: 'survival',
   vitals: new Vitals(),
   drops: null,
@@ -252,7 +254,9 @@ const ui = new UI({
     saveOptions(options);
     applyOptions();
   },
-  onCloseInventory: () => resumeGame(),
+  onCloseInventory: () => closeContainer(),
+  onOutsideClick: () => handleOutsideClick(),
+  onInventorySlot: (index, detail) => handleInventorySlot(index, detail),
   onOpenCreative: () => openCreative(),
   onPickBlock: (id) => {
     state.hotbar[state.selectedSlot] = slot(id, Math.min(itemStackLimit(id), 64));
@@ -260,7 +264,7 @@ const ui = new UI({
     playClick();
     ui.toast(`Picked ${itemName(id)}`);
   },
-  onCraftSlot: (index, size) => handleCraftSlot(index, size),
+  onCraftSlot: (index, size, detail) => handleCraftSlot(index, size, detail),
   onCraftResult: (size) => handleCraftResult(size),
   getCreativeIds: (tab, query) => creativeIds(tab, query),
   onQuitGame: () => {
@@ -286,6 +290,106 @@ function selectSlot(index) {
   ui.setHotbar(state.hotbar, state.selectedSlot);
   // A server tracks what we are holding, which decides what a right click places.
   state.session?.sendHeldItem?.(state.selectedSlot);
+}
+
+// ── carrying stacks between slots ───────────────────────────────────────────
+
+/** Throw a stack out in front of the player's feet. */
+function dropStack(entry) {
+  if (slotIsEmpty(entry) || !state.player) return false;
+  const { x, y, z } = state.player;
+  // 1.12.2 gives a thrown item two seconds before its thrower can take it back.
+  state.drops?.spawn(entry.id, x, y + 1.2, z, { count: entry.count, vy: 1.8, pickupDelay: 2 });
+  return true;
+}
+
+/** Empty the cursor: back into the hotbar, or onto the ground if it is full. */
+function returnCarry() {
+  const carried = state.cursor ?? slot(0, 0);
+  state.cursor = slot(0, 0);
+  ui.setCarry(null);
+  if (slotIsEmpty(carried)) return;
+  const left = addToHotbar(state.hotbar, carried.id, carried.count, itemStackLimit(carried.id));
+  if (left > 0) dropStack({ id: carried.id, count: left });
+  selectSlot(state.selectedSlot);
+}
+
+/** E or Escape on a container: put down what is carried, then go back to play. */
+function closeContainer() {
+  returnCarry();
+  resumeGame();
+}
+
+/**
+ * Clicking a slot inside a container: pick the stack up onto the cursor, put it
+ * down, merge it with a stack of the same thing, or swap the two.
+ */
+function handleInventorySlot(index, { right = false } = {}) {
+  const target = state.hotbar[index];
+  if (!target) return;
+  const carried = state.cursor;
+
+  if (slotIsEmpty(carried)) {
+    if (slotIsEmpty(target)) return;
+    const taken = right ? Math.ceil(target.count / 2) : target.count;
+    state.cursor = slot(target.id, taken);
+    takeFromSlot(target, taken);
+  } else if (slotIsEmpty(target)) {
+    const moved = right ? 1 : carried.count;
+    target.id = carried.id;
+    target.count = moved;
+    takeFromSlot(carried, moved);
+  } else if (target.id === carried.id) {
+    const room = itemStackLimit(target.id) - target.count;
+    const moved = right ? Math.min(1, room) : Math.min(carried.count, room);
+    if (moved > 0) {
+      target.count += moved;
+      takeFromSlot(carried, moved);
+    }
+  } else {
+    const swap = slot(target.id, target.count);
+    target.id = carried.id;
+    target.count = carried.count;
+    state.cursor = swap;
+  }
+
+  if (slotIsEmpty(state.cursor)) state.cursor = slot(0, 0);
+  playClick();
+  selectSlot(state.selectedSlot);
+  ui.setCarry(state.cursor);
+}
+
+/** The world behind a container: drop what is carried, or close the screen. */
+function handleOutsideClick() {
+  if (!slotIsEmpty(state.cursor)) {
+    dropCarried();
+    return;
+  }
+  closeContainer();
+}
+
+/** Q throws what the cursor holds first, then what the hotbar slot holds. */
+function dropCarried(one = false) {
+  const carried = state.cursor;
+  if (slotIsEmpty(carried)) return dropHeld(one);
+  const count = one ? 1 : carried.count;
+  dropStack({ id: carried.id, count });
+  takeFromSlot(carried, count);
+  if (slotIsEmpty(carried)) state.cursor = slot(0, 0);
+  selectSlot(state.selectedSlot);
+  ui.setCarry(state.cursor);
+  return true;
+}
+
+/** Throw the held stack, or a single item with Ctrl held. */
+function dropHeld(one = false) {
+  const held = state.hotbar[state.selectedSlot];
+  if (slotIsEmpty(held)) return false;
+  const count = one ? 1 : held.count;
+  dropStack({ id: held.id, count });
+  takeFromSlot(held, count);
+  selectSlot(state.selectedSlot);
+  return true;
 }
 
 /**
@@ -394,6 +498,7 @@ function applyOptions() {
 
 function openInventory() {
   if (!state.mode) return;
+  returnCarry();
   document.exitPointerLock?.();
   refreshCraft(state.craft, 2);
   ui.setCraftState(state.craft);
@@ -403,6 +508,7 @@ function openInventory() {
 /** Right-clicking a crafting table opens its 3x3 instead of placing a block. */
 function openCraftingTable() {
   if (!state.mode) return;
+  returnCarry();
   document.exitPointerLock?.();
   refreshCraft(state.table, 3);
   ui.setTableState(state.table);
@@ -411,6 +517,7 @@ function openCraftingTable() {
 
 function openCreative() {
   if (!state.mode) return;
+  returnCarry();
   document.exitPointerLock?.();
   ui.showCreative(state.hotbar, state.selectedSlot);
 }
@@ -426,37 +533,48 @@ function refreshCraft(container, size) {
   return container.result;
 }
 
-/** Clicking a grid cell: drop the held item in, or take the stack back out. */
-function handleCraftSlot(index, size) {
+/** Clicking a grid cell moves a stack between the cursor and the grid. */
+function handleCraftSlot(index, size, { right = false } = {}) {
   const container = craftStateFor(size);
-  const cell = container.grid[index];
-  const held = state.hotbar[state.selectedSlot];
+  const carried = state.cursor;
 
-  if (cell?.id) {
+  if (slotIsEmpty(carried)) {
     const taken = takeAt(container.grid, index);
-    if (taken) addToHotbar(state.hotbar, taken.id, taken.count);
-  } else if (!slotIsEmpty(held)) {
-    if (putOne(container.grid, index, held.id, itemStackLimit(held.id))) takeFromSlot(held, 1);
+    if (taken) {
+      if (right && taken.count > 1) {
+        // Right click leaves half the stack in the grid, as 1.12.2 does.
+        const half = Math.ceil(taken.count / 2);
+        state.cursor = slot(taken.id, half);
+        putMany(container.grid, index, taken.id, taken.count - half, itemStackLimit(taken.id));
+      } else {
+        state.cursor = slot(taken.id, taken.count);
+      }
+    }
+  } else {
+    const want = right ? 1 : carried.count;
+    const placed = putMany(container.grid, index, carried.id, want, itemStackLimit(carried.id));
+    takeFromSlot(carried, placed);
   }
 
+  if (slotIsEmpty(state.cursor)) state.cursor = slot(0, 0);
   refreshCraft(container, size);
   selectSlot(state.selectedSlot);
+  ui.setCarry(state.cursor);
   if (size === 3) ui.renderTableCraft();
   else ui.renderInventoryCraft();
 }
 
-/** Clicking the result slot crafts once, spending one of each ingredient. */
+/** Clicking the result slot crafts once; the output lands on the cursor. */
 function handleCraftResult(size) {
   const container = craftStateFor(size);
+  if (!slotIsEmpty(state.cursor)) return;
   const crafted = craftOnce(container.grid, size, (ids, gridSize) => matchRecipe(ids, gridSize, recipeRef));
   if (!crafted) return;
-  const left = addToHotbar(state.hotbar, crafted.id, crafted.count);
-  if (left > 0 && state.player) {
-    state.drops?.spawn(crafted.id, state.player.x, state.player.y + 1, state.player.z, { count: left });
-  }
+  state.cursor = slot(crafted.id, crafted.count);
   playClick();
   refreshCraft(container, size);
   selectSlot(state.selectedSlot);
+  ui.setCarry(state.cursor);
   if (size === 3) ui.renderTableCraft();
   else ui.renderInventoryCraft();
   ui.toast(`Crafted ${itemName(crafted.id)} x${crafted.count}`);
@@ -668,21 +786,41 @@ window.addEventListener('keydown', (event) => {
   if (!state.mode) return;
 
   if (event.code === 'Escape') {
-    if (ui.isInventoryOpen()) resumeGame();
+    if (ui.isInventoryOpen()) closeContainer();
     else pauseGame();
     return;
   }
-  // E opens the inventory in every mode but spectator, where there is no
-  // inventory to open; flight no longer steals the key.
+  // E opens the inventory in every mode but spectator, and closes whatever
+  // container is already up.
   if (event.code === 'KeyE') {
-    if (state.gamemode !== 'spectator') {
+    if (ui.isInventoryOpen()) {
+      event.preventDefault();
+      closeContainer();
+    } else if (state.gamemode !== 'spectator') {
       event.preventDefault();
       openInventory();
     }
     return;
   }
-  // With the inventory up the game is still rendered but you do not walk.
-  if (ui.isInventoryOpen()) return;
+  // '/' and 'T' both open the chat line; '/' arrives with its slash typed.
+  if (event.code === 'Slash' || event.code === 'NumpadDivide') {
+    event.preventDefault();
+    ui.openChat('/');
+    return;
+  }
+  // With a container up the game is still rendered but you do not walk.
+  if (ui.isInventoryOpen()) {
+    if (event.code === 'KeyQ') {
+      event.preventDefault();
+      dropCarried(event.ctrlKey);
+    }
+    return;
+  }
+  if (event.code === 'KeyQ') {
+    event.preventDefault();
+    dropHeld(event.ctrlKey);
+    return;
+  }
   if (event.code === 'KeyT') {
     ui.openChat();
     event.preventDefault();

@@ -37,6 +37,17 @@ export function putOne(grid, index, id, limit = STACK_LIMIT) {
 }
 
 /** Empty a cell and hand back what was in it. */
+/**
+ * Put up to `count` of `id` into one cell, stacking with what is already there.
+ * Returns how many landed, so the caller can take exactly that off the cursor.
+ */
+export function putMany(grid, index, id, count, limit = STACK_LIMIT) {
+  let placed = 0;
+  const want = Math.max(0, Math.floor(count));
+  while (placed < want && putOne(grid, index, id, limit)) placed++;
+  return placed;
+}
+
 export function takeAt(grid, index) {
   const cell = grid[index];
   if (!cell || slotIsEmpty(cell)) return null;

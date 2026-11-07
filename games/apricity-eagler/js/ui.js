@@ -243,9 +243,16 @@ export class UI {
     on('btn-cancel-connect', () => this.handlers.onCancelConnect?.());
     on('btn-open-creative', () => this.handlers.onOpenCreative?.());
 
-    // The inventory closes when the world behind the panel is clicked.
-    this.screens.inventory?.addEventListener('click', (event) => {
-      if (event.target === this.screens.inventory) this.handlers.onCloseInventory?.();
+    // Clicking the world behind a container drops what is on the cursor, or
+    // closes the container when the hands are free.
+    for (const name of ['inventory', 'crafting', 'creative']) {
+      this.screens[name]?.addEventListener('mousedown', (event) => {
+        if (event.target === this.screens[name]) this.handlers.onOutsideClick?.();
+      });
+    }
+    window.addEventListener('mousemove', (event) => {
+      this.lastMouse = { x: event.clientX, y: event.clientY };
+      this.moveCarry(event);
     });
   }
 
@@ -404,12 +411,13 @@ export class UI {
     // The HUD stays visible behind the container screens, as in game.
     this.hud.classList.toggle('visible', name === null || name === 'inventory' || name === 'creative');
     this.setClickToPlay(name === null);
+    if (!this.isInventoryOpen()) this.setCarry(null);
   }
 
+  /** Any container screen: the inventory, a crafting table or the palette. */
   isInventoryOpen() {
-    return (
-      (this.screens.inventory?.classList.contains('active') ?? false) ||
-      (this.screens.creative?.classList.contains('active') ?? false)
+    return ['inventory', 'crafting', 'creative'].some(
+      (name) => this.screens[name]?.classList.contains('active') ?? false
     );
   }
 
@@ -703,8 +711,12 @@ export class UI {
     el.style.backgroundRepeat = 'no-repeat';
   }
 
-  /** One hotbar/inventory slot: the block's icon, its stack size, a click target. */
-  slotElement(entry, index, selected, className) {
+  /**
+   * One hotbar/inventory slot: the block's icon, its stack size, a click target.
+   * `activate` replaces the HUD's pick-a-slot behaviour with a container's
+   * pick-up/put-down one; right click arrives as `{ right: true }`.
+   */
+  slotElement(entry, index, selected, className, activate) {
     const element = document.createElement('div');
     element.className = `${className}${index === selected ? ' active' : ''}`;
     const icon = document.createElement('div');
@@ -721,7 +733,12 @@ export class UI {
       setText(badge, String(entry.count), { scale: 1 });
       element.append(badge);
     }
-    element.addEventListener('click', () => this.handlers.onSelectSlot?.(index));
+    const fire = activate ?? ((i) => this.handlers.onSelectSlot?.(i));
+    element.addEventListener('click', (event) => fire(index, { right: event.button === 2 }));
+    element.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      fire(index, { right: true });
+    });
     return element;
   }
 
@@ -836,7 +853,11 @@ export class UI {
           setText(badge, String(cell.count), { scale: 1 });
           element.append(badge);
         }
-        element.addEventListener('click', () => this.handlers.onCraftSlot?.(index, size));
+        element.addEventListener('click', () => this.handlers.onCraftSlot?.(index, size, { right: false }));
+        element.addEventListener('contextmenu', (event) => {
+          event.preventDefault();
+          this.handlers.onCraftSlot?.(index, size, { right: true });
+        });
         container.appendChild(element);
       });
     }
@@ -867,7 +888,11 @@ export class UI {
     const bar = $('crafting-hotbar');
     if (bar) {
       bar.textContent = '';
-      slots.forEach((entry, index) => bar.appendChild(this.slotElement(entry, index, selected, 'inv-slot')));
+      slots.forEach((entry, index) =>
+        bar.appendChild(
+          this.slotElement(entry, index, selected, 'inv-slot', (i, detail) => this.handlers.onInventorySlot?.(i, detail))
+        )
+      );
     }
     const title = $('crafting-title');
     if (title) setText(title, this.strings.crafting ?? 'Crafting');
@@ -919,7 +944,9 @@ export class UI {
     const { slots, selected } = this.sessionHotbar;
     bar.textContent = '';
     slots.forEach((entry, index) => {
-      bar.appendChild(this.slotElement(entry, index, selected, 'inv-slot'));
+      bar.appendChild(
+        this.slotElement(entry, index, selected, 'inv-slot', (i, detail) => this.handlers.onInventorySlot?.(i, detail))
+      );
     });
   }
 
@@ -940,17 +967,56 @@ export class UI {
     const { slots, selected } = this.sessionHotbar;
     this.inventoryHotbar.textContent = '';
     slots.forEach((entry, index) => {
-      this.inventoryHotbar.appendChild(this.slotElement(entry, index, selected, 'inv-slot'));
+      this.inventoryHotbar.appendChild(
+        this.slotElement(entry, index, selected, 'inv-slot', (i, detail) => this.handlers.onInventorySlot?.(i, detail))
+      );
     });
+  }
+
+  /** The stack riding the cursor while a container is open. */
+  setCarry(entry) {
+    const carried = entry && entry.id ? { id: entry.id, count: entry.count } : null;
+    this.carry = carried;
+    const el = $('carry');
+    if (!el) return;
+    el.textContent = '';
+    el.classList.toggle('visible', Boolean(carried));
+    if (!carried) return;
+    const icon = document.createElement('div');
+    icon.className = 'icon';
+    this.iconStyle(icon, carried.id);
+    el.append(icon);
+    if (carried.count > 1) {
+      const badge = document.createElement('span');
+      badge.className = 'count';
+      setText(badge, String(carried.count), { scale: 1 });
+      el.append(badge);
+    }
+    if (this.lastMouse) {
+      el.style.left = `${this.lastMouse.x}px`;
+      el.style.top = `${this.lastMouse.y}px`;
+    }
+  }
+
+  moveCarry(event) {
+    if (!this.carry) return;
+    const el = $('carry');
+    if (!el) return;
+    el.style.left = `${event.clientX}px`;
+    el.style.top = `${event.clientY}px`;
   }
 
   setClickToPlay(visible) {
     this.clickToPlay.classList.toggle('visible', Boolean(visible));
   }
 
-  openChat() {
+  /** Open the chat line, optionally prefilled -- '/' lands here with a slash. */
+  openChat(prefill = '') {
     this.chatInput.classList.add('open');
+    this.chatInput.value = String(prefill ?? '');
     this.chatInput.focus();
+    const end = this.chatInput.value.length;
+    this.chatInput.setSelectionRange?.(end, end);
   }
 
   closeChat() {

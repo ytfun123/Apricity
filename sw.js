@@ -1,4 +1,4 @@
-const CACHE = 'apricity-v1';
+const CACHE = 'apricity-v2';
 const PRECACHE = [
   '/',
   '/index.html',
