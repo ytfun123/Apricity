@@ -19,6 +19,7 @@ import {
   loadItems,
 } from './registry.js';
 import { canHarvest, dropsFor, harvestNeed, toolInfo } from './drops.js';
+import { SMELT_SECONDS, tickFurnace } from './smelting.js';
 import { craftOnce, emptyGrid, gridIds, putMany, putOne, takeAt } from './crafting.js';
 import { matchRecipe } from './recipes.js';
 import { playBlockSound, playClick, playHurt, playPickup } from './sound.js';
@@ -36,6 +37,14 @@ const PALETTE = [...HOTBAR];
 const recipeRef = {
   blockId: (name) => blockIdByName(name),
   itemId: (name) => itemIdByKey(name),
+};
+
+// The furnace tables name blocks and items too; this is how they become ids.
+const smeltRef = {
+  blockName,
+  itemKey,
+  isItemId,
+  resolve: (out) => (out.kind === 'block' ? blockIdByName(out.name) : itemIdByKey(out.name)),
 };
 
 const WORLDS_KEY = 'apricity-eagler.worlds';
@@ -60,6 +69,13 @@ const state = {
   selectedSlot: 0,
   // Survival starts with an empty hotbar; creative fills it from the palette.
   hotbar: emptyHotbar(),
+  // The inventory's 27 storage slots: the screen shows them above the hotbar and
+  // anything picked up goes here once the hotbar is full.
+  backpack: emptyHotbar(27),
+  // Lit furnaces, keyed by block position, plus the one on screen.
+  furnaces: new Map(),
+  furnaceKey: null,
+  lastFurnaceUi: 0,
   // The stack on the cursor while the inventory or a crafting table is open.
   cursor: slot(0, 0),
   // Which mouse buttons are down, so holding one keeps mining or placing.
@@ -237,6 +253,7 @@ const ui = new UI({
         world: state.world,
         player: state.player,
         hotbar: state.hotbar,
+        backpack: state.backpack,
         selectedSlot: state.selectedSlot,
         vitals: state.vitals,
         gamemode: state.gamemode,
@@ -261,7 +278,8 @@ const ui = new UI({
   },
   onCloseInventory: () => closeContainer(),
   onOutsideClick: () => handleOutsideClick(),
-  onInventorySlot: (index, detail) => handleInventorySlot(index, detail),
+  onInventorySlot: (container, index, detail) => handleInventorySlot(container, index, detail),
+  onFurnaceSlot: (name, detail) => handleFurnaceSlot(name, detail),
   onOpenCreative: () => openCreative(),
   onPickBlock: (id) => {
     state.hotbar[state.selectedSlot] = slot(id, Math.min(itemStackLimit(id), 64));
@@ -325,43 +343,95 @@ function closeContainer() {
   resumeGame();
 }
 
+// Blocks that open a furnace when right-clicked: unlit and lit.
+const FURNACE_IDS = new Set([61, 62]);
+
 /**
- * Clicking a slot inside a container: pick the stack up onto the cursor, put it
- * down, merge it with a stack of the same thing, or swap the two.
+ * One slot click: pick a stack up, put it down, merge it with a stack of the
+ * same thing, or swap the two. `takeOnly` slots (a furnace's output) refuse to
+ * accept anything. Returns the stack that ends up on the cursor.
  */
-function handleInventorySlot(index, { right = false } = {}) {
-  const target = state.hotbar[index];
-  if (!target) return;
-  const carried = state.cursor;
+function clickSlot(target, carried, { right = false, takeOnly = false } = {}) {
+  if (takeOnly) {
+    if (!slotIsEmpty(carried) || slotIsEmpty(target)) return carried;
+    const taken = right ? Math.ceil(target.count / 2) : target.count;
+    const stack = slot(target.id, taken);
+    takeFromSlot(target, taken);
+    return stack;
+  }
 
   if (slotIsEmpty(carried)) {
-    if (slotIsEmpty(target)) return;
+    if (slotIsEmpty(target)) return carried;
     const taken = right ? Math.ceil(target.count / 2) : target.count;
-    state.cursor = slot(target.id, taken);
+    const stack = slot(target.id, taken);
     takeFromSlot(target, taken);
-  } else if (slotIsEmpty(target)) {
+    return stack;
+  }
+  if (slotIsEmpty(target)) {
     const moved = right ? 1 : carried.count;
     target.id = carried.id;
     target.count = moved;
     takeFromSlot(carried, moved);
-  } else if (target.id === carried.id) {
+    return carried;
+  }
+  if (target.id === carried.id) {
     const room = itemStackLimit(target.id) - target.count;
     const moved = right ? Math.min(1, room) : Math.min(carried.count, room);
     if (moved > 0) {
       target.count += moved;
       takeFromSlot(carried, moved);
     }
-  } else {
-    const swap = slot(target.id, target.count);
-    target.id = carried.id;
-    target.count = carried.count;
-    state.cursor = swap;
+    return carried;
   }
+  const swap = slot(target.id, target.count);
+  target.id = carried.id;
+  target.count = carried.count;
+  return swap;
+}
 
+/** Add items the way a player expects: hotbar first, then the storage slots. */
+function stow(id, count) {
+  let left = addToHotbar(state.hotbar, id, count, itemStackLimit(id));
+  if (left > 0) left = addToHotbar(state.backpack, id, left, itemStackLimit(id));
+  return left;
+}
+
+/** A click in the inventory or crafting-screen hotbar row. */
+function handleInventorySlot(container, index, { right = false } = {}) {
+  const list = container === 'backpack' ? state.backpack : state.hotbar;
+  const target = list?.[index];
+  if (!target) return;
+  state.cursor = clickSlot(target, state.cursor, { right });
   if (slotIsEmpty(state.cursor)) state.cursor = slot(0, 0);
   playClick();
   selectSlot(state.selectedSlot);
   ui.setCarry(state.cursor);
+}
+
+/** A click in a furnace's input, fuel or output slot. */
+function handleFurnaceSlot(name, { right = false } = {}) {
+  const furnace = state.furnaces.get(state.furnaceKey);
+  const target = furnace?.[name];
+  if (!target) return;
+  state.cursor = clickSlot(target, state.cursor, { right, takeOnly: name === 'output' });
+  if (slotIsEmpty(state.cursor)) state.cursor = slot(0, 0);
+  playClick();
+  selectSlot(state.selectedSlot);
+  ui.setCarry(state.cursor);
+  ui.setFurnaceState(furnace);
+}
+
+/** Run every loaded furnace and redraw the one on screen. */
+function updateFurnaces(dt, now) {
+  if (!state.furnaces?.size) return;
+  for (const [key, furnace] of state.furnaces) {
+    furnace.cookSeconds = furnace.cookSeconds || SMELT_SECONDS;
+    tickFurnace(furnace, dt, smeltRef);
+    if (key === state.furnaceKey && ui.isFurnaceOpen() && now - state.lastFurnaceUi > 100) {
+      state.lastFurnaceUi = now;
+      ui.setFurnaceState(furnace);
+    }
+  }
 }
 
 /** The world behind a container: drop what is carried, or close the screen. */
@@ -464,7 +534,8 @@ function updateSurvival(dt, input) {
     const picked = drops.update(dt, player);
     if (picked.length) {
       for (const drop of picked) {
-        const leftover = addToHotbar(state.hotbar, drop.itemId, drop.count, itemStackLimit(drop.itemId));
+        // The hotbar fills first, then the inventory's storage slots.
+        const leftover = stow(drop.itemId, drop.count);
         // Anything that does not fit stays on the ground where it fell.
         if (leftover > 0) drops.spawn(drop.itemId, player.x, player.y + 1, player.z, { count: leftover, vy: 0.4 });
       }
@@ -508,7 +579,7 @@ function openInventory() {
   document.exitPointerLock?.();
   refreshCraft(state.craft, 2);
   ui.setCraftState(state.craft);
-  ui.showInventory(state.hotbar, state.selectedSlot);
+  ui.showInventory(state.hotbar, state.selectedSlot, state.backpack);
 }
 
 /** Right-clicking a crafting table opens its 3x3 instead of placing a block. */
@@ -528,6 +599,34 @@ function openCreative() {
   clearButtons();
   document.exitPointerLock?.();
   ui.showCreative(state.hotbar, state.selectedSlot);
+}
+
+/**
+ * Right-clicking a furnace opens its three slots. What is inside lives on the
+ * block position, so it is still there when the screen is closed and reopened.
+ */
+function openFurnace(x, y, z) {
+  if (!state.mode) return;
+  returnCarry();
+  clearButtons();
+  document.exitPointerLock?.();
+  const key = `${x},${y},${z}`;
+  let furnace = state.furnaces.get(key);
+  if (!furnace) {
+    furnace = {
+      input: slot(0, 0),
+      fuel: slot(0, 0),
+      output: slot(0, 0),
+      cook: 0,
+      burn: 0,
+      burnMax: 0,
+      cookSeconds: SMELT_SECONDS,
+    };
+    state.furnaces.set(key, furnace);
+  }
+  state.furnaceKey = key;
+  ui.setFurnaceState(furnace);
+  ui.showFurnace(state.hotbar, state.selectedSlot);
 }
 
 // ── crafting ───────────────────────────────────────────────────────────────
@@ -588,7 +687,7 @@ function handleCraftResult(size, { shift = false } = {}) {
       const crafted = craftOnce(container.grid, size, match);
       if (!crafted) break;
       made += crafted.count;
-      const left = addToHotbar(state.hotbar, crafted.id, crafted.count, itemStackLimit(crafted.id));
+      const left = stow(crafted.id, crafted.count);
       if (left > 0) {
         // The hotbar is full: the rest goes on the ground rather than vanishing.
         dropStack({ id: crafted.id, count: left });
@@ -670,6 +769,8 @@ function playWorld(record) {
   state.drops = new Drops(world);
   // Whatever the player was carrying when they left comes back with them.
   state.hotbar = restoreHotbar(record.hotbar);
+  state.backpack = restoreHotbar(record.backpack, 27);
+  state.furnaces = restoreFurnaces(record.furnaces);
 
   record.lastPlayed = Date.now();
   const worlds = loadWorlds().map((w) => (w.id === record.id ? record : w));
@@ -702,6 +803,10 @@ function saveProgress() {
   record.hotbar = state.hotbar.map((entry) =>
     slotIsEmpty(entry) ? { id: 0, count: 0 } : { id: entry.id, count: entry.count }
   );
+  record.backpack = state.backpack.map((entry) =>
+    slotIsEmpty(entry) ? { id: 0, count: 0 } : { id: entry.id, count: entry.count }
+  );
+  record.furnaces = [...state.furnaces.entries()];
   record.selectedSlot = state.selectedSlot;
   record.gamemode = state.gamemode;
   const worlds = loadWorlds().map((w) => (w.id === record.id ? record : w));
@@ -713,22 +818,49 @@ function saveProgress() {
  * A saved hotbar comes back out of localStorage, so treat it as untrusted: drop
  * ids that are neither a block nor an item any more, and clamp the counts.
  */
-function restoreHotbar(saved) {
-  const hotbar = emptyHotbar();
+/**
+ * One saved slot back into a live one. The registry is fetched asynchronously
+ * and a world can be entered before it lands, so unknown item ids are only
+ * dropped once the registry is actually here.
+ */
+function restoreSlot(entry) {
+  const id = Math.floor(Number(entry?.id) || 0);
+  const count = Math.floor(Number(entry?.count) || 0);
+  if (id <= 0 || count <= 0) return slot(0, 0);
+  // isItemId only checks the id range, so make the registry confirm the id.
+  if (!blockDef(id) && !isItemId(id)) return slot(0, 0);
+  if (allItems().length > 0 && isItemId(id) && !itemKey(id)) return slot(0, 0);
+  return slot(id, Math.min(count, itemStackLimit(id)));
+}
+
+function restoreHotbar(saved, size = 9) {
+  const hotbar = emptyHotbar(size);
   if (!Array.isArray(saved)) return hotbar;
-  // The registry is fetched asynchronously, and a world can be entered before
-  // it lands; only drop unknown item ids once it is actually here.
-  const registryReady = allItems().length > 0;
-  saved.slice(0, hotbar.length).forEach((entry, index) => {
-    const id = Math.floor(Number(entry?.id) || 0);
-    const count = Math.floor(Number(entry?.count) || 0);
-    if (id <= 0 || count <= 0) return;
-    // isItemId only checks the id range, so make the registry confirm the id.
-    if (!blockDef(id) && !isItemId(id)) return;
-    if (registryReady && isItemId(id) && !itemKey(id)) return;
-    hotbar[index] = slot(id, Math.min(count, itemStackLimit(id)));
+  saved.slice(0, size).forEach((entry, index) => {
+    hotbar[index] = restoreSlot(entry);
   });
   return hotbar;
+}
+
+/** Furnaces, keyed the same way they are saved: one entry per block position. */
+function restoreFurnaces(saved) {
+  const map = new Map();
+  if (!Array.isArray(saved)) return map;
+  for (const entry of saved) {
+    if (!Array.isArray(entry) || typeof entry[0] !== 'string') continue;
+    const [key, slots] = entry;
+    if (!slots) continue;
+    map.set(key, {
+      input: restoreSlot(slots.input),
+      fuel: restoreSlot(slots.fuel),
+      output: restoreSlot(slots.output),
+      cook: Number(slots.cook) || 0,
+      burn: Number(slots.burn) || 0,
+      burnMax: Number(slots.burnMax) || 0,
+      cookSeconds: Number(slots.cookSeconds) || SMELT_SECONDS,
+    });
+  }
+  return map;
 }
 
 function joinServer(server) {
@@ -962,9 +1094,14 @@ canvas.addEventListener('mousedown', (event) => {
   } else if (event.button === 2) {
     state.buttons.right = true;
     if (!hit || !flags.canPlace) return;
-    // A crafting table opens its own grid rather than being built on.
+    // A crafting table opens its own grid, and a furnace its own three slots,
+    // rather than being built on.
     if (hit.id === blockIdByName('Crafting Table')) {
       openCraftingTable();
+      return;
+    }
+    if (FURNACE_IDS.has(hit.id)) {
+      openFurnace(hit.x, hit.y, hit.z);
       return;
     }
     if (placeBlockAt(hit)) state.nextPlaceAt = performance.now() + PLACE_INTERVAL;
@@ -1070,6 +1207,7 @@ function frame(now) {
     }
     updateRepeatActions(now);
     updateMining(dt);
+    updateFurnaces(dt, now);
 
     if (state.mode === 'multi' && state.session && now - state.lastPositionSent > 100) {
       state.lastPositionSent = now;
@@ -1230,8 +1368,8 @@ function updateRepeatActions(now) {
     if (now < state.nextPlaceAt) return;
     const hit = state.player.raycast(6);
     if (!hit) return;
-    // Only the click itself opens a crafting table; holding must not re-open it.
-    if (hit.id === blockIdByName('Crafting Table')) return;
+    // Only the click itself opens a container; holding must not re-open it.
+    if (hit.id === blockIdByName('Crafting Table') || FURNACE_IDS.has(hit.id)) return;
     if (placeBlockAt(hit)) state.nextPlaceAt = now + PLACE_INTERVAL;
   }
 }

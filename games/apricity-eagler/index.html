@@ -526,6 +526,60 @@
     image-rendering: pixelated;
   }
 
+  /* ── the inventory's 27 storage slots, above the hotbar row ────────── */
+  #inventory-grid {
+    position: absolute;
+    left: calc(7px * var(--gui));
+    top: calc(83px * var(--gui));
+    display: grid;
+    grid-template-columns: repeat(9, calc(18px * var(--gui)));
+    grid-auto-rows: calc(18px * var(--gui));
+    pointer-events: auto;
+  }
+
+  /* ── furnace: container/furnace.png, 176x166 ──────────────────────── */
+  #screen-furnace { background: none; }
+  #screen-furnace::before { display: none; }
+  #furnace-panel {
+    width: calc(176px * var(--gui));
+    height: calc(166px * var(--gui));
+    background: url("./assets/gui-furnace.png") 0 0 / calc(176px * var(--gui)) calc(166px * var(--gui)) no-repeat;
+    image-rendering: pixelated;
+    position: relative;
+  }
+  #furnace-title { position: absolute; left: calc(60px * var(--gui)); top: calc(6px * var(--gui)); color: #404040; }
+  #furnace-input { position: absolute; left: calc(56px * var(--gui)); top: calc(17px * var(--gui)); }
+  #furnace-fuel { position: absolute; left: calc(56px * var(--gui)); top: calc(53px * var(--gui)); }
+  #furnace-output { position: absolute; left: calc(116px * var(--gui)); top: calc(31px * var(--gui)); }
+  #furnace-flame, #furnace-arrow {
+    position: absolute;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    image-rendering: pixelated;
+    pointer-events: none;
+  }
+  #furnace-flame {
+    left: calc(56px * var(--gui));
+    top: calc(36px * var(--gui));
+    width: calc(14px * var(--gui));
+    height: calc(14px * var(--gui));
+    background-image: url("./assets/gui-furnace-flame.png");
+  }
+  #furnace-arrow {
+    left: calc(79px * var(--gui));
+    top: calc(34px * var(--gui));
+    width: calc(24px * var(--gui));
+    height: calc(17px * var(--gui));
+    background-image: url("./assets/gui-furnace-arrow.png");
+  }
+  #furnace-hotbar {
+    position: absolute;
+    left: calc(7px * var(--gui));
+    top: calc(140px * var(--gui));
+    display: flex;
+    pointer-events: auto;
+  }
+
   /* ── the stack on the cursor while a container is open ─────────────── */
   #carry {
     position: fixed;
@@ -744,6 +798,7 @@
     <div id="inventory-title" class="mc-text"></div>
     <div id="inventory-craft"></div>
     <div id="inventory-result" class="craft-slot"></div>
+    <div id="inventory-grid"></div>
     <div id="inventory-hotbar"></div>
   </div>
   <div class="row" style="margin-top:6px">
@@ -761,6 +816,20 @@
 </section>
 
 <section id="screen-creative" class="screen">
+<section id="screen-furnace" class="screen">
+  <div id="furnace-panel">
+    <div id="furnace-title" class="mc-text"></div>
+    <div id="furnace-input" class="craft-slot"></div>
+    <div id="furnace-fuel" class="craft-slot"></div>
+    <div id="furnace-output" class="craft-slot"></div>
+    <div id="furnace-flame"></div>
+    <div id="furnace-arrow"></div>
+    <div id="furnace-hotbar"></div>
+  </div>
+</section>
+
+<section id="screen-creative" class="screen">
+
   <div id="creative-panel">
     <div id="creative-tabs">
       <button class="creative-tab active" data-tab="blocks">Blocks</button>

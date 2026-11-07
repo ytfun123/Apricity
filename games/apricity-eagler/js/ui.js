@@ -87,6 +87,7 @@ export class UI {
       inventory: $('screen-inventory'),
       crafting: $('screen-crafting'),
       creative: $('screen-creative'),
+      furnace: $('screen-furnace'),
     };
     this.hud = $('hud');
     this.chatEl = $('chat');
@@ -245,9 +246,18 @@ export class UI {
 
     // Clicking the world behind a container drops what is on the cursor, or
     // closes the container when the hands are free.
-    for (const name of ['inventory', 'crafting', 'creative']) {
+    for (const name of ['inventory', 'crafting', 'creative', 'furnace']) {
       this.screens[name]?.addEventListener('mousedown', (event) => {
         if (event.target === this.screens[name]) this.handlers.onOutsideClick?.();
+      });
+    }
+    // The furnace's three slots take the same clicks as any other container.
+    for (const key of ['input', 'fuel', 'output']) {
+      const el = $(`furnace-${key}`);
+      el?.addEventListener('click', () => this.handlers.onFurnaceSlot?.(key, { right: false }));
+      el?.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        this.handlers.onFurnaceSlot?.(key, { right: true });
       });
     }
     window.addEventListener('mousemove', (event) => {
@@ -416,9 +426,13 @@ export class UI {
 
   /** Any container screen: the inventory, a crafting table or the palette. */
   isInventoryOpen() {
-    return ['inventory', 'crafting', 'creative'].some(
+    return ['inventory', 'crafting', 'creative', 'furnace'].some(
       (name) => this.screens[name]?.classList.contains('active') ?? false
     );
+  }
+
+  isFurnaceOpen() {
+    return this.screens.furnace?.classList.contains('active') ?? false;
   }
 
   anyScreenOpen() {
@@ -751,7 +765,10 @@ export class UI {
     this.renderBars();
     this.renderInventory();
     this.renderCreativeHotbar();
+    this.renderFurnaceHotbar();
+    this.renderFurnace();
     this.renderCraftingHotbar();
+    this.renderFurnaceHotbar();
     this.renderInventoryCraft();
   }
 
@@ -815,8 +832,9 @@ export class UI {
     if (creative) creative.style.display = mode === 'creative' ? '' : 'none';
   }
 
-  showInventory(slots, selected) {
+  showInventory(slots, selected, backpack) {
     this.sessionHotbar = { slots, selected };
+    this.sessionBackpack = backpack ?? [];
     this.renderInventory();
     this.renderInventoryCraft();
     this.showScreen('inventory');
@@ -875,6 +893,55 @@ export class UI {
     }
     // Shift clicking the result crafts as much as fits in the hotbar.
     resultEl.onclick = (event) => this.handlers.onCraftResult?.(size, { shift: event.shiftKey });
+  }
+
+  /** The furnace: three slots, a burning flame and a cooking arrow. */
+  showFurnace(slots, selected) {
+    this.sessionHotbar = { slots, selected };
+    this.renderFurnaceHotbar();
+    const title = $('furnace-title');
+    if (title) setText(title, this.strings.furnace ?? 'Furnace');
+    this.renderFurnace();
+    this.showScreen('furnace');
+  }
+
+  setFurnaceState(furnace) {
+    this.furnaceState = furnace;
+    this.renderFurnace();
+  }
+
+  renderFurnace() {
+    const furnace = this.furnaceState;
+    if (!furnace) return;
+    for (const [id, key] of [
+      ['furnace-input', 'input'],
+      ['furnace-fuel', 'fuel'],
+      ['furnace-output', 'output'],
+    ]) {
+      const el = $(id);
+      if (!el) continue;
+      el.textContent = '';
+      const cell = furnace[key];
+      if (!cell?.id) continue;
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+      this.iconStyle(icon, cell.id);
+      icon.title = itemName(cell.id);
+      el.append(icon);
+      if (cell.count > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'count';
+        setText(badge, String(cell.count), { scale: 1 });
+        el.append(badge);
+      }
+    }
+    // The flame burns down from the top and the arrow fills left to right.
+    const burn = furnace.burnMax > 0 ? Math.max(0, Math.min(1, furnace.burn / furnace.burnMax)) : 0;
+    const flame = $('furnace-flame');
+    if (flame) flame.style.clipPath = `inset(${(1 - burn) * 100}% 0 0 0)`;
+    const cook = Math.max(0, Math.min(1, (furnace.cook ?? 0) / (furnace.cookSeconds || 10)));
+    const arrow = $('furnace-arrow');
+    if (arrow) arrow.style.clipPath = `inset(0 ${(1 - cook) * 100}% 0 0)`;
   }
 
   renderInventoryCraft() {
@@ -972,13 +1039,47 @@ export class UI {
     });
   }
 
+  /**
+   * The inventory screen: the 27 storage slots, then the hotbar row, both 
+   * click targets that hand stacks to the cursor.
+   */
   renderInventory() {
-    if (!this.inventoryHotbar || !this.sessionHotbar) return;
+    if (!this.sessionHotbar) return;
     const { slots, selected } = this.sessionHotbar;
-    this.inventoryHotbar.textContent = '';
+    if (this.inventoryHotbar) {
+      this.inventoryHotbar.textContent = '';
+      slots.forEach((entry, index) => {
+        this.inventoryHotbar.appendChild(
+          this.slotElement(entry, index, selected, 'inv-slot', (i, detail) =>
+            this.handlers.onInventorySlot?.('hotbar', i, detail)
+          )
+        );
+      });
+    }
+    const grid = $('inventory-grid');
+    if (grid) {
+      grid.textContent = '';
+      (this.sessionBackpack ?? []).forEach((entry, index) => {
+        grid.appendChild(
+          this.slotElement(entry, index, -1, 'inv-slot', (i, detail) =>
+            this.handlers.onInventorySlot?.('backpack', i, detail)
+          )
+        );
+      });
+    }
+  }
+
+  /** The furnace's own hotbar row, redrawn as stacks move. */
+  renderFurnaceHotbar() {
+    const bar = $('furnace-hotbar');
+    if (!bar || !this.sessionHotbar) return;
+    const { slots, selected } = this.sessionHotbar;
+    bar.textContent = '';
     slots.forEach((entry, index) => {
-      this.inventoryHotbar.appendChild(
-        this.slotElement(entry, index, selected, 'inv-slot', (i, detail) => this.handlers.onInventorySlot?.(i, detail))
+      bar.appendChild(
+        this.slotElement(entry, index, selected, 'inv-slot', (i, detail) =>
+          this.handlers.onInventorySlot?.('hotbar', i, detail)
+        )
       );
     });
   }

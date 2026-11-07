@@ -74,6 +74,26 @@ export function parseBlock(text) {
   return loose || null;
 }
 
+/**
+ * parseBlock without the prefix and word-order guessing: only an id, the block's
+ * own name or its texture key. `/give` needs this so that `coal` is the item and
+ * not Coal Ore through a prefix match.
+ */
+export function parseBlockExact(text) {
+  if (!text) return null;
+  const wanted = normalize(String(text));
+  const asNumber = Number(wanted);
+  if (Number.isInteger(asNumber) && BLOCKS.has(asNumber)) return asNumber;
+  for (const [id, def] of BLOCKS) {
+    if (normalize(def.name) === wanted) return id;
+  }
+  for (const [id] of BLOCKS) {
+    const key = blockKey(id);
+    if (key && normalize(key) === wanted) return id;
+  }
+  return null;
+}
+
 function integers(values) {
   const numbers = values.map(Number);
   return numbers.every((value) => Number.isInteger(value)) ? numbers : null;
@@ -169,13 +189,18 @@ export function runCommand(input, ctx) {
 
     case 'give': {
       // A block by name or id, or any item the pack ships: /give diamond,
-      // /give wood_pickaxe, /give apple.
-      const id = parseBlock(args[0]) ?? parseItem(args[0]);
+      // /give wood_pickaxe, /give apple. The exact block name comes first so
+      // that /give coal is the item, not Coal Ore through a prefix guess.
+      const id = parseBlockExact(args[0]) ?? parseItem(args[0]) ?? parseBlock(args[0]);
       const count = args[1] === undefined ? 1 : Number(args[1]);
       if (id === null || !id || !Number.isInteger(count) || count < 1 || count > 6400) {
         return out([USAGE.give]);
       }
-      const leftover = addToHotbar(ctx.hotbar, id, count, itemStackLimit(id));
+      // The hotbar fills first, then the inventory's storage slots.
+      let leftover = addToHotbar(ctx.hotbar, id, count, itemStackLimit(id));
+      if (leftover > 0 && Array.isArray(ctx.backpack)) {
+        leftover = addToHotbar(ctx.backpack, id, leftover, itemStackLimit(id));
+      }
       ctx.refreshHotbar?.();
       const given = count - leftover;
       if (given === 0) return out(['Your hotbar is full']);
