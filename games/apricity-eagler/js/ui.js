@@ -5,6 +5,7 @@
 // every label.
 
 import { BLOCKS, blockColor, blockName, getAtlas, getAtlasImage, tileFor } from './blocks.js';
+import { isItemId, itemName, itemTileKey } from './registry.js';
 import { setFontMeta, setBaseScale, setText, textElement, measureText } from './mcfont.js';
 
 const $ = (id) => document.getElementById(id);
@@ -84,6 +85,7 @@ export class UI {
       connect: $('screen-connect'),
       pause: $('screen-pause'),
       inventory: $('screen-inventory'),
+      crafting: $('screen-crafting'),
       creative: $('screen-creative'),
     };
     this.hud = $('hud');
@@ -118,6 +120,10 @@ export class UI {
     this.servers = [];
     this.selectedWorld = null;
     this.selectedServer = null;
+    this.creativeTab = 'blocks';
+    this.creativeQuery = '';
+    this.craftState = null;
+    this.tableState = null;
 
     this.wire();
     this.applyLabels();
@@ -179,6 +185,15 @@ export class UI {
         this.chatInput.value = '';
         this.closeChat();
       }
+    });
+
+    for (const tab of document.querySelectorAll('.creative-tab')) {
+      tab.addEventListener('click', () => this.setCreativeTab(tab.dataset.tab));
+    }
+    const creativeSearch = $('creative-search');
+    creativeSearch?.addEventListener('input', () => {
+      this.creativeQuery = creativeSearch.value;
+      this.buildCreative();
     });
 
     on('btn-singleplayer', () => this.handlers.onSingleplayer?.());
@@ -641,8 +656,45 @@ export class UI {
     return url;
   }
 
+  /**
+   * Icons for things that are not blocks: the item's own 16x16 icon out of the
+   * atlas, drawn as a flat sprite the way 1.12.2 draws items in a slot.
+   */
+  itemIcon(id) {
+    if (this.iconCache.has(id)) return this.iconCache.get(id);
+    if (!isItemId(id)) return this.blockIcon(id);
+    const atlas = getAtlas();
+    const image = getAtlasImage();
+    if (!atlas || !image) return null;
+    const key = itemTileKey(id);
+    const tile = key ? atlas.tiles[key] : null;
+    if (!tile) return null;
+
+    const size = 16;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      image,
+      tile[0] * atlas.tileSize,
+      tile[1] * atlas.tileSize,
+      atlas.tileSize,
+      atlas.tileSize,
+      0,
+      0,
+      size,
+      size
+    );
+    const url = canvas.toDataURL('image/png');
+    this.iconCache.set(id, url);
+    return url;
+  }
+
   iconStyle(el, id) {
-    const url = this.blockIcon(id);
+    const url = this.itemIcon(id);
     if (!url) return;
     // The icon already has the right shape at 16x16, so it just fills the slot.
     el.style.backgroundImage = `url("${url}")`;
@@ -659,7 +711,7 @@ export class UI {
     icon.className = 'icon';
     if (entry?.id) {
       this.iconStyle(icon, entry.id);
-      icon.title = blockName(entry.id);
+      icon.title = itemName(entry.id);
     }
     element.append(icon);
     // 1.12.2 hides the counter on single items and on empty slots.
@@ -682,6 +734,7 @@ export class UI {
     this.renderBars();
     this.renderInventory();
     this.renderCreativeHotbar();
+    this.renderInventoryCraft();
   }
 
   /**
@@ -724,6 +777,16 @@ export class UI {
     });
   }
 
+  /** How far through the block being mined we are, 0..1. Zero hides the bar. */
+  setMining(progress) {
+    const bar = $('mine-progress');
+    const fill = $('mine-progress-fill');
+    if (!bar || !fill) return;
+    const value = Math.max(0, Math.min(1, progress || 0));
+    bar.classList.toggle('visible', value > 0.01);
+    fill.style.width = `${value * 100}%`;
+  }
+
   /** Creative and spectator hide the health/hunger bars, as 1.12.2 does. */
   setGamemode(mode) {
     this.gamemode = mode;
@@ -737,32 +800,115 @@ export class UI {
   showInventory(slots, selected) {
     this.sessionHotbar = { slots, selected };
     this.renderInventory();
+    this.renderInventoryCraft();
     this.showScreen('inventory');
   }
 
-  /** The creative palette: every block, one click to the selected hotbar slot. */
+  /** Remember the 2x2 grid and redraw it; main.js owns the grid itself. */
+  setCraftState(craftState) {
+    this.craftState = craftState;
+    this.renderInventoryCraft();
+  }
+
+  setTableState(tableState) {
+    this.tableState = tableState;
+    this.renderTableCraft();
+  }
+
+  /** Fill a crafting grid and its result slot. Grid cells are click targets. */
+  renderCraft(containerId, resultId, state, size) {
+    const container = $(containerId);
+    if (container && state?.grid) {
+      container.textContent = '';
+      state.grid.forEach((cell, index) => {
+        const element = document.createElement('div');
+        element.className = 'craft-slot';
+        const icon = document.createElement('div');
+        icon.className = 'icon';
+        if (cell?.id) {
+          this.iconStyle(icon, cell.id);
+          icon.title = itemName(cell.id);
+        }
+        element.append(icon);
+        if (cell?.count > 1) {
+          const badge = document.createElement('span');
+          badge.className = 'count';
+          setText(badge, String(cell.count), { scale: 1 });
+          element.append(badge);
+        }
+        element.addEventListener('click', () => this.handlers.onCraftSlot?.(index, size));
+        container.appendChild(element);
+      });
+    }
+
+    const resultEl = $(resultId);
+    if (!resultEl) return;
+    resultEl.textContent = '';
+    if (state?.result?.id) {
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+      this.iconStyle(icon, state.result.id);
+      icon.title = `${itemName(state.result.id)} x${state.result.count}`;
+      resultEl.append(icon);
+    }
+    resultEl.onclick = () => this.handlers.onCraftResult?.(size);
+  }
+
+  renderInventoryCraft() {
+    this.renderCraft('inventory-craft', 'inventory-result', this.craftState, 2);
+  }
+
+  renderTableCraft() {
+    this.renderCraft('crafting-grid', 'crafting-result', this.tableState, 3);
+  }
+
+  showCrafting(slots, selected) {
+    this.sessionHotbar = { slots, selected };
+    const bar = $('crafting-hotbar');
+    if (bar) {
+      bar.textContent = '';
+      slots.forEach((entry, index) => bar.appendChild(this.slotElement(entry, index, selected, 'inv-slot')));
+    }
+    const title = $('crafting-title');
+    if (title) setText(title, this.strings.crafting ?? 'Crafting');
+    this.renderTableCraft();
+    this.showScreen('crafting');
+  }
+
+  /**
+   * The creative palette. Two tabs -- every block, then every item the pack
+   * ships -- with the filter box narrowing either, one click to the held slot.
+   */
   buildCreative() {
-    if (this.creativeBuilt) return;
     const grid = $('creative-grid');
     if (!grid) return;
-    for (const id of BLOCKS.keys()) {
-      if (!id) continue;
+    const ids = this.handlers.getCreativeIds?.(this.creativeTab, this.creativeQuery) ?? [];
+    grid.textContent = '';
+    for (const id of ids) {
       const button = document.createElement('button');
       button.className = 'block';
       const icon = document.createElement('div');
       icon.className = 'icon';
       this.iconStyle(icon, id);
-      icon.title = blockName(id);
+      icon.title = itemName(id);
       button.append(icon);
       button.addEventListener('click', () => this.handlers.onPickBlock?.(id));
       grid.appendChild(button);
     }
-    this.creativeBuilt = true;
+    grid.scrollTop = 0;
+  }
+
+  setCreativeTab(tab) {
+    this.creativeTab = tab === 'items' ? 'items' : 'blocks';
+    for (const button of document.querySelectorAll('.creative-tab')) {
+      button.classList.toggle('active', button.dataset.tab === this.creativeTab);
+    }
+    this.buildCreative();
   }
 
   showCreative(slots, selected) {
-    this.buildCreative();
     this.sessionHotbar = { slots, selected };
+    this.setCreativeTab(this.creativeTab ?? 'blocks');
     this.renderCreativeHotbar();
     this.showScreen('creative');
   }

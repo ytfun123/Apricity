@@ -23,15 +23,16 @@ export function slotIsEmpty(entry) {
  * Add items to the hotbar: existing stacks of the same block first, then empty
  * slots, exactly like 1.12.2 filling an inventory. Returns how many did not fit.
  */
-export function addToHotbar(hotbar, id, count = 1) {
+export function addToHotbar(hotbar, id, count = 1, limit = STACK_LIMIT) {
   if (!id) return Math.max(0, Math.floor(count));
+  const cap = Math.max(1, Math.min(STACK_LIMIT, Math.floor(limit) || STACK_LIMIT));
   let left = Math.max(0, Math.floor(count));
   if (left === 0) return 0;
 
   for (const entry of hotbar) {
     if (left === 0) break;
-    if (entry.id === id && entry.count > 0 && entry.count < STACK_LIMIT) {
-      const moved = Math.min(STACK_LIMIT - entry.count, left);
+    if (entry.id === id && entry.count > 0 && entry.count < cap) {
+      const moved = Math.min(cap - entry.count, left);
       entry.count += moved;
       left -= moved;
     }
@@ -40,7 +41,7 @@ export function addToHotbar(hotbar, id, count = 1) {
   for (const entry of hotbar) {
     if (left === 0) break;
     if (!slotIsEmpty(entry)) continue;
-    const moved = Math.min(STACK_LIMIT, left);
+    const moved = Math.min(cap, left);
     entry.id = id;
     entry.count = moved;
     left -= moved;

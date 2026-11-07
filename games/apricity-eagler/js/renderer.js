@@ -249,7 +249,60 @@ export class Renderer {
     gl.uniform1f(this.uTextured, this.texture ? 1 : 0);
   }
 
-  render(camera, aspect, selection, cubes = []) {
+  /**
+   * Item drops with no block form: one camera-facing quad each, textured with
+   * the item's own icon out of the atlas. The quad is turned to the viewer on
+   * the XZ plane, which is all a spinning item drop needs.
+   */
+  drawSprites(sprites, camera) {
+    if (!sprites || !sprites.length || !this.texture) return;
+    const gl = this.gl;
+    const data = new Float32Array(sprites.length * 6 * 8);
+    let offset = 0;
+    for (const sprite of sprites) {
+      // Screen-right on the ground plane, from the camera to the sprite.
+      const dx = sprite.x - camera.x;
+      const dz = sprite.z - camera.z;
+      const length = Math.hypot(dx, dz) || 1;
+      const rx = (-dz / length) * sprite.size;
+      const rz = (dx / length) * sprite.size;
+      const [u0, v0, u1, v1] = sprite.uv;
+      const y0 = sprite.y - sprite.size;
+      const y1 = sprite.y + sprite.size;
+      const corners = [
+        [sprite.x - rx, y0, sprite.z - rz, u0, v1],
+        [sprite.x + rx, y0, sprite.z + rz, u1, v1],
+        [sprite.x + rx, y1, sprite.z + rz, u1, v0],
+        [sprite.x - rx, y0, sprite.z - rz, u0, v1],
+        [sprite.x + rx, y1, sprite.z + rz, u1, v0],
+        [sprite.x - rx, y1, sprite.z - rz, u0, v0],
+      ];
+      for (const [x, y, z, u, v] of corners) {
+        data[offset++] = x;
+        data[offset++] = y;
+        data[offset++] = z;
+        data[offset++] = u;
+        data[offset++] = v;
+        data[offset++] = 1;
+        data[offset++] = 1;
+        data[offset++] = 1;
+      }
+    }
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.cubeBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data.subarray(0, offset), gl.DYNAMIC_DRAW);
+    gl.uniform1f(this.uTextured, 1);
+    gl.uniform1f(this.uAlpha, 1);
+    gl.vertexAttribPointer(this.aPos, 3, gl.FLOAT, false, STRIDE, 0);
+    gl.vertexAttribPointer(this.aUV, 2, gl.FLOAT, false, STRIDE, 12);
+    gl.vertexAttribPointer(this.aColor, 3, gl.FLOAT, false, STRIDE, 20);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(gl.TRIANGLES, 0, offset / 8);
+    gl.disable(gl.BLEND);
+  }
+
+  render(camera, aspect, selection, cubes = [], sprites = []) {
     const gl = this.gl;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(this.program);
@@ -285,6 +338,7 @@ export class Renderer {
     }
 
     this.drawCubes(cubes);
+    this.drawSprites(sprites, camera);
 
     // Water: drawn after the opaque world, blended and with depth writes off, so
     // an ocean reads as water instead of a solid blue surface.

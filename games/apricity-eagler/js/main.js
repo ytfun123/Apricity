@@ -7,7 +7,19 @@ import { Player } from './player.js';
 import { buildMesh } from './mesher.js';
 import { UI } from './ui.js';
 import { MultiplayerSession, faceIndex } from './multiplayer.js';
-import { HOTBAR, blockName, setAtlas } from './blocks.js';
+import { BLOCKS, HOTBAR, blockDef, blockIdByName, blockName, setAtlas } from './blocks.js';
+import {
+  allItems,
+  isBlockItem,
+  itemIdByKey,
+  itemKey,
+  itemName,
+  itemStackLimit,
+  loadItems,
+} from './registry.js';
+import { canHarvest, dropsFor, harvestNeed } from './drops.js';
+import { craftOnce, emptyGrid, gridIds, putOne, takeAt } from './crafting.js';
+import { matchRecipe } from './recipes.js';
 import { playBlockSound, playClick, playHurt, playPickup } from './sound.js';
 import { isCommand, runCommand } from './commands.js';
 import { addToHotbar, emptyHotbar, fillHotbarWith, slot, slotIsEmpty, takeFromSlot } from './inventory.js';
@@ -17,6 +29,13 @@ import { GAMEMODES, gameModeFlags, gamemodeName, normalizeGamemode } from './gam
 
 // The blocks the creative palette's hotbar starts with.
 const PALETTE = [...HOTBAR];
+
+// Recipes name blocks and items; this turns those names into ids. Items only
+// resolve once the generated registry has loaded.
+const recipeRef = {
+  blockId: (name) => blockIdByName(name),
+  itemId: (name) => itemIdByKey(name),
+};
 
 const WORLDS_KEY = 'apricity-eagler.worlds';
 const SERVERS_KEY = 'apricity-eagler.servers';
@@ -49,6 +68,12 @@ const state = {
   lastPositionSent: 0,
   lastChunkScan: 0,
   chatLines: [],
+  // Crafting: the inventory's own 2x2 and a crafting table's 3x3, each holding
+  // whatever the grid currently makes.
+  craft: { grid: emptyGrid(2), result: null },
+  table: { grid: emptyGrid(3), result: null },
+  mining: null,
+  toolHint: { id: 0, at: 0 },
 };
 
 const keys = new Set();
@@ -230,11 +255,14 @@ const ui = new UI({
   onCloseInventory: () => resumeGame(),
   onOpenCreative: () => openCreative(),
   onPickBlock: (id) => {
-    state.hotbar[state.selectedSlot] = slot(id, 1);
+    state.hotbar[state.selectedSlot] = slot(id, Math.min(itemStackLimit(id), 64));
     selectSlot(state.selectedSlot);
     playClick();
-    ui.toast(`Picked ${blockName(id)}`);
+    ui.toast(`Picked ${itemName(id)}`);
   },
+  onCraftSlot: (index, size) => handleCraftSlot(index, size),
+  onCraftResult: (size) => handleCraftResult(size),
+  getCreativeIds: (tab, query) => creativeIds(tab, query),
   onQuitGame: () => {
     stopSession();
     document.exitPointerLock?.();
@@ -327,7 +355,7 @@ function updateSurvival(dt, input) {
     const picked = drops.update(dt, player);
     if (picked.length) {
       for (const drop of picked) {
-        const leftover = addToHotbar(state.hotbar, drop.itemId, drop.count);
+        const leftover = addToHotbar(state.hotbar, drop.itemId, drop.count, itemStackLimit(drop.itemId));
         // Anything that does not fit stays on the ground where it fell.
         if (leftover > 0) drops.spawn(drop.itemId, player.x, player.y + 1, player.z, { count: leftover, vy: 0.4 });
       }
@@ -367,13 +395,79 @@ function applyOptions() {
 function openInventory() {
   if (!state.mode) return;
   document.exitPointerLock?.();
+  refreshCraft(state.craft, 2);
+  ui.setCraftState(state.craft);
   ui.showInventory(state.hotbar, state.selectedSlot);
+}
+
+/** Right-clicking a crafting table opens its 3x3 instead of placing a block. */
+function openCraftingTable() {
+  if (!state.mode) return;
+  document.exitPointerLock?.();
+  refreshCraft(state.table, 3);
+  ui.setTableState(state.table);
+  ui.showCrafting(state.hotbar, state.selectedSlot);
 }
 
 function openCreative() {
   if (!state.mode) return;
   document.exitPointerLock?.();
   ui.showCreative(state.hotbar, state.selectedSlot);
+}
+
+// ── crafting ───────────────────────────────────────────────────────────────
+
+const craftStateFor = (size) => (size === 3 ? state.table : state.craft);
+
+/** Re-run the recipe match for a grid and remember the result. */
+function refreshCraft(container, size) {
+  const match = matchRecipe(gridIds(container.grid), size, recipeRef);
+  container.result = match?.out ?? null;
+  return container.result;
+}
+
+/** Clicking a grid cell: drop the held item in, or take the stack back out. */
+function handleCraftSlot(index, size) {
+  const container = craftStateFor(size);
+  const cell = container.grid[index];
+  const held = state.hotbar[state.selectedSlot];
+
+  if (cell?.id) {
+    const taken = takeAt(container.grid, index);
+    if (taken) addToHotbar(state.hotbar, taken.id, taken.count);
+  } else if (!slotIsEmpty(held)) {
+    if (putOne(container.grid, index, held.id, itemStackLimit(held.id))) takeFromSlot(held, 1);
+  }
+
+  refreshCraft(container, size);
+  selectSlot(state.selectedSlot);
+  if (size === 3) ui.renderTableCraft();
+  else ui.renderInventoryCraft();
+}
+
+/** Clicking the result slot crafts once, spending one of each ingredient. */
+function handleCraftResult(size) {
+  const container = craftStateFor(size);
+  const crafted = craftOnce(container.grid, size, (ids, gridSize) => matchRecipe(ids, gridSize, recipeRef));
+  if (!crafted) return;
+  const left = addToHotbar(state.hotbar, crafted.id, crafted.count);
+  if (left > 0 && state.player) {
+    state.drops?.spawn(crafted.id, state.player.x, state.player.y + 1, state.player.z, { count: left });
+  }
+  playClick();
+  refreshCraft(container, size);
+  selectSlot(state.selectedSlot);
+  if (size === 3) ui.renderTableCraft();
+  else ui.renderInventoryCraft();
+  ui.toast(`Crafted ${itemName(crafted.id)} x${crafted.count}`);
+}
+
+/** Ids the creative menu shows for a tab, narrowed by the search box. */
+function creativeIds(tab, query) {
+  const text = String(query ?? '').toLowerCase().trim();
+  const ids = tab === 'items' ? allItems().map((entry) => entry.id) : [...BLOCKS.keys()].filter((id) => id > 0);
+  if (!text) return ids;
+  return ids.filter((id) => itemName(id).toLowerCase().includes(text));
 }
 
 // ── game entry ─────────────────────────────────────────────────────────────
@@ -641,19 +735,19 @@ canvas.addEventListener('mousedown', (event) => {
 
   if (event.button === 0) {
     if (!flags.canBreak) return;
-    state.world.setBlock(hit.x, hit.y, hit.z, 0, { record });
-    playBlockSound(hit.id);
-    if (state.mode === 'multi') {
-      state.session?.breakBlock(hit.x, hit.y, hit.z, faceIndex(hit.face));
-    } else if (flags.dropsItems) {
-      // Survival drops what you break, and you have to walk over it to keep it.
-      state.drops?.spawn(hit.id, hit.x + 0.5, hit.y + 0.5, hit.z + 0.5);
-    }
-    if (flags.hurt) state.vitals.exhaustion += EXHAUSTION.breakBlock;
+    // 1.12.2 mines as you hold the button: hardness decides how long it takes and
+    // the frame loop finishes the job.
+    if (blockDef(hit.id)?.hardness < 0) return;
+    state.mining = { x: hit.x, y: hit.y, z: hit.z, id: hit.id, progress: 0 };
   } else if (event.button === 2) {
     if (!flags.canPlace) return;
+    // A crafting table opens its own grid rather than being built on.
+    if (hit.id === blockIdByName('Crafting Table')) {
+      openCraftingTable();
+      return;
+    }
     const item = state.hotbar[state.selectedSlot];
-    if (slotIsEmpty(item)) return;
+    if (slotIsEmpty(item) || !isBlockItem(item.id)) return;
     const bx = hit.x + hit.face[0];
     const by = hit.y + hit.face[1];
     const bz = hit.z + hit.face[2];
@@ -670,6 +764,11 @@ canvas.addEventListener('mousedown', (event) => {
       selectSlot(state.selectedSlot);
     }
   }
+});
+
+window.addEventListener('mouseup', () => {
+  state.mining = null;
+  ui.setMining(0);
 });
 
 canvas.addEventListener('contextmenu', (event) => event.preventDefault());
@@ -745,6 +844,7 @@ function frame(now) {
     state.player.update(dt, input);
 
     if (state.mode === 'single') updateSurvival(dt, input);
+    updateMining(dt);
 
     if (state.mode === 'multi' && state.session && now - state.lastPositionSent > 100) {
       state.lastPositionSent = now;
@@ -777,7 +877,8 @@ function frame(now) {
       { x: p.x, y: p.eyeY(), z: p.z, yaw: p.yaw, pitch: p.pitch, fov: options.fov },
       width / Math.max(1, height),
       selection,
-      state.drops ? state.drops.cubes() : []
+      state.drops ? state.drops.cubes() : [],
+      state.drops ? state.drops.sprites() : []
     );
     updateHud(now);
   } else {
@@ -820,6 +921,96 @@ async function loadAtlas() {
   }
 }
 
+// ── mining ─────────────────────────────────────────────────────────────────
+
+/** Blocks per second: a correct tool multiplies the baseline by its tier. */
+function miningSpeed(id, heldKey) {
+  const def = blockDef(id);
+  if (!def) return 0;
+  const hardness = Math.max(0.05, def.hardness);
+  const tool = heldKey ? itemToolInfo(heldKey) : null;
+  const correct = tool && tool.type === def.tool;
+  const speed = correct ? 1 + tool.tier * 1.5 : 1;
+  return speed / hardness;
+}
+
+function itemToolInfo(key) {
+  const info = toolInfoFromKey(key);
+  return info;
+}
+
+function heldToolKey() {
+  const held = state.hotbar[state.selectedSlot];
+  if (!held?.id || isBlockItem(held.id)) return null;
+  return itemKey(held.id);
+}
+
+function updateMining(dt) {
+  const mining = state.mining;
+  if (!mining || !state.player) {
+    ui.setMining(0);
+    return;
+  }
+  const hit = state.player.raycast(6);
+  if (!hit || hit.x !== mining.x || hit.y !== mining.y || hit.z !== mining.z) {
+    state.mining = null;
+    ui.setMining(0);
+    return;
+  }
+  if (!gameModeFlags(state.gamemode).canBreak) {
+    state.mining = null;
+    ui.setMining(0);
+    return;
+  }
+
+  mining.progress += dt * miningSpeed(mining.id, heldToolKey());
+  if (mining.progress < 1) {
+    ui.setMining(mining.progress);
+    return;
+  }
+
+  state.mining = null;
+  ui.setMining(0);
+  breakBlockAt(hit);
+}
+
+function breakBlockAt(hit) {
+  const flags = gameModeFlags(state.gamemode);
+  state.world.setBlock(hit.x, hit.y, hit.z, 0, { record: state.mode === 'single' });
+  playBlockSound(hit.id);
+
+  if (state.mode === 'multi') {
+    state.session?.breakBlock(hit.x, hit.y, hit.z, faceIndex(hit.face));
+  } else if (flags.dropsItems) {
+    spawnDrops(hit);
+  }
+  if (flags.hurt) state.vitals.exhaustion += EXHAUSTION.breakBlock;
+}
+
+/** Throw whatever 1.12.2 says this block leaves behind into the world. */
+function spawnDrops(hit) {
+  const heldKey = heldToolKey();
+  const drops = dropsFor(hit.id, { heldKey });
+
+  if (!drops.length && harvestNeed(hit.id) && !canHarvest(hit.id, heldKey)) {
+    // Say what is missing, but not on every swing.
+    const now = performance.now();
+    if (state.toolHint.id !== hit.id || now - state.toolHint.at > 5000) {
+      const need = harvestNeed(hit.id);
+      const tier = ['', 'wooden', 'stone', 'iron', 'diamond'][need.tier] || 'wooden';
+      ui.toast(`You need a ${tier} ${need.tool} for ${blockName(hit.id)}`);
+      state.toolHint = { id: hit.id, at: now };
+    }
+    return;
+  }
+
+  for (const drop of drops) {
+    const id = drop.kind === 'block' ? blockIdByName(drop.name) : itemIdByKey(drop.name);
+    if (!id) continue;
+    state.drops?.spawn(id, hit.x + 0.5, hit.y + 0.5, hit.z + 0.5, { count: drop.count });
+  }
+}
+
 resize();
 applyOptions();
 ui.init();
@@ -829,6 +1020,9 @@ ui.renderServers(loadServers());
 selectSlot(0);
 requestAnimationFrame(frame);
 loadAtlas();
+loadItems().catch((err) => {
+  console.warn('item registry unavailable', err);
+});
 
 // Diagnostics handle for automated checks.
 window.__eagler = { state, renderer, ui, playWorld, joinServer, quitToTitle, setGamemode, updateSurvival };

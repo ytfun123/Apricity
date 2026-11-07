@@ -1,14 +1,32 @@
 // Dropped items: break a block in survival and it falls out of the world as a
-// small spinning cube that you can walk over to pick up, exactly as 1.12.2 does
-// it. Physics is the same cheap AABB-free point simulation the game uses for
-// items: gravity, a resting snap onto the block below, and a little drag.
+// small spinning object that you can walk over to pick up, exactly as 1.12.2
+// does it. Blocks tumble as cubes; everything else (coal, diamonds, saplings)
+// is a flat billboard using its own 16x16 icon.
+//
+// Physics is the cheap point simulation the game already used: gravity, a
+// resting snap onto the block below, and a little drag.
 
-import { blockColor } from './blocks.js';
+import { blockColor, getAtlas } from './blocks.js';
+import { isBlockItem, itemTileKey } from './registry.js';
 
 const GRAVITY = 20;
 const ITEM_SIZE = 0.25;
 export const PICKUP_DELAY = 0.5;
 export const PICKUP_RADIUS = 1.4;
+
+/** Atlas UV rect for a non-block item icon, as [u0, v0, u1, v1] in 0..1. */
+function uvFor(itemId) {
+  const atlas = getAtlas();
+  if (!atlas) return null;
+  const key = itemTileKey(itemId);
+  if (!key) return null;
+  const tile = atlas.tiles[key];
+  if (!tile) return null;
+  const columns = Math.round(atlas.width / atlas.tileSize);
+  const rows = Math.round(atlas.height / atlas.tileSize);
+  const [column, row] = tile;
+  return [column / columns, row / rows, (column + 1) / columns, (row + 1) / rows];
+}
 
 export class Drops {
   constructor(world) {
@@ -104,15 +122,35 @@ export class Drops {
     return picked;
   }
 
-  /** Geometry for the renderer: a small spinning cube in the block's colour. */
+  /** Geometry for the renderer: block drops as small spinning cubes. */
   cubes() {
-    return this.list.map((drop) => ({
-      x: drop.x,
-      y: drop.y + 0.18 + Math.sin(drop.age * 2.4) * 0.06,
-      z: drop.z,
-      size: ITEM_SIZE,
-      spin: drop.age * 1.8,
-      color: blockColor(drop.itemId),
-    }));
+    return this.list
+      .filter((drop) => isBlockItem(drop.itemId))
+      .map((drop) => ({
+        x: drop.x,
+        y: drop.y + 0.18 + Math.sin(drop.age * 2.4) * 0.06,
+        z: drop.z,
+        size: ITEM_SIZE,
+        spin: drop.age * 1.8,
+        color: blockColor(drop.itemId),
+      }));
+  }
+
+  /** Geometry for everything with no block form: a billboarded flat icon. */
+  sprites() {
+    const out = [];
+    for (const drop of this.list) {
+      if (isBlockItem(drop.itemId)) continue;
+      const uv = uvFor(drop.itemId);
+      if (!uv) continue;
+      out.push({
+        x: drop.x,
+        y: drop.y + 0.18 + Math.sin(drop.age * 2.4) * 0.06,
+        z: drop.z,
+        size: ITEM_SIZE,
+        uv,
+      });
+    }
+    return out;
   }
 }

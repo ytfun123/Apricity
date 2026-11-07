@@ -5,7 +5,8 @@
 // runCommand() is pure apart from the world, player, hotbar and vitals it is
 // handed, so the whole set is testable in Node without a browser.
 
-import { BLOCKS, blockName } from './blocks.js';
+import { BLOCKS, blockIdByLooseName, blockKey, blockName } from './blocks.js';
+import { itemIdByKey, itemIdByName, itemName, itemStackLimit } from './registry.js';
 import { addToHotbar, emptyHotbar } from './inventory.js';
 import { GAMEMODES, gameModeFlags, normalizeGamemode } from './gamemode.js';
 import { MAX_FOOD, MAX_HEALTH, MAX_SATURATION } from './survival.js';
@@ -42,6 +43,13 @@ const FILL_LIMIT = 32768;
 const normalize = (text) => text.toLowerCase().replace(/^minecraft:/, '').replace(/\s+/g, '_');
 
 /** Block id from an id or a name like `stone`, `oak_planks` or `diamond_block`. */
+/** Item id from a texture key ('wood_pickaxe') or a display name ('Wooden
+ *  Pickaxe'). Returns null when the registry has no such item. */
+function parseItem(text) {
+  if (!text) return null;
+  return itemIdByKey(text) || itemIdByName(text) || null;
+}
+
 export function parseBlock(text) {
   if (!text) return null;
   const wanted = normalize(String(text));
@@ -50,12 +58,20 @@ export function parseBlock(text) {
   for (const [id, def] of BLOCKS) {
     if (normalize(def.name) === wanted) return id;
   }
+  // Texture names double as the short names players type: /give diamond_block.
+  for (const [id] of BLOCKS) {
+    const key = blockKey(id);
+    if (key && normalize(key) === wanted) return id;
+  }
   // The numbered variants share a name ("Water" is both 8 and 9), so accept a
   // prefix as well: /give water picks the first one.
   for (const [id, def] of BLOCKS) {
     if (normalize(def.name).startsWith(`${wanted}_`) || normalize(def.name) === wanted) return id;
   }
-  return null;
+  // Word order and filler words are free: oak_planks, planks_oak and
+  // oak_wood_planks all name the same block.
+  const loose = blockIdByLooseName(wanted);
+  return loose || null;
 }
 
 function integers(values) {
@@ -152,16 +168,18 @@ export function runCommand(input, ctx) {
     }
 
     case 'give': {
-      const id = parseBlock(args[0]);
+      // A block by name or id, or any item the pack ships: /give diamond,
+      // /give wood_pickaxe, /give apple.
+      const id = parseBlock(args[0]) ?? parseItem(args[0]);
       const count = args[1] === undefined ? 1 : Number(args[1]);
-      if (id === null || !Number.isInteger(count) || count < 1 || count > 6400) {
+      if (id === null || !id || !Number.isInteger(count) || count < 1 || count > 6400) {
         return out([USAGE.give]);
       }
-      const leftover = addToHotbar(ctx.hotbar, id, count);
+      const leftover = addToHotbar(ctx.hotbar, id, count, itemStackLimit(id));
       ctx.refreshHotbar?.();
       const given = count - leftover;
       if (given === 0) return out(['Your hotbar is full']);
-      return out([`Gave ${given} ${blockName(id)}`], true);
+      return out([`Gave ${given} ${itemName(id)}`], true);
     }
 
     case 'clear': {

@@ -144,20 +144,27 @@ colours, with a warning on the title screen.
 | Play state: keepalive, join game, compression, packet log | done |
 | 1.12.2 menus: title + splash, select world, play multiplayer, game menu | done |
 | 1.12.2 HUD and containers: hearts/hunger/XP, hotbar, inventory, creative | done |
-| Singleplayer commands behind the T key: `/help`, `/seed`, `/tp`, `/spawn`, `/kill`, `/setblock`, `/fill`, `/give <block> [count]`, `/clear`, `/gamemode`, `/heal`, `/feed` | done |
+| Singleplayer commands behind the T key: `/help`, `/seed`, `/tp`, `/spawn`, `/kill`, `/setblock`, `/fill`, `/give <block\|item> [count]`, `/clear`, `/gamemode`, `/heal`, `/feed` | done |
+| Every block id 1.12.2 has, with the pack's textures, its hardness and the tool tier it needs | done |
+| Items: the pack's whole item set as real stacks — 412 items named out of `en_us.lang` | done |
+| Crafting: the inventory's 2x2 and a crafting table's 3x3, 50 shaped and shapeless 1.12.2 recipes | done |
+| Drops: ores give their mineral, leaves give saplings/apples/sticks, stone needs a pickaxe, shears cut plants | done |
+| Mining: hold to break, speed follows hardness and tool tier, progress bar under the crosshair | done |
+| Creative menu: Blocks and Items tabs with a search box, one click to the held slot | done |
 | Game modes: survival, creative, adventure, spectator — flight, clipping, breaking, endless blocks | done |
 | Health and hunger: 1.12.2 exhaustion costs, regeneration, starvation, fall damage | done |
 | Starting inventory: empty hotbar in survival, palette in creative, stacks of 64 with a slot counter | done |
-| Dropped items: a broken block falls out of the world as a spinning cube you walk over to collect | done |
+| Dropped items: blocks tumble as spinning cubes, everything else as its flat icon, and you walk over them to collect | done |
 | 1.12.2 strings and splash texts from the pack's `en_us.lang` / `splashes.txt` | done |
-| Textures: all 69 atlas tiles and every GUI sprite from the 1.12.2 pack | done |
+| Textures: 164 block and 412 item tiles plus every GUI sprite, straight out of the 1.12.2 pack | done |
 | Singleplayer: biomes, caves, ores, trees, saves, land spawn, break/place | done |
 | Multiplayer: chunks, position sync, walking, chat | done |
 | Multiplayer block editing: `0x07` dig + `0x08` place, byte-checked against a local mock server | done |
 | Break and place sounds, grouped by block material, from the pack's `sounds/dig` | done |
 | MOTD pings in the server list | **not yet** |
-| Skins, capes, other players and mobs, 2x2 crafting | **not yet** |
-| Break progress and the destroy-stage crack overlay (breaking is instant) | **not yet** |
+| Skins, capes, other players and mobs | **not yet** |
+| Block metadata, so the colour and wood variants (16 wools, 6 planks, 6 saplings) collapse to one block each | **not yet** |
+| The destroy-stage crack overlay: mining reports progress with a bar instead of baked cracks | **not yet** |
 
 ## Files
 
@@ -169,7 +176,11 @@ js/ui.js            every screen and the HUD, driven by the pack's font
 js/mcfont.js        the pack's 8x8 bitmap font, rendered as CSS masks
 js/handshake.js     the protocol state machine (the actual client)
 js/multiplayer.js   play-packet decoding and outbound movement/chat
-js/blocks.js        block table, per-face texture keys, atlas lookup
+js/blocks.js        block table, per-face texture keys, hardness, atlas lookup
+js/registry.js      one id space for blocks and items, from assets/registry.json
+js/drops.js         1.12.2 drop table and harvest rules, keyed by block semantics
+js/recipes.js       the crafting book: shaped patterns and shapeless bags
+js/crafting.js      the 2x2 / 3x3 grid as data: put, take, consume, craft
 js/world.js         chunk storage, biomes/caves/ores generation, spawn, edits
 js/mesher.js        chunk -> textured triangles
 js/renderer.js      WebGL renderer, one buffer per chunk, alpha-tested atlas
