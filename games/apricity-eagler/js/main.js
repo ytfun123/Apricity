@@ -61,6 +61,9 @@ const state = {
   hotbar: emptyHotbar(),
   // The stack on the cursor while the inventory or a crafting table is open.
   cursor: slot(0, 0),
+  // Which mouse buttons are down, so holding one keeps mining or placing.
+  buttons: { left: false, right: false },
+  nextPlaceAt: 0,
   gamemode: 'survival',
   vitals: new Vitals(),
   drops: null,
@@ -499,6 +502,7 @@ function applyOptions() {
 function openInventory() {
   if (!state.mode) return;
   returnCarry();
+  clearButtons();
   document.exitPointerLock?.();
   refreshCraft(state.craft, 2);
   ui.setCraftState(state.craft);
@@ -509,6 +513,7 @@ function openInventory() {
 function openCraftingTable() {
   if (!state.mode) return;
   returnCarry();
+  clearButtons();
   document.exitPointerLock?.();
   refreshCraft(state.table, 3);
   ui.setTableState(state.table);
@@ -518,6 +523,7 @@ function openCraftingTable() {
 function openCreative() {
   if (!state.mode) return;
   returnCarry();
+  clearButtons();
   document.exitPointerLock?.();
   ui.showCreative(state.hotbar, state.selectedSlot);
 }
@@ -726,6 +732,7 @@ function requestLock() {
 
 function pauseGame() {
   if (!state.mode) return;
+  clearButtons();
   document.exitPointerLock?.();
   if (ui.isChatOpen()) ui.closeChat();
   ui.showScreen('pause');
@@ -852,6 +859,7 @@ window.addEventListener('keyup', (event) => {
 window.addEventListener('blur', () => {
   keys.clear();
   syncInput();
+  clearButtons();
 });
 
 canvas.addEventListener('mousedown', (event) => {
@@ -864,49 +872,34 @@ canvas.addEventListener('mousedown', (event) => {
   if (!state.mode) return;
 
   const hit = state.player.raycast(6);
-  if (!hit) return;
-  // Local saves record edits; a server world is the server's, so we only apply
-  // the change optimistically and let 0x23 BlockChange be the truth.
-  const record = state.mode === 'single';
-
   const flags = gameModeFlags(state.gamemode);
 
   if (event.button === 0) {
-    if (!flags.canBreak) return;
+    state.buttons.left = true;
+    if (!hit || !flags.canBreak) return;
     // 1.12.2 mines as you hold the button: hardness decides how long it takes and
-    // the frame loop finishes the job.
-    if (blockDef(hit.id)?.hardness < 0) return;
-    state.mining = { x: hit.x, y: hit.y, z: hit.z, id: hit.id, progress: 0 };
+    // the frame loop finishes the job, then picks up the next block you look at.
+    startMining(hit);
   } else if (event.button === 2) {
-    if (!flags.canPlace) return;
+    state.buttons.right = true;
+    if (!hit || !flags.canPlace) return;
     // A crafting table opens its own grid rather than being built on.
     if (hit.id === blockIdByName('Crafting Table')) {
       openCraftingTable();
       return;
     }
-    const item = state.hotbar[state.selectedSlot];
-    if (slotIsEmpty(item) || !isBlockItem(item.id)) return;
-    const bx = hit.x + hit.face[0];
-    const by = hit.y + hit.face[1];
-    const bz = hit.z + hit.face[2];
-    if (state.player.intersectsBlock(bx, by, bz)) return;
-    const id = item.id;
-    state.world.setBlock(bx, by, bz, id, { record });
-    playBlockSound(id);
-    if (state.mode === 'multi') {
-      state.session?.place(hit.x, hit.y, hit.z, faceIndex(hit.face), id, hit.point);
-    }
-    // Creative places from an endless supply; survival spends one block.
-    if (!flags.infinite) {
-      takeFromSlot(item, 1);
-      selectSlot(state.selectedSlot);
-    }
+    if (placeBlockAt(hit)) state.nextPlaceAt = performance.now() + PLACE_INTERVAL;
   }
 });
 
-window.addEventListener('mouseup', () => {
-  state.mining = null;
-  ui.setMining(0);
+window.addEventListener('mouseup', (event) => {
+  if (event.button === 0) {
+    state.buttons.left = false;
+    state.mining = null;
+    ui.setMining(0);
+  } else if (event.button === 2) {
+    state.buttons.right = false;
+  }
 });
 
 canvas.addEventListener('contextmenu', (event) => event.preventDefault());
@@ -930,6 +923,7 @@ document.addEventListener('mousemove', (event) => {
 document.addEventListener('pointerlockchange', () => {
   if (!state.mode) return;
   const locked = document.pointerLockElement === canvas;
+  if (!locked) clearButtons();
   if (locked) {
     ui.setClickToPlay(false);
     return;
@@ -982,6 +976,7 @@ function frame(now) {
     state.player.update(dt, input);
 
     if (state.mode === 'single') updateSurvival(dt, input);
+    updateRepeatActions(now);
     updateMining(dt);
 
     if (state.mode === 'multi' && state.session && now - state.lastPositionSent > 100) {
@@ -1081,6 +1076,73 @@ function heldToolKey() {
   const held = state.hotbar[state.selectedSlot];
   if (!held?.id || isBlockItem(held.id)) return null;
   return itemKey(held.id);
+}
+
+// 1.12.2 places a block every four ticks while the button stays down.
+const PLACE_INTERVAL = 200;
+
+/** Forget both buttons, for when the pointer lock or the screen goes away. */
+function clearButtons() {
+  state.buttons.left = false;
+  state.buttons.right = false;
+}
+
+/** Start on a block, unless it is the one already being mined. */
+function startMining(hit) {
+  if (!hit || blockDef(hit.id)?.hardness < 0) return;
+  const current = state.mining;
+  if (current && current.x === hit.x && current.y === hit.y && current.z === hit.z) return;
+  state.mining = { x: hit.x, y: hit.y, z: hit.z, id: hit.id, progress: 0 };
+}
+
+/** Put the selected block against the face that was hit. Returns whether it went down. */
+function placeBlockAt(hit) {
+  const flags = gameModeFlags(state.gamemode);
+  const item = state.hotbar[state.selectedSlot];
+  if (slotIsEmpty(item) || !isBlockItem(item.id)) return false;
+  const bx = hit.x + hit.face[0];
+  const by = hit.y + hit.face[1];
+  const bz = hit.z + hit.face[2];
+  if (state.player.intersectsBlock(bx, by, bz)) return false;
+  const id = item.id;
+  // Local saves record edits; a server world is the server's, so we only apply
+  // the change optimistically and let 0x23 BlockChange be the truth.
+  state.world.setBlock(bx, by, bz, id, { record: state.mode === 'single' });
+  playBlockSound(id);
+  if (state.mode === 'multi') {
+    state.session?.place(hit.x, hit.y, hit.z, faceIndex(hit.face), id, hit.point);
+  }
+  // Creative places from an endless supply; survival spends one block.
+  if (!flags.infinite) {
+    takeFromSlot(item, 1);
+    selectSlot(state.selectedSlot);
+  }
+  return true;
+}
+
+/**
+ * A held button keeps working, the way it does in 1.12.2: breaking moves on to
+ * the next block in front of you, and placing repeats on a four tick clock.
+ */
+function updateRepeatActions(now) {
+  if (!state.mode || !state.player) return;
+  if (!state.buttons.left && !state.buttons.right) return;
+  if (ui.isInventoryOpen() || document.pointerLockElement !== canvas) return;
+  const flags = gameModeFlags(state.gamemode);
+
+  if (state.buttons.left && flags.canBreak) {
+    const hit = state.player.raycast(6);
+    if (hit) startMining(hit);
+  }
+
+  if (state.buttons.right && flags.canPlace) {
+    if (now < state.nextPlaceAt) return;
+    const hit = state.player.raycast(6);
+    if (!hit) return;
+    // Only the click itself opens a crafting table; holding must not re-open it.
+    if (hit.id === blockIdByName('Crafting Table')) return;
+    if (placeBlockAt(hit)) state.nextPlaceAt = now + PLACE_INTERVAL;
+  }
 }
 
 function updateMining(dt) {

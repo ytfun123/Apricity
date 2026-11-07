@@ -34,8 +34,8 @@ node games/apricity-eagler/serve.mjs   # static server, then open the printed UR
 | / or T | chat line; `/` arrives with the slash already typed, so commands are one key away |
 | Q | drop the held stack, or what the cursor carries (Ctrl+Q drops one item) |
 | Mouse | look (click the canvas to capture the mouse) |
-| Left click | break block (singleplayer and servers) |
-| Right click | place selected block (singleplayer and servers) |
+| Left click | break block (singleplayer and servers); hold to keep breaking as the block goes |
+| Right click | place the selected block; hold to place once every four ticks (singleplayer and servers) |
 | 1–9, mouse wheel | pick hotbar slot |
 | T | chat / command input |
 | Escape | close a container, else the pause menu (save and quit) |
