@@ -3,183 +3,641 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Apricity Eagler — direct connect</title>
+<title>Apricity Eagler 1.12.2</title>
 <style>
+  /* Everything below measures in sprite pixels times the GUI scale, the way
+     1.12.2 lays its screens out: a 2px slot border on an 18px pitch, 200x20
+     buttons, a 182x22 hotbar and 9x9 heart/hunger icons. */
   :root {
-    --bg: #0d1014;
-    --panel: #161b22;
-    --line: #262d36;
-    --text: #d7dee8;
-    --dim: #7d8896;
-    --green: #57e389;
-    --red: #ff6b6b;
-    --blue: #6cb6ff;
-    --gold: #f5c542;
+    --gui: 2;
+    --text: #ffffff;
+    --shadow: #3f3f3f;
+    --panel: #c6c6c6;
   }
   * { box-sizing: border-box; }
-  body {
+  html, body {
+    height: 100%;
     margin: 0;
-    min-height: 100vh;
-    background: radial-gradient(circle at 50% -20%, #1b2430, var(--bg) 60%);
+    overflow: hidden;
+    background: #000;
     color: var(--text);
-    font-family: ui-monospace, "SFMono-Regular", "Consolas", monospace;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    -webkit-font-smoothing: none;
+    user-select: none;
+  }
+  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ── the pack's bitmap font ─────────────────────────────────────────── */
+  .mc-text { display: inline-flex; align-items: flex-end; line-height: 0; white-space: pre; color: var(--text); }
+  .mc-glyph {
+    display: inline-block;
+    background-color: currentColor;
+    -webkit-mask-image: url("./assets/font.png");
+    mask-image: url("./assets/font.png");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+
+  /* ── screens: dirt backdrop, 1.12.2 style ───────────────────────────── */
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: calc(8px * var(--gui));
+    z-index: 20;
+    background-color: #191919;
+    background-image: url("./assets/gui-menu-bg.png");
+    background-repeat: repeat;
+    background-size: calc(16px * var(--gui)) calc(16px * var(--gui));
+    image-rendering: pixelated;
+  }
+  .screen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.58);
+    pointer-events: none;
+  }
+  .screen.active { display: flex; }
+  .screen > * { position: relative; }
+
+  /* Title screen: panorama behind the stitched 274x44 wordmark. */
+  #screen-title {
+    background-image: url("./assets/title-bg.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    justify-content: flex-start;
+    padding-top: 7vh;
+  }
+  #screen-title::before {
+    background: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4) 45%, rgba(0, 0, 0, 0.7));
+  }
+  #title-logo {
+    width: min(74vw, calc(274px * var(--gui)));
+    height: auto;
+    image-rendering: pixelated;
+    filter: drop-shadow(calc(2px * var(--gui)) calc(2px * var(--gui)) 0 rgba(0, 0, 0, 0.4));
+  }
+  /* The splash sits at the logo's bottom-right corner, tilted -20 degrees. */
+  #splash-row {
+    width: min(74vw, calc(274px * var(--gui)));
+    height: calc(12px * var(--gui));
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    padding-right: calc(6px * var(--gui));
+  }
+  #splash {
+    color: #ffff00;
+    margin: calc(2px * var(--gui)) 0 0 calc(2px * var(--gui));
+    transform: rotate(-20deg);
+    transform-origin: left top;
+    animation: splash-pulse 0.9s ease-in-out infinite alternate;
+    white-space: pre;
+  }
+  @keyframes splash-pulse {
+    from { transform: rotate(-20deg) scale(1); }
+    to   { transform: rotate(-20deg) scale(1.08); }
+  }
+
+  #title-buttons {
+    display: grid;
+    justify-items: center;
+    gap: calc(4px * var(--gui));
+    margin-top: 13vh;
+  }
+
+  /* ── buttons: widgets.png (0,46) / (0,66) / (0,86), 200x20 ─────────── */
+  button.mc-button {
+    font: inherit;
+    color: #e0e0e0;
+    cursor: pointer;
+    border: 0;
+    padding: 0;
+    width: calc(200px * var(--gui));
+    height: calc(20px * var(--gui));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: url("./assets/gui-button.png") center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+    text-shadow: none;
+  }
+  button.mc-button:hover:not(:disabled) { background-image: url("./assets/gui-button-hover.png"); color: #ffffa0; }
+  button.mc-button:active:not(:disabled) { filter: brightness(0.9); }
+  button.mc-button:disabled { background-image: url("./assets/gui-button-disabled.png"); color: #a0a0a0; cursor: default; }
+  button.mc-button.wide { width: calc(200px * var(--gui)); }
+  button.mc-button.half { width: calc(150px * var(--gui)); }
+  /* The four small buttons of the 1.12.2 selection screens are 74 wide. */
+  button.mc-button.list-btn { width: calc(74px * var(--gui)); }
+
+  .menu { display: grid; gap: calc(4px * var(--gui)); justify-items: center; }
+  .row { display: flex; gap: calc(4px * var(--gui)); flex-wrap: wrap; justify-content: center; align-items: center; }
+  /* Button rows stack with the same 4px rhythm the game uses between widgets. */
+  .row + .row { margin-top: calc(2px * var(--gui)); }
+  .screen-title-text {
+    position: absolute;
+    top: calc(10px * var(--gui));
+    left: 0; right: 0;
     display: flex;
     justify-content: center;
-    padding: 32px 16px 48px;
   }
-  main { width: min(880px, 100%); }
-  h1 {
-    margin: 0 0 6px;
-    font-size: 28px;
-    letter-spacing: -0.5px;
-    font-family: system-ui, sans-serif;
-    font-weight: 800;
-  }
-  h1 span { color: var(--green); }
-  .sub { margin: 0 0 22px; color: var(--dim); font-size: 13px; line-height: 1.6; }
-  .panel {
+
+  /* ── 1.12.2 containers: light panel with a black 2px edge ──────────── */
+  .mc-panel {
     background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 16px;
-    display: grid;
-    gap: 12px;
-  }
-  label { display: grid; gap: 6px; font-size: 12px; color: var(--dim); }
-  input, select {
-    width: 100%;
-    background: #0f141a;
-    border: 1px solid var(--line);
-    border-radius: 7px;
-    color: var(--text);
-    padding: 9px 11px;
-    font: inherit;
-    font-size: 13px;
-  }
-  input:focus, select:focus { outline: 1px solid var(--green); border-color: var(--green); }
-  .grid2 { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
-  @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
-  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  button {
-    background: #1f7a4d;
-    border: 1px solid #2b9a63;
-    color: #eafff2;
-    border-radius: 7px;
-    padding: 9px 16px;
-    font: inherit;
-    font-size: 13px;
-    cursor: pointer;
-  }
-  button:hover:not(:disabled) { background: #26915b; }
-  button:disabled { opacity: 0.45; cursor: not-allowed; }
-  button.ghost { background: transparent; border-color: var(--line); color: var(--dim); }
-  .status {
-    font-size: 12px;
-    color: var(--dim);
-    margin-left: auto;
-  }
-  .status.busy { color: var(--gold); }
-  .status.good { color: var(--green); }
-  .status.bad { color: var(--red); }
-  .servers { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 0; }
-  .chip {
-    border: 1px solid var(--line);
-    background: #131920;
-    color: var(--dim);
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .chip:hover { border-color: var(--green); color: var(--green); }
-  .logwrap { margin-top: 16px; }
-  .loghead {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: var(--dim);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 6px;
-  }
-  #log {
-    background: #0a0e12;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    height: 320px;
+    border: calc(2px * var(--gui) / 2) solid #000;
+    box-shadow:
+      inset calc(2px) calc(2px) 0 #ffffff,
+      inset calc(-2px) calc(-2px) 0 #555555;
+    padding: calc(12px * var(--gui) / 2);
+    width: min(680px, 96vw);
+    max-height: 92vh;
     overflow-y: auto;
-    padding: 12px;
-    font-size: 12px;
-    line-height: 1.65;
-    white-space: pre-wrap;
-    word-break: break-word;
+    overflow-x: hidden;
+    color: #404040;
+    display: grid;
+    gap: calc(6px * var(--gui) / 2);
+    justify-items: center;
   }
-  .line.good { color: var(--green); }
-  .line.bad { color: var(--red); }
-  .line.note { color: var(--gold); }
-  footer { margin-top: 18px; color: #5c6672; font-size: 11px; line-height: 1.7; }
-  code { color: var(--blue); }
+
+  /* Server / world list: the game's own black slots with a grey frame. */
+  .mc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    display: grid;
+    gap: calc(2px * var(--gui) / 2);
+    max-height: 46vh;
+    overflow-y: auto;
+  }
+  .mc-list li {
+    display: flex;
+    align-items: center;
+    gap: calc(4px * var(--gui) / 2);
+    width: 100%;
+    min-height: calc(26px * var(--gui));
+    padding: calc(3px * var(--gui)) calc(5px * var(--gui));
+    background: #000;
+    border: calc(2px) solid #6f6f6f;
+    color: #e0e0e0;
+    cursor: pointer;
+  }
+  .mc-list li:hover { border-color: #a0a0a0; }
+  .mc-list li.selected { border-color: #ffffff; background: #1b1b1b; }
+  .mc-list .meta { flex: 1; min-width: 0; display: grid; gap: 1px; justify-items: start; }
+  /* The second line of a server/world entry is the grey detail line. */
+  .mc-list .meta .mc-text + .mc-text { color: #a0a0a0; }
+  .mc-list .empty { color: #b0b0b0; padding: 6px 2px; cursor: default; border-color: #6f6f6f; background: #000; }
+
+  .mc-form { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 8px; align-items: center; width: 100%; }
+  .mc-form label { color: #ffffff; }
+  input.mc-field {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: calc(9px * var(--gui));
+    color: #ffffff;
+    background: #000;
+    border: calc(1px * var(--gui) / 2) solid #a0a0a0;
+    padding: 2px 4px;
+    min-width: 0;
+  }
+  input.mc-field:focus { outline: none; border-color: #ffffff; }
+
+  /* ── in-game HUD ───────────────────────────────────────────────────── */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; display: none; }
+  #hud.visible { display: block; }
+
+  #crosshair {
+    position: absolute; left: 50%; top: 50%;
+    width: calc(9px * var(--gui)); height: calc(9px * var(--gui));
+    transform: translate(-50%, -50%);
+    mix-blend-mode: difference;
+  }
+  #crosshair::before, #crosshair::after { content: ""; position: absolute; background: #fff; }
+  #crosshair::before { left: 50%; top: 0; width: calc(1px * var(--gui)); height: 100%; transform: translateX(-50%); }
+  #crosshair::after { top: 50%; left: 0; height: calc(1px * var(--gui)); width: 100%; transform: translateY(-50%); }
+
+  #debug { position: absolute; left: 4px; top: 4px; display: grid; gap: 1px; color: #ffffff; }
+  #debug .mc-text { align-items: flex-start; }
+
+  #chat {
+    position: absolute; left: 4px; bottom: calc(48px * var(--gui));
+    width: min(600px, 62vw);
+    display: grid; gap: 1px; color: #ffffff;
+  }
+  #chat .mc-text { text-align: left; }
+  #chat-input {
+    position: absolute; left: 2px; bottom: calc(26px * var(--gui));
+    width: min(560px, 62vw);
+    display: none; pointer-events: auto;
+    background: rgba(0, 0, 0, 0.55);
+    border: calc(1px * var(--gui) / 2) solid #a0a0a0;
+    color: #fff;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: calc(9px * var(--gui));
+    padding: 3px 4px;
+  }
+  #chat-input.open { display: block; }
+
+  #hud-bottom {
+    position: absolute; left: 50%; bottom: calc(1px * var(--gui));
+    transform: translateX(-50%);
+    display: grid;
+    justify-items: center;
+  }
+  #hud-bars {
+    display: grid;
+    gap: calc(1px * var(--gui));
+    width: calc(182px * var(--gui));
+    padding: 0;
+    color: #fff;
+  }
+  #hud-icons { display: flex; justify-content: space-between; align-items: flex-end; }
+  #hearts, #hunger { display: flex; height: calc(9px * var(--gui)); }
+
+  /* 1.12.2 icons.png: heart frames at (16,0), full hearts (52,0), hunger at
+     y=27, all on a 9px pitch. */
+  .hud-icon {
+    position: relative;
+    width: calc(9px * var(--gui));
+    height: calc(9px * var(--gui));
+    background-image: url("./assets/gui-icons.png");
+    background-size: calc(256px * var(--gui)) calc(256px * var(--gui));
+    image-rendering: pixelated;
+  }
+  .heart { background-position: calc(-16px * var(--gui)) 0; }
+  .heart > i { position: absolute; inset: 0; background-image: url("./assets/gui-icons.png");
+    background-size: calc(256px * var(--gui)) calc(256px * var(--gui));
+    background-position: calc(-52px * var(--gui)) 0; image-rendering: pixelated; }
+  .food { background-position: calc(-16px * var(--gui)) calc(-27px * var(--gui)); }
+  .food > i { position: absolute; inset: 0; background-image: url("./assets/gui-icons.png");
+    background-size: calc(256px * var(--gui)) calc(256px * var(--gui));
+    background-position: calc(-52px * var(--gui)) calc(-27px * var(--gui)); image-rendering: pixelated; }
+  .hud-icon.half > i { width: 50%; }
+  .hud-icon.empty > i { display: none; }
+
+  #xpbar {
+    width: calc(182px * var(--gui));
+    height: calc(5px * var(--gui));
+    background: url("./assets/hud-xp-bg.png") center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+    position: relative;
+  }
+  #xpbar-fill {
+    position: absolute; inset: 0 auto 0 0;
+    width: 0%;
+    background: url("./assets/hud-xp-fill.png") left / 100% 100% no-repeat;
+    image-rendering: pixelated;
+  }
+
+  #hotbar {
+    width: calc(182px * var(--gui));
+    height: calc(22px * var(--gui));
+    display: flex;
+    pointer-events: auto;
+    background: url("./assets/gui-hotbar.png") center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+  }
+  .slot {
+    width: calc(20px * var(--gui));
+    height: calc(20px * var(--gui));
+    margin: calc(1px * var(--gui)) auto 0;
+    display: grid;
+    place-items: center;
+    position: relative;
+    cursor: pointer;
+  }
+  .slot .icon {
+    width: calc(16px * var(--gui));
+    height: calc(16px * var(--gui));
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+  .slot.active::after {
+    content: "";
+    position: absolute;
+    inset: calc(-2px * var(--gui));
+    background: url("./assets/gui-hotbar-select.png") center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+    pointer-events: none;
+  }
+
+  /* Stack size, bottom-right of the slot, in the pack's font with its shadow. */
+  .slot .count, .inv-slot .count {
+    position: absolute;
+    right: calc(1px * var(--gui));
+    bottom: 0;
+    pointer-events: none;
+  }
+
+  #click-to-play {
+    position: absolute; left: 50%; top: 58%; transform: translateX(-50%);
+    color: #fff;
+    display: none;
+  }
+  #click-to-play.visible { display: block; }
+
+  /* ── connect log ───────────────────────────────────────────────────── */
+  #connect-log {
+    width: 100%;
+    background: #000;
+    border: calc(1px * var(--gui) / 2) solid #a0a0a0;
+    padding: 4px;
+    height: 180px;
+    overflow-y: auto;
+    display: grid;
+    align-content: start;
+    gap: 1px;
+    text-align: left;
+    color: #c8c8c8;
+  }
+  #connect-status { color: #d8d8d8; margin: 2px 0; }
+
+  /* ── inventory: container/inventory.png, 176x166 at (0,0) ──────────── */
+  #screen-inventory { background: none; }
+  #screen-inventory::before { display: none; }
+  #inventory-panel {
+    width: calc(176px * var(--gui));
+    height: calc(166px * var(--gui));
+    background: url("./assets/gui-inventory.png") 0 0 / calc(176px * var(--gui)) calc(166px * var(--gui)) no-repeat;
+    image-rendering: pixelated;
+    position: relative;
+  }
+  #inventory-title { position: absolute; left: calc(8px * var(--gui)); top: calc(6px * var(--gui)); color: #404040; }
+  #inventory-hotbar {
+    position: absolute;
+    left: calc(7px * var(--gui));
+    top: calc(140px * var(--gui));
+    display: flex;
+    pointer-events: auto;
+  }
+  .inv-slot {
+    width: calc(18px * var(--gui));
+    height: calc(18px * var(--gui));
+    position: relative;
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    padding: 0;
+  }
+  .inv-slot .icon {
+    width: calc(16px * var(--gui));
+    height: calc(16px * var(--gui));
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+  .inv-slot.active { outline: calc(2px * var(--gui) / 2) solid #fff; outline-offset: 0; }
+
+  /* ── options: 1.12.2 slider (widgets.png 0,46 track + 0,66 handle) ─── */
+  .mc-slider {
+    position: relative;
+    width: calc(200px * var(--gui));
+    height: calc(20px * var(--gui));
+    background: url("./assets/gui-slider.png") center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e0e0e0;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    touch-action: none;
+  }
+  .mc-slider .knob {
+    position: absolute;
+    top: 0;
+    width: calc(8px * var(--gui));
+    height: 100%;
+    background: url("./assets/gui-slider-knob.png") center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+    pointer-events: none;
+  }
+
+  /* ── creative inventory: tab_inventory.png, 195x136 ────────────────── */
+  #screen-creative { background: none; }
+  #screen-creative::before { display: none; }
+  #creative-panel {
+    width: calc(195px * var(--gui));
+    height: calc(136px * var(--gui));
+    background: url("./assets/gui-creative.png") 0 0 / calc(195px * var(--gui)) calc(136px * var(--gui)) no-repeat;
+    image-rendering: pixelated;
+    position: relative;
+  }
+  /* The item area of that panel: nine columns from x=9, three visible rows. */
+  #creative-grid {
+    position: absolute;
+    left: calc(9px * var(--gui));
+    top: calc(53px * var(--gui));
+    width: calc(162px * var(--gui));
+    display: grid;
+    grid-template-columns: repeat(9, calc(18px * var(--gui)));
+    grid-auto-rows: calc(18px * var(--gui));
+    max-height: calc(54px * var(--gui));
+    overflow-y: auto;
+    overflow-x: hidden;
+    pointer-events: auto;
+    scrollbar-width: none;
+  }
+  #creative-grid::-webkit-scrollbar { width: 0; }
+  #creative-grid .block {
+    width: calc(18px * var(--gui));
+    height: calc(18px * var(--gui));
+    display: grid;
+    place-items: center;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  #creative-grid .block:hover { background: rgba(255, 255, 255, 0.45); }
+  #creative-grid .block .icon,
+  #creative-hotbar .inv-slot .icon {
+    width: calc(16px * var(--gui));
+    height: calc(16px * var(--gui));
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+  #creative-hotbar {
+    position: absolute;
+    left: calc(9px * var(--gui));
+    top: calc(111px * var(--gui));
+    display: flex;
+    pointer-events: auto;
+  }
+
+  /* ── toasts: toasts.png (0,0) 160x32 ───────────────────────────────── */
+  #toasts {
+    position: fixed;
+    right: 6px;
+    top: 6px;
+    z-index: 30;
+    display: grid;
+    gap: 3px;
+    justify-items: end;
+    pointer-events: none;
+  }
+  .toast {
+    width: calc(160px * var(--gui) / 2);
+    height: calc(32px * var(--gui) / 2);
+    background: url("./assets/gui-toast.png") center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+    display: flex;
+    align-items: center;
+    padding: 0 calc(5px * var(--gui) / 2);
+    color: #ffff00;
+  }
+
+  .footer-note { margin-top: 8px; color: #e0e0e0; text-align: center; }
+  .title-footer { position: absolute; bottom: 2px; color: #ffffff; }
+  #title-bottom-left { left: 2px; }
+  #title-bottom-right { right: 2px; }
+  #asset-warning { display: none; margin-top: 10px; color: #ffb0b0; text-align: center; }
+  #asset-warning.visible { display: block; }
 </style>
 </head>
 <body>
-<main>
-  <h1>Apricity <span>Eagler</span> <span style="color:var(--dim);font-size:14px;font-weight:400">client core</span></h1>
-  <p class="sub">
-    Our own client, written from the protocol up. It opens <strong>one WebSocket directly to the
-    Eaglercraft server</strong> you name — no relay, no proxy and no back-end of ours anywhere in the path.
-  </p>
+<canvas id="game"></canvas>
+<div id="toasts"></div>
 
-  <section class="panel">
-    <div class="grid2">
-      <label>
-        Nickname (offline account)
-        <input id="nickname" value="Player" maxlength="16" autocomplete="off" spellcheck="false">
-      </label>
-      <label>
-        Server address
-        <input id="address" value="mc.arch.lol" placeholder="wss://host/ or host:port" autocomplete="off" spellcheck="false">
-      </label>
+<div id="hud">
+  <div id="crosshair"></div>
+  <div id="debug"></div>
+  <div id="chat"></div>
+  <input id="chat-input" autocomplete="off" spellcheck="false" maxlength="256">
+  <div id="hud-bottom">
+    <div id="hud-bars">
+      <div id="hud-icons">
+        <div id="hearts"></div>
+        <div id="hunger"></div>
+      </div>
+      <div id="xpbar"><div id="xpbar-fill"></div></div>
     </div>
-    <div class="grid2">
-      <label>
-        Minecraft protocol to offer
-        <select id="protocol">
-          <option value="47" selected>47 — 1.8</option>
-          <option value="340">340 — 1.12.2</option>
-          <option value="393">393 — 1.14.4</option>
-          <option value="769">769 — 1.20.4</option>
-        </select>
-      </label>
-      <label>
-        Password (optional — needed only if the server asks for auth)
-        <input id="password" type="password" placeholder="leave empty for offline login" autocomplete="off">
-      </label>
-    </div>
-    <div class="row">
-      <button id="connect">Connect</button>
-      <button id="disconnect" class="ghost" disabled>Disconnect</button>
-      <span id="status" class="status">idle</span>
-    </div>
-  </section>
-
-  <div class="servers">
-    <button class="chip" data-server="mc.arch.lol">mc.arch.lol</button>
-    <button class="chip" data-server="wss://clever-teaching.com/">clever-teaching.com</button>
-    <button class="chip" data-server="apricity1-20.eagler.host">apricity1-20.eagler.host</button>
+    <div id="hotbar"></div>
   </div>
+  <div id="click-to-play"></div>
+</div>
 
-  <div class="logwrap">
-    <div class="loghead"><span>connection log</span><span>handshake → login → play</span></div>
-    <div id="log"></div>
+<section id="screen-title" class="screen active">
+  <img id="title-logo" src="./assets/gui-logo.png" alt="">
+  <div id="splash-row"><div id="splash" class="mc-text"></div></div>
+  <div id="title-buttons">
+    <button id="btn-singleplayer" class="mc-button"></button>
+    <button id="btn-multiplayer" class="mc-button"></button>
+    <button id="btn-realms" class="mc-button" disabled></button>
+    <button id="btn-options" class="mc-button"></button>
+    <button id="btn-quit-game" class="mc-button"></button>
   </div>
+  <div id="title-bottom-left" class="mc-text title-footer" style="left:2px"></div>
+  <div id="title-bottom-right" class="mc-text title-footer" style="right:2px"></div>
+  <div id="asset-warning"></div>
+</section>
 
-  <footer>
-    Stage 1 of the rebuild: transport, handshake, login and the play packet stream.
-    World rendering, entities and inventory come next — this page reports what the server
-    actually sends instead of pretending to draw it.<br>
-    Not affiliated with Mojang or Microsoft. No Minecraft assets are bundled or downloaded.
-  </footer>
-</main>
-<script type="module" src="./js/ui.js"></script>
+<section id="screen-worlds" class="screen">
+  <div class="screen-title-text"><span id="worlds-title" class="mc-text"></span></div>
+  <ul id="world-list" class="mc-list" style="width:min(440px,92vw)"></ul>
+  <div class="row" style="margin-top:6px">
+    <button id="btn-play-world" class="mc-button half"></button>
+    <button id="btn-create-world" class="mc-button half"></button>
+  </div>
+  <div class="row">
+    <button id="btn-edit-world" class="mc-button list-btn" disabled></button>
+    <button id="btn-delete-world" class="mc-button list-btn"></button>
+    <button id="btn-recreate-world" class="mc-button list-btn" disabled></button>
+  </div>
+  <div class="mc-form" style="width:min(440px,92vw);margin-top:8px">
+    <label id="label-world-name" class="mc-text"></label>
+    <input id="new-world-name" class="mc-field" maxlength="40">
+    <label id="label-world-seed" class="mc-text"></label>
+    <input id="new-world-seed" class="mc-field" maxlength="18">
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button id="btn-back-title" class="mc-button"></button>
+  </div>
+</section>
+
+<section id="screen-servers" class="screen">
+  <div class="screen-title-text"><span id="servers-title" class="mc-text"></span></div>
+  <ul id="server-list" class="mc-list" style="width:min(460px,92vw)"></ul>
+  <div class="row" style="margin-top:6px">
+    <button id="btn-join-server" class="mc-button half"></button>
+    <button id="btn-direct-connect" class="mc-button half"></button>
+  </div>
+  <div class="row">
+    <button id="btn-add-server" class="mc-button list-btn"></button>
+    <button id="btn-edit-server" class="mc-button list-btn" disabled></button>
+    <button id="btn-delete-server" class="mc-button list-btn"></button>
+    <button id="btn-refresh-servers" class="mc-button list-btn"></button>
+  </div>
+  <div class="mc-form" style="width:min(460px,92vw);margin-top:8px">
+    <label id="label-nickname" class="mc-text"></label>
+    <input id="nickname" class="mc-field" value="Player" maxlength="16">
+    <label id="label-server-name" class="mc-text"></label>
+    <input id="server-name" class="mc-field" maxlength="40">
+    <label id="label-server-address" class="mc-text"></label>
+    <input id="server-address" class="mc-field" placeholder="host:port or wss://host/">
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button id="btn-back-title-servers" class="mc-button"></button>
+  </div>
+</section>
+
+<section id="screen-options" class="screen">
+  <div class="screen-title-text"><span id="options-title" class="mc-text"></span></div>
+  <div class="menu" id="options-menu" style="margin-top:4vh"></div>
+  <div class="row" style="margin-top:10px">
+    <button id="btn-options-done" class="mc-button"></button>
+  </div>
+</section>
+
+<section id="screen-connect" class="screen">
+  <div class="screen-title-text"><span id="connect-title" class="mc-text"></span></div>
+  <div class="mc-panel" style="width:min(560px,92vw);margin-top:3vh;background:#c6c6c6">
+    <div id="connect-status" class="mc-text"></div>
+    <div id="connect-log"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="btn-cancel-connect" class="mc-button"></button>
+    </div>
+  </div>
+</section>
+
+<section id="screen-pause" class="screen">
+  <div class="screen-title-text"><span id="pause-title" class="mc-text"></span></div>
+  <div class="menu" style="margin-top:4vh">
+    <button id="btn-resume" class="mc-button"></button>
+    <button id="btn-advancements" class="mc-button" disabled></button>
+    <button id="btn-statistics" class="mc-button" disabled></button>
+    <button id="btn-pause-options" class="mc-button"></button>
+    <button id="btn-quit" class="mc-button"></button>
+  </div>
+  <div id="pause-footer" class="footer-note mc-text"></div>
+</section>
+
+<section id="screen-inventory" class="screen">
+  <div id="inventory-panel">
+    <div id="inventory-title" class="mc-text"></div>
+    <div id="inventory-hotbar"></div>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <button id="btn-open-creative" class="mc-button half"></button>
+  </div>
+</section>
+
+<section id="screen-creative" class="screen">
+  <div id="creative-panel">
+    <div id="creative-grid"></div>
+    <div id="creative-hotbar"></div>
+  </div>
+</section>
+
+<script type="module" src="./js/main.js"></script>
 </body>
 </html>

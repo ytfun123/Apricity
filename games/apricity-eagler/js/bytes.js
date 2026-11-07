@@ -50,6 +50,20 @@ export class Writer {
     return this.u32(v);
   }
 
+  f32(v) {
+    this._grow(4);
+    new DataView(this.buf.buffer, this.buf.byteOffset + this.len, 4).setFloat32(0, v);
+    this.len += 4;
+    return this;
+  }
+
+  f64(v) {
+    this._grow(8);
+    new DataView(this.buf.buffer, this.buf.byteOffset + this.len, 8).setFloat64(0, v);
+    this.len += 8;
+    return this;
+  }
+
   // 64-bit values are passed around as BigInt so UUID halves survive intact.
   i64(v) {
     const big = BigInt.asUintN(64, BigInt(v));
@@ -141,6 +155,20 @@ export class Reader {
 
   i32() {
     return this.u32() | 0;
+  }
+
+  f32() {
+    this._need(4);
+    const v = new DataView(this.view.buffer, this.view.byteOffset + this.pos, 4).getFloat32(0);
+    this.pos += 4;
+    return v;
+  }
+
+  f64() {
+    this._need(8);
+    const v = new DataView(this.view.buffer, this.view.byteOffset + this.pos, 8).getFloat64(0);
+    this.pos += 8;
+    return v;
   }
 
   i64() {

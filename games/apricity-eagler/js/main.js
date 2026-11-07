@@ -1,0 +1,834 @@
+// App bootstrap: screens, world management, input, the render loop, and the
+// multiplayer session.
+
+import { Renderer } from './renderer.js';
+import { World, chunkKey } from './world.js';
+import { Player } from './player.js';
+import { buildMesh } from './mesher.js';
+import { UI } from './ui.js';
+import { MultiplayerSession, faceIndex } from './multiplayer.js';
+import { HOTBAR, blockName, setAtlas } from './blocks.js';
+import { playBlockSound, playClick, playHurt, playPickup } from './sound.js';
+import { isCommand, runCommand } from './commands.js';
+import { addToHotbar, emptyHotbar, fillHotbarWith, slot, slotIsEmpty, takeFromSlot } from './inventory.js';
+import { Vitals, EXHAUSTION, fallDamage } from './survival.js';
+import { Drops } from './items.js';
+import { GAMEMODES, gameModeFlags, gamemodeName, normalizeGamemode } from './gamemode.js';
+
+// The blocks the creative palette's hotbar starts with.
+const PALETTE = [...HOTBAR];
+
+const WORLDS_KEY = 'apricity-eagler.worlds';
+const SERVERS_KEY = 'apricity-eagler.servers';
+const OPTIONS_KEY = 'apricity-eagler.options';
+const DEFAULT_OPTIONS = { renderDistance: 4, fov: 75, sensitivity: 100, guiScale: 0 };
+
+const DEFAULT_SERVERS = [
+  { id: 'arch', name: 'ArchMC', address: 'mc.arch.lol' },
+  { id: 'clever', name: 'Clever Teaching', address: 'wss://clever-teaching.com/' },
+];
+
+const canvas = document.getElementById('game');
+const renderer = new Renderer(canvas);
+
+const state = {
+  mode: null,
+  world: null,
+  worldRecord: null,
+  player: null,
+  session: null,
+  selectedSlot: 0,
+  // Survival starts with an empty hotbar; creative fills it from the palette.
+  hotbar: emptyHotbar(),
+  gamemode: 'survival',
+  vitals: new Vitals(),
+  drops: null,
+  teleported: false,
+  chunksDone: 0,
+  fps: 0,
+  lastPositionSent: 0,
+  lastChunkScan: 0,
+  chatLines: [],
+};
+
+const keys = new Set();
+const input = { forward: false, back: false, left: false, right: false, jump: false, sprint: false, up: false, down: false };
+
+// ── storage ────────────────────────────────────────────────────────────────
+
+function readJson(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJson(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (err) {
+    console.warn('could not save', key, err);
+  }
+}
+
+const loadWorlds = () => readJson(WORLDS_KEY, []);
+const saveWorlds = (list) => writeJson(WORLDS_KEY, list);
+const loadServers = () => {
+  const stored = readJson(SERVERS_KEY, null);
+  if (stored) return stored;
+  writeJson(SERVERS_KEY, DEFAULT_SERVERS);
+  return DEFAULT_SERVERS;
+};
+const saveServers = (list) => writeJson(SERVERS_KEY, list);
+const loadOptions = () => ({ ...DEFAULT_OPTIONS, ...readJson(OPTIONS_KEY, {}) });
+const saveOptions = (options) => writeJson(OPTIONS_KEY, options);
+const options = loadOptions();
+
+function newId() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+// ── mesh queue ─────────────────────────────────────────────────────────────
+
+const meshQueue = [];
+const queued = new Set();
+
+function queueMesh(cx, cz, force = false) {
+  const key = chunkKey(cx, cz);
+  if (!force && renderer.buffers.has(key)) return;
+  if (queued.has(key)) return;
+  queued.add(key);
+  meshQueue.push({ cx, cz, key });
+}
+
+function processMeshQueue(budgetMs = 8) {
+  if (!state.world) return;
+  const start = performance.now();
+  while (meshQueue.length && performance.now() - start < budgetMs) {
+    const job = meshQueue.shift();
+    queued.delete(job.key);
+    try {
+      if (!state.world.hasChunk(job.cx, job.cz)) {
+        // Singleplayer generates on demand (generation stays inside the budget so
+        // it never blocks a frame); a server world only gets chunks from the server.
+        if (state.mode !== 'single') continue;
+        state.world.getChunk(job.cx, job.cz);
+      }
+      renderer.upload(job.key, buildMesh(state.world, job.cx, job.cz));
+      state.chunksDone++;
+    } catch (err) {
+      console.warn('mesh failed', job.key, err);
+    }
+  }
+}
+
+function clearChunks() {
+  for (const key of [...renderer.buffers.keys()]) renderer.remove(key);
+  meshQueue.length = 0;
+  queued.clear();
+}
+
+function scanAroundPlayer(radius) {
+  if (!state.player || !state.world) return;
+  const pcx = Math.floor(state.player.x / 16);
+  const pcz = Math.floor(state.player.z / 16);
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dz = -radius; dz <= radius; dz++) {
+      const cx = pcx + dx;
+      const cz = pcz + dz;
+      // Generation happens in the mesh queue, inside its per-frame budget.
+      queueMesh(cx, cz);
+    }
+  }
+}
+
+// ── UI ─────────────────────────────────────────────────────────────────────
+
+const ui = new UI({
+  onSingleplayer: () => {
+    ui.renderWorlds(loadWorlds());
+    ui.showScreen('worlds');
+  },
+  onMultiplayer: () => {
+    ui.renderServers(loadServers());
+    ui.showScreen('servers');
+  },
+  onBackToTitle: () => ui.showScreen('title'),
+  onCreateWorld: (name, seed) => {
+    const worlds = loadWorlds();
+    const record = {
+      id: newId(),
+      name: name.trim() || `World ${worlds.length + 1}`,
+      seed: seed.trim() ? hashSeed(seed.trim()) : Math.floor(Math.random() * 1e9),
+      edits: [],
+      lastPlayed: null,
+    };
+    worlds.push(record);
+    saveWorlds(worlds);
+    ui.renderWorlds(worlds);
+    playWorld(record);
+  },
+  onPlayWorld: (record) => playWorld(record),
+  onDeleteWorld: (record) => {
+    const worlds = loadWorlds().filter((w) => w.id !== record.id);
+    saveWorlds(worlds);
+    ui.renderWorlds(worlds);
+  },
+  onAddServer: (name, address) => {
+    if (!address.trim()) return;
+    const servers = loadServers();
+    servers.push({ id: newId(), name: name.trim() || address.trim(), address: address.trim() });
+    saveServers(servers);
+    ui.renderServers(servers);
+  },
+  onJoinServer: (server) => joinServer(server),
+  onDeleteServer: (server) => {
+    const servers = loadServers().filter((s) => s.id !== server.id);
+    saveServers(servers);
+    ui.renderServers(servers);
+  },
+  onResume: () => resumeGame(),
+  onQuit: () => quitToTitle(),
+  onCancelConnect: () => {
+    // Also covers the kicked case: drop the session and reset back to the title.
+    stopSession();
+    quitToTitle();
+  },
+  onSendChat: (text) => {
+    const line = String(text ?? '').trim();
+    // In singleplayer a slash line is a local command, as it is in 1.12.2; on a
+    // server it belongs to the server and is just forwarded.
+    if (isCommand(line) && state.mode === 'single') {
+      const result = runCommand(line, {
+        world: state.world,
+        player: state.player,
+        hotbar: state.hotbar,
+        selectedSlot: state.selectedSlot,
+        vitals: state.vitals,
+        gamemode: state.gamemode,
+        setGamemode: (mode) => setGamemode(mode),
+        refreshHotbar: () => selectSlot(state.selectedSlot),
+      });
+      ui.appendChat(`> ${line}`);
+      for (const message of result.lines) ui.appendChat(message);
+      return;
+    }
+    state.session?.sendChat(text);
+  },
+  onSelectSlot: (index) => selectSlot(index),
+  getWorlds: () => loadWorlds(),
+  getServers: () => loadServers(),
+  onOpenOptions: () => ui.showScreen('options'),
+  onBackFromOptions: () => ui.showScreen(state.mode ? 'pause' : 'title'),
+  onOptionsChanged: (next) => {
+    Object.assign(options, next);
+    saveOptions(options);
+    applyOptions();
+  },
+  onCloseInventory: () => resumeGame(),
+  onOpenCreative: () => openCreative(),
+  onPickBlock: (id) => {
+    state.hotbar[state.selectedSlot] = slot(id, 1);
+    selectSlot(state.selectedSlot);
+    playClick();
+    ui.toast(`Picked ${blockName(id)}`);
+  },
+  onQuitGame: () => {
+    stopSession();
+    document.exitPointerLock?.();
+    state.mode = null;
+    state.world = null;
+    state.player = null;
+    state.worldRecord = null;
+    clearChunks();
+    ui.showQuitNotice();
+  },
+});
+
+function hashSeed(text) {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) hash = (Math.imul(hash, 31) + text.charCodeAt(i)) | 0;
+  return Math.abs(hash) || 1;
+}
+
+function selectSlot(index) {
+  state.selectedSlot = Math.max(0, Math.min(state.hotbar.length - 1, index));
+  ui.setHotbar(state.hotbar, state.selectedSlot);
+  // A server tracks what we are holding, which decides what a right click places.
+  state.session?.sendHeldItem?.(state.selectedSlot);
+}
+
+/**
+ * Apply a game mode everywhere it matters: flight and clipping on the player,
+ * what the HUD shows, and 1.12.2's habit of handing a creative player blocks.
+ */
+function setGamemode(mode, { announce = false } = {}) {
+  const next = normalizeGamemode(mode) ?? 'survival';
+  if (!GAMEMODES.includes(next)) return;
+  state.gamemode = next;
+  const flags = gameModeFlags(next);
+
+  const player = state.player;
+  if (player) {
+    player.noClip = flags.noClip;
+    player.flying = flags.canFly;
+    player.vy = 0;
+    player.fallStartY = null;
+  }
+  if (!flags.hurt) state.vitals.reset();
+
+  if (state.worldRecord) state.worldRecord.gamemode = next;
+
+  if (flags.infinite) {
+    for (let i = 0; i < state.hotbar.length; i++) {
+      if (slotIsEmpty(state.hotbar[i])) state.hotbar[i] = slot(PALETTE[i] ?? 1, 1);
+    }
+  }
+
+  ui.setGamemode(next);
+  selectSlot(state.selectedSlot);
+  if (announce) ui.toast(`Game mode: ${gamemodeName(next)}`);
+}
+
+/** One frame of singleplayer survival: falls, hunger, drops, and death. */
+function updateSurvival(dt, input) {
+  const player = state.player;
+  const vitals = state.vitals;
+  const flags = gameModeFlags(state.gamemode);
+
+  // Fall damage is decided the moment you touch down, from the height you fell.
+  if (player.justLanded) {
+    player.justLanded = false;
+    if (flags.hurt) {
+      const damage = fallDamage(player.fallDistance);
+      if (damage > 0) {
+        vitals.damage(damage);
+        playHurt();
+      }
+    }
+  }
+
+  if (flags.hurt) {
+    const distance = Math.hypot(player.vx, player.vz) * dt;
+    const events = vitals.update(dt, {
+      distance,
+      sprinting: Boolean(input.sprint) && distance > 0,
+      jumped: player.jumped,
+    });
+    if (events.damaged > 0) playHurt();
+    player.jumped = false;
+    if (vitals.dead) die();
+  }
+
+  const drops = state.drops;
+  if (drops) {
+    const picked = drops.update(dt, player);
+    if (picked.length) {
+      for (const drop of picked) {
+        const leftover = addToHotbar(state.hotbar, drop.itemId, drop.count);
+        // Anything that does not fit stays on the ground where it fell.
+        if (leftover > 0) drops.spawn(drop.itemId, player.x, player.y + 1, player.z, { count: leftover, vy: 0.4 });
+      }
+      playPickup();
+      selectSlot(state.selectedSlot);
+    }
+  }
+
+  ui.renderBars(vitals.health, vitals.food);
+}
+
+/** 1.12.2 drops everything you carried where you died, then respawns you. */
+function die() {
+  const player = state.player;
+  if (state.drops) {
+    for (const item of state.hotbar) {
+      if (!slotIsEmpty(item)) state.drops.spawn(item.id, player.x, player.y + 0.6, player.z, { count: item.count, vy: 1.2 });
+    }
+  }
+  state.hotbar = emptyHotbar();
+  state.vitals.reset();
+  state.selectedSlot = 0;
+
+  const spawn = state.world.findSpawn();
+  player.spawnAt(spawn.x, spawn.z);
+  selectSlot(0);
+  ui.renderBars(state.vitals.health, state.vitals.food);
+  ui.appendChat('You died! Respawning at the world spawn.');
+  ui.toast('You died!');
+}
+
+/** Push the saved options into the page and the renderer. */
+function applyOptions() {
+  ui.setOptions(options);
+}
+
+function openInventory() {
+  if (!state.mode) return;
+  document.exitPointerLock?.();
+  ui.showInventory(state.hotbar, state.selectedSlot);
+}
+
+function openCreative() {
+  if (!state.mode) return;
+  document.exitPointerLock?.();
+  ui.showCreative(state.hotbar, state.selectedSlot);
+}
+
+// ── game entry ─────────────────────────────────────────────────────────────
+
+function stopSession() {
+  if (state.session) {
+    try {
+      state.session.disconnect();
+    } catch {
+      /* already gone */
+    }
+    state.session = null;
+  }
+}
+
+function playWorld(record) {
+  stopSession();
+  clearChunks();
+
+  const world = new World({ seed: record.seed, edits: record.edits || [] });
+  const player = new Player(world);
+  const spawn = world.findSpawn();
+  player.spawnAt(spawn.x, spawn.z);
+
+  state.mode = 'single';
+  state.world = world;
+  state.worldRecord = record;
+  state.player = player;
+  state.teleported = true;
+  state.chunksDone = 0;
+  // A world remembers the mode it was played in; a new world starts survival
+  // with nothing in your hands.
+  state.gamemode = normalizeGamemode(record.gamemode) ?? 'survival';
+  state.vitals = new Vitals();
+  state.drops = new Drops(world);
+  state.hotbar = emptyHotbar();
+
+  record.lastPlayed = Date.now();
+  const worlds = loadWorlds().map((w) => (w.id === record.id ? record : w));
+  saveWorlds(worlds);
+
+  scanAroundPlayer(options.renderDistance);
+  for (const key of world.takeDirty()) {
+    const [cx, cz] = key.split(',').map(Number);
+    if (world.hasChunk(cx, cz)) queueMesh(cx, cz, true);
+  }
+
+  setGamemode(state.gamemode);
+  ui.showScreen(null);
+  ui.clearChat();
+  ui.renderBars(state.vitals.health, state.vitals.food);
+  selectSlot(0);
+  resize();
+  canvas.focus();
+}
+
+function joinServer(server) {
+  stopSession();
+  clearChunks();
+  ui.clearConnectLog();
+  ui.setConnectTitle(`Joining ${server.name}`);
+  ui.setConnectStatus('opening socket');
+  ui.showScreen('connect');
+
+  const world = new World({ generate: false });
+  const player = new Player(world);
+  player.flying = true; // until the server sends our position
+
+  state.mode = 'multi';
+  state.world = world;
+  state.player = player;
+  state.teleported = false;
+  state.chunksDone = 0;
+  // Server health comes from the server (we do not read 0x06 yet), so the bars
+  // stay full and the local survival rules are off. The hotbar carries the
+  // standard blocks because places are just 0x08 packets.
+  state.gamemode = 'survival';
+  state.vitals = new Vitals();
+  state.drops = null;
+  state.hotbar = fillHotbarWith(emptyHotbar(), PALETTE);
+  ui.setGamemode('survival');
+  ui.renderBars(state.vitals.health, state.vitals.food);
+
+  const session = new MultiplayerSession({
+    address: server.address,
+    username: ui.getNickname(),
+    world,
+    handlers: {
+      onLog: (line) => ui.log(line),
+      onStatus: (text) => ui.setConnectStatus(text),
+      onChat: (text) => ui.appendChat(text),
+      onChunk: (cx, cz) => queueMesh(cx, cz, true),
+      onBlockChange: (x, y, z) => queueMesh(x >> 4, z >> 4, true),
+      onJoin: () => {
+        ui.setConnectStatus('in game');
+        ui.toast(`Joined ${server.name}`);
+        ui.showScreen(null);
+        ui.clearChat();
+        selectSlot(0);
+        resize();
+        canvas.focus();
+      },
+      onTeleport: ({ x, y, z, yaw, pitch }) => {
+        player.x = x;
+        player.y = y;
+        player.z = z;
+        if (!state.teleported) {
+          player.yaw = (yaw * Math.PI) / 180;
+          player.pitch = (pitch * Math.PI) / 180;
+          player.flying = false;
+          state.teleported = true;
+          if (state.mode === 'multi') ui.showScreen(null);
+        }
+      },
+      onKick: (reason) => {
+        state.session = null;
+        ui.setConnectTitle('Disconnected');
+        ui.setConnectStatus(reason);
+        ui.log(reason);
+        ui.showScreen('connect');
+      },
+    },
+  });
+
+  state.session = session;
+  session.connect();
+}
+
+function requestLock() {
+  try {
+    const result = canvas.requestPointerLock?.();
+    // Chrome returns a promise that rejects when the page is not focused yet.
+    if (result && typeof result.catch === 'function') result.catch(() => {});
+  } catch {
+    /* pointer lock is a nicety, never fatal */
+  }
+}
+
+function pauseGame() {
+  if (!state.mode) return;
+  document.exitPointerLock?.();
+  if (ui.isChatOpen()) ui.closeChat();
+  ui.showScreen('pause');
+}
+
+function resumeGame() {
+  if (!state.mode) return;
+  ui.showScreen(null);
+  requestLock();
+}
+
+function quitToTitle() {
+  if (state.mode === 'single' && state.world && state.worldRecord) {
+    const record = state.worldRecord;
+    record.edits = state.world.serializeEdits();
+    const worlds = loadWorlds().map((w) => (w.id === record.id ? record : w));
+    saveWorlds(worlds);
+    ui.toast('World saved');
+  }
+  stopSession();
+  document.exitPointerLock?.();
+  state.mode = null;
+  state.world = null;
+  state.player = null;
+  state.worldRecord = null;
+  clearChunks();
+  ui.showScreen('title');
+}
+
+// ── input ──────────────────────────────────────────────────────────────────
+
+const KEY_MAP = {
+  KeyW: 'forward',
+  ArrowUp: 'forward',
+  KeyS: 'back',
+  ArrowDown: 'back',
+  KeyA: 'left',
+  ArrowLeft: 'left',
+  KeyD: 'right',
+  ArrowRight: 'right',
+  // In 1.12.2 space and shift are jump/sprint on the ground and up/down while
+  // flying, which leaves Q and E to the game itself.
+  Space: 'jump',
+  ShiftLeft: 'sprint',
+  ShiftRight: 'sprint',
+};
+
+function syncInput() {
+  for (const [prop] of Object.entries(input)) input[prop] = false;
+  for (const code of keys) {
+    const mapped = KEY_MAP[code];
+    if (mapped) input[mapped] = true;
+  }
+}
+
+window.addEventListener('keydown', (event) => {
+  if (ui.isChatOpen()) return;
+  if (!state.mode) return;
+
+  if (event.code === 'Escape') {
+    if (ui.isInventoryOpen()) resumeGame();
+    else pauseGame();
+    return;
+  }
+  // E opens the inventory in every mode but spectator, where there is no
+  // inventory to open; flight no longer steals the key.
+  if (event.code === 'KeyE') {
+    if (state.gamemode !== 'spectator') {
+      event.preventDefault();
+      openInventory();
+    }
+    return;
+  }
+  // With the inventory up the game is still rendered but you do not walk.
+  if (ui.isInventoryOpen()) return;
+  if (event.code === 'KeyT') {
+    ui.openChat();
+    event.preventDefault();
+    return;
+  }
+  if (event.code === 'KeyF' && state.mode === 'single' && gameModeFlags(state.gamemode).canFly) {
+    state.player.flying = !state.player.flying;
+    state.player.vy = 0;
+    return;
+  }
+  if (event.code.startsWith('Digit')) {
+    const index = Number(event.code.slice(5)) - 1;
+    if (index >= 0 && index < state.hotbar.length) selectSlot(index);
+    return;
+  }
+
+  if (KEY_MAP[event.code]) {
+    keys.add(event.code);
+    syncInput();
+    if (event.code === 'Space') event.preventDefault();
+  }
+});
+
+window.addEventListener('keyup', (event) => {
+  keys.delete(event.code);
+  syncInput();
+});
+
+window.addEventListener('blur', () => {
+  keys.clear();
+  syncInput();
+});
+
+canvas.addEventListener('mousedown', (event) => {
+  if (!state.player) return;
+  if (document.pointerLockElement !== canvas) {
+    requestLock();
+    ui.setClickToPlay(false);
+    return;
+  }
+  if (!state.mode) return;
+
+  const hit = state.player.raycast(6);
+  if (!hit) return;
+  // Local saves record edits; a server world is the server's, so we only apply
+  // the change optimistically and let 0x23 BlockChange be the truth.
+  const record = state.mode === 'single';
+
+  const flags = gameModeFlags(state.gamemode);
+
+  if (event.button === 0) {
+    if (!flags.canBreak) return;
+    state.world.setBlock(hit.x, hit.y, hit.z, 0, { record });
+    playBlockSound(hit.id);
+    if (state.mode === 'multi') {
+      state.session?.breakBlock(hit.x, hit.y, hit.z, faceIndex(hit.face));
+    } else if (flags.dropsItems) {
+      // Survival drops what you break, and you have to walk over it to keep it.
+      state.drops?.spawn(hit.id, hit.x + 0.5, hit.y + 0.5, hit.z + 0.5);
+    }
+    if (flags.hurt) state.vitals.exhaustion += EXHAUSTION.breakBlock;
+  } else if (event.button === 2) {
+    if (!flags.canPlace) return;
+    const item = state.hotbar[state.selectedSlot];
+    if (slotIsEmpty(item)) return;
+    const bx = hit.x + hit.face[0];
+    const by = hit.y + hit.face[1];
+    const bz = hit.z + hit.face[2];
+    if (state.player.intersectsBlock(bx, by, bz)) return;
+    const id = item.id;
+    state.world.setBlock(bx, by, bz, id, { record });
+    playBlockSound(id);
+    if (state.mode === 'multi') {
+      state.session?.place(hit.x, hit.y, hit.z, faceIndex(hit.face), id, hit.point);
+    }
+    // Creative places from an endless supply; survival spends one block.
+    if (!flags.infinite) {
+      takeFromSlot(item, 1);
+      selectSlot(state.selectedSlot);
+    }
+  }
+});
+
+canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+
+canvas.addEventListener('wheel', (event) => {
+  if (!state.mode) return;
+  event.preventDefault();
+  const dir = event.deltaY > 0 ? 1 : -1;
+  selectSlot((state.selectedSlot + dir + state.hotbar.length) % state.hotbar.length);
+}, { passive: false });
+
+document.addEventListener('mousemove', (event) => {
+  if (document.pointerLockElement !== canvas || !state.player) return;
+  const sensitivity = 0.0022 * (options.sensitivity / 100);
+  state.player.yaw -= event.movementX * sensitivity;
+  state.player.pitch -= event.movementY * sensitivity;
+  const limit = Math.PI / 2 - 0.01;
+  state.player.pitch = Math.max(-limit, Math.min(limit, state.player.pitch));
+});
+
+document.addEventListener('pointerlockchange', () => {
+  if (!state.mode) return;
+  const locked = document.pointerLockElement === canvas;
+  if (locked) {
+    ui.setClickToPlay(false);
+    return;
+  }
+  // Escape (or a tab switch) drops pointer lock: treat that as pausing unless a
+  // screen is already up.
+  if (!ui.anyScreenOpen()) {
+    ui.setClickToPlay(true);
+    pauseGame();
+  }
+});
+
+// ── loop ───────────────────────────────────────────────────────────────────
+
+function resize() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  renderer.setSize(width, height);
+  // Auto GUI scale follows the window, as 1.12.2 does on resize.
+  ui?.applyScale?.();
+}
+
+window.addEventListener('resize', resize);
+
+function updateHud(now) {
+  if (!state.player) return;
+  const p = state.player;
+  const chunks = renderer.chunkCount;
+  const mode = state.mode === 'multi' ? 'multiplayer' : 'singleplayer';
+  const flight = p.flying ? ' · flying' : '';
+  const vitals = state.mode === 'single' ? `hp ${state.vitals.health.toFixed(0)} · food ${state.vitals.food.toFixed(0)}\n` : '';
+  const drops = state.drops ? `items ${state.drops.count} · ` : '';
+  ui.setDebug(
+    `${Math.round(state.fps)} fps\n` +
+      `xyz ${p.x.toFixed(1)} ${p.y.toFixed(1)} ${p.z.toFixed(1)}\n` +
+      `${mode}${flight} · ${state.gamemode}\n` +
+      vitals +
+      `${drops}chunks ${chunks} · ${Math.round(renderer.triangleCount / 1000)}k tris`
+  );
+}
+
+let lastFrame = performance.now();
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastFrame) / 1000);
+  lastFrame = now;
+  state.fps = state.fps * 0.9 + (1 / Math.max(dt, 0.0001)) * 0.1;
+
+  if (state.mode && state.player) {
+    state.player.update(dt, input);
+
+    if (state.mode === 'single') updateSurvival(dt, input);
+
+    if (state.mode === 'multi' && state.session && now - state.lastPositionSent > 100) {
+      state.lastPositionSent = now;
+      const p = state.player;
+      state.session.sendPosition(p.x, p.y, p.z, (p.yaw * 180) / Math.PI, (p.pitch * 180) / Math.PI, p.onGround);
+    }
+
+    if (now - state.lastChunkScan > 400) {
+      state.lastChunkScan = now;
+      scanAroundPlayer(state.mode === 'single' ? options.renderDistance : 9);
+    }
+
+    for (const key of state.world.takeDirty()) {
+      const [cx, cz] = key.split(',').map(Number);
+      if (state.world.hasChunk(cx, cz)) queueMesh(cx, cz, true);
+    }
+  }
+
+  processMeshQueue();
+
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  renderer.setSize(width, height);
+
+  if (state.player) {
+    const p = state.player;
+    const selection = state.mode === 'single' ? p.raycast(6) : null;
+    renderer.setSky(1);
+    renderer.render(
+      { x: p.x, y: p.eyeY(), z: p.z, yaw: p.yaw, pitch: p.pitch, fov: options.fov },
+      width / Math.max(1, height),
+      selection,
+      state.drops ? state.drops.cubes() : []
+    );
+    updateHud(now);
+  } else {
+    renderer.setSky(1);
+    renderer.render({ x: 0, y: 70, z: 0, yaw: 0.6, pitch: -0.15, fov: options.fov }, width / Math.max(1, height), null);
+  }
+
+  requestAnimationFrame(frame);
+}
+
+// ── boot ───────────────────────────────────────────────────────────────────
+
+// Textures are built from the bundled Eaglercraft asset pack by
+// tools/build-assets.mjs; if they are missing the client still runs, unfurnished.
+async function loadAtlas() {
+  try {
+    const response = await fetch('./assets/atlas.json', { cache: 'no-cache' });
+    if (!response.ok) throw new Error(`atlas.json ${response.status}`);
+    const meta = await response.json();
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('atlas.png failed to load'));
+      // Cache-bust: the atlas is rebuilt by tools/build-assets.mjs.
+      img.src = `./assets/atlas.png?v=${Date.now()}`;
+    });
+    // The HUD needs the image too: it composes isometric block icons from it.
+    setAtlas(meta, image);
+    renderer.setAtlasTexture(image);
+    selectSlot(state.selectedSlot);
+    ui.setAssetWarning('');
+    // Anything meshed before the atlas arrived needs one redraw.
+    if (state.mode) {
+      clearChunks();
+      scanAroundPlayer(state.mode === 'single' ? options.renderDistance : 9);
+    }
+    console.log(`atlas loaded: ${Object.keys(meta.tiles).length} tiles`);
+  } catch (err) {
+    ui.setAssetWarning(`Could not load textures (${err.message}) — run: node tools/build-assets.mjs`);
+  }
+}
+
+resize();
+applyOptions();
+ui.init();
+ui.showScreen('title');
+ui.renderWorlds(loadWorlds());
+ui.renderServers(loadServers());
+selectSlot(0);
+requestAnimationFrame(frame);
+loadAtlas();
+
+// Diagnostics handle for automated checks.
+window.__eagler = { state, renderer, ui, playWorld, joinServer, quitToTitle, setGamemode, updateSurvival };

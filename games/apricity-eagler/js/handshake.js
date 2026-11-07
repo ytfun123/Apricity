@@ -192,7 +192,10 @@ export class EaglerConnection {
     if (this.state === STATE.PLAY) {
       this._playQueue = this._playQueue
         .then(() => this._handlePlayFrame(bytes))
-        .catch((err) => this._fail(err.message));
+        .catch((err) => {
+          // An unparseable packet must never drop an otherwise working session.
+          this._log(`play frame error: ${err.message}`);
+        });
       return;
     }
 
@@ -417,6 +420,7 @@ export class EaglerConnection {
     this.recentPackets.push({ id: packetId, name, size: data.length });
     if (this.recentPackets.length > 64) this.recentPackets.shift();
     this._emit('packet', { id: packetId, name, size: data.length });
+    this._emit('play-packet', { id: packetId, data });
 
     if (packetId === 0x46) {
       this.compressionThreshold = r.varint();
@@ -449,6 +453,11 @@ export class EaglerConnection {
     }
 
     this._log(`<- ${name} (${data.length} B)`);
+  }
+
+  /** Send a packet in the play state, framed correctly for compression. */
+  sendPlayPacket(packetId, payload) {
+    this._sendPlayPacket(packetId, payload);
   }
 
   _sendPlayPacket(packetId, payload) {
