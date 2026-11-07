@@ -268,7 +268,7 @@ const ui = new UI({
     ui.toast(`Picked ${itemName(id)}`);
   },
   onCraftSlot: (index, size, detail) => handleCraftSlot(index, size, detail),
-  onCraftResult: (size) => handleCraftResult(size),
+  onCraftResult: (size, detail) => handleCraftResult(size, detail),
   getCreativeIds: (tab, query) => creativeIds(tab, query),
   onQuitGame: () => {
     stopSession();
@@ -570,13 +570,52 @@ function handleCraftSlot(index, size, { right = false } = {}) {
   else ui.renderInventoryCraft();
 }
 
-/** Clicking the result slot crafts once; the output lands on the cursor. */
-function handleCraftResult(size) {
+/**
+ * Clicking the result crafts. Repeated clicks stack the output onto the cursor,
+ * so a stack of logs becomes planks without putting each batch down first, and
+ * shift clicking crafts straight into the hotbar for as long as it fits.
+ */
+function handleCraftResult(size, { shift = false } = {}) {
   const container = craftStateFor(size);
-  if (!slotIsEmpty(state.cursor)) return;
-  const crafted = craftOnce(container.grid, size, (ids, gridSize) => matchRecipe(ids, gridSize, recipeRef));
+  const match = () => matchRecipe(gridIds(container.grid), size, recipeRef);
+
+  if (shift) {
+    let crafts = 0;
+    let made = 0;
+    for (; crafts < 64; crafts++) {
+      const crafted = craftOnce(container.grid, size, match);
+      if (!crafted) break;
+      made += crafted.count;
+      const left = addToHotbar(state.hotbar, crafted.id, crafted.count, itemStackLimit(crafted.id));
+      if (left > 0) {
+        // The hotbar is full: the rest goes on the ground rather than vanishing.
+        dropStack({ id: crafted.id, count: left });
+        break;
+      }
+    }
+    if (!crafts) return;
+    playClick();
+    refreshCraft(container, size);
+    selectSlot(state.selectedSlot);
+    if (size === 3) ui.renderTableCraft();
+    else ui.renderInventoryCraft();
+    ui.toast(`Crafted ${made} items`);
+    return;
+  }
+
+  const out = match()?.out;
+  if (!out) return;
+  const carried = state.cursor;
+  // The hands must be free, or already holding the same thing with room left.
+  if (!slotIsEmpty(carried)) {
+    if (carried.id !== out.id) return;
+    if (carried.count + out.count > itemStackLimit(out.id)) return;
+  }
+
+  const crafted = craftOnce(container.grid, size, match);
   if (!crafted) return;
-  state.cursor = slot(crafted.id, crafted.count);
+  const carriedCount = slotIsEmpty(carried) ? 0 : carried.count;
+  state.cursor = slot(crafted.id, carriedCount + crafted.count);
   playClick();
   refreshCraft(container, size);
   selectSlot(state.selectedSlot);

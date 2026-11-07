@@ -751,6 +751,7 @@ export class UI {
     this.renderBars();
     this.renderInventory();
     this.renderCreativeHotbar();
+    this.renderCraftingHotbar();
     this.renderInventoryCraft();
   }
 
@@ -872,7 +873,8 @@ export class UI {
       icon.title = `${itemName(state.result.id)} x${state.result.count}`;
       resultEl.append(icon);
     }
-    resultEl.onclick = () => this.handlers.onCraftResult?.(size);
+    // Shift clicking the result crafts as much as fits in the hotbar.
+    resultEl.onclick = (event) => this.handlers.onCraftResult?.(size, { shift: event.shiftKey });
   }
 
   renderInventoryCraft() {
@@ -885,15 +887,7 @@ export class UI {
 
   showCrafting(slots, selected) {
     this.sessionHotbar = { slots, selected };
-    const bar = $('crafting-hotbar');
-    if (bar) {
-      bar.textContent = '';
-      slots.forEach((entry, index) =>
-        bar.appendChild(
-          this.slotElement(entry, index, selected, 'inv-slot', (i, detail) => this.handlers.onInventorySlot?.(i, detail))
-        )
-      );
-    }
+    this.renderCraftingHotbar();
     const title = $('crafting-title');
     if (title) setText(title, this.strings.crafting ?? 'Crafting');
     this.renderTableCraft();
@@ -960,6 +954,22 @@ export class UI {
     container.appendChild(toast);
     while (container.childElementCount > 4) container.firstElementChild.remove();
     setTimeout(() => toast.remove(), 3200);
+  }
+
+  /**
+   * The crafting table's own hotbar row. It has to be redrawn every time a stack
+   * moves, or the slot keeps showing an item that is really on the cursor.
+   */
+  renderCraftingHotbar() {
+    const bar = $('crafting-hotbar');
+    if (!bar || !this.sessionHotbar) return;
+    const { slots, selected } = this.sessionHotbar;
+    bar.textContent = '';
+    slots.forEach((entry, index) => {
+      bar.appendChild(
+        this.slotElement(entry, index, selected, 'inv-slot', (i, detail) => this.handlers.onInventorySlot?.(i, detail))
+      );
+    });
   }
 
   renderInventory() {
