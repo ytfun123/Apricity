@@ -11,6 +11,7 @@ import { BLOCKS, HOTBAR, blockDef, blockIdByName, blockName, setAtlas } from './
 import {
   allItems,
   isBlockItem,
+  isItemId,
   itemIdByKey,
   itemKey,
   itemName,
@@ -64,6 +65,7 @@ const state = {
   // Which mouse buttons are down, so holding one keeps mining or placing.
   buttons: { left: false, right: false },
   nextPlaceAt: 0,
+  lastSave: 0,
   gamemode: 'survival',
   vitals: new Vitals(),
   drops: null,
@@ -666,11 +668,13 @@ function playWorld(record) {
   state.gamemode = normalizeGamemode(record.gamemode) ?? 'survival';
   state.vitals = new Vitals();
   state.drops = new Drops(world);
-  state.hotbar = emptyHotbar();
+  // Whatever the player was carrying when they left comes back with them.
+  state.hotbar = restoreHotbar(record.hotbar);
 
   record.lastPlayed = Date.now();
   const worlds = loadWorlds().map((w) => (w.id === record.id ? record : w));
   saveWorlds(worlds);
+  state.lastSave = performance.now();
 
   scanAroundPlayer(options.renderDistance);
   for (const key of world.takeDirty()) {
@@ -682,9 +686,45 @@ function playWorld(record) {
   ui.showScreen(null);
   ui.clearChat();
   ui.renderBars(state.vitals.health, state.vitals.food);
-  selectSlot(0);
+  selectSlot(Number.isFinite(record.selectedSlot) ? record.selectedSlot : 0);
   resize();
   canvas.focus();
+}
+
+/**
+ * Everything a singleplayer world remembers about the player: the blocks they
+ * changed, the hotbar they were carrying and which slot was in hand.
+ */
+function saveProgress() {
+  const record = state.worldRecord;
+  if (state.mode !== 'single' || !state.world || !record) return false;
+  record.edits = state.world.serializeEdits();
+  record.hotbar = state.hotbar.map((entry) =>
+    slotIsEmpty(entry) ? { id: 0, count: 0 } : { id: entry.id, count: entry.count }
+  );
+  record.selectedSlot = state.selectedSlot;
+  record.gamemode = state.gamemode;
+  const worlds = loadWorlds().map((w) => (w.id === record.id ? record : w));
+  saveWorlds(worlds);
+  return true;
+}
+
+/**
+ * A saved hotbar comes back out of localStorage, so treat it as untrusted: drop
+ * ids that are neither a block nor an item any more, and clamp the counts.
+ */
+function restoreHotbar(saved) {
+  const hotbar = emptyHotbar();
+  if (!Array.isArray(saved)) return hotbar;
+  saved.slice(0, hotbar.length).forEach((entry, index) => {
+    const id = Math.floor(Number(entry?.id) || 0);
+    const count = Math.floor(Number(entry?.count) || 0);
+    if (id <= 0 || count <= 0) return;
+    // isItemId only checks the id range, so make the registry confirm the id.
+    if (!blockDef(id) && (!isItemId(id) || !itemKey(id))) return;
+    hotbar[index] = slot(id, Math.min(count, itemStackLimit(id)));
+  });
+  return hotbar;
 }
 
 function joinServer(server) {
@@ -784,13 +824,7 @@ function resumeGame() {
 }
 
 function quitToTitle() {
-  if (state.mode === 'single' && state.world && state.worldRecord) {
-    const record = state.worldRecord;
-    record.edits = state.world.serializeEdits();
-    const worlds = loadWorlds().map((w) => (w.id === record.id ? record : w));
-    saveWorlds(worlds);
-    ui.toast('World saved');
-  }
+  if (saveProgress()) ui.toast('World saved');
   stopSession();
   document.exitPointerLock?.();
   state.mode = null;
@@ -1015,6 +1049,11 @@ function frame(now) {
     state.player.update(dt, input);
 
     if (state.mode === 'single') updateSurvival(dt, input);
+    // 1.12.2 autosaves singleplayer every half minute; a closed tab loses less.
+    if (state.mode === 'single' && now - state.lastSave > 30000) {
+      state.lastSave = now;
+      saveProgress();
+    }
     updateRepeatActions(now);
     updateMining(dt);
 
