@@ -716,12 +716,16 @@ function saveProgress() {
 function restoreHotbar(saved) {
   const hotbar = emptyHotbar();
   if (!Array.isArray(saved)) return hotbar;
+  // The registry is fetched asynchronously, and a world can be entered before
+  // it lands; only drop unknown item ids once it is actually here.
+  const registryReady = allItems().length > 0;
   saved.slice(0, hotbar.length).forEach((entry, index) => {
     const id = Math.floor(Number(entry?.id) || 0);
     const count = Math.floor(Number(entry?.count) || 0);
     if (id <= 0 || count <= 0) return;
     // isItemId only checks the id range, so make the registry confirm the id.
-    if (!blockDef(id) && (!isItemId(id) || !itemKey(id))) return;
+    if (!blockDef(id) && !isItemId(id)) return;
+    if (registryReady && isItemId(id) && !itemKey(id)) return;
     hotbar[index] = slot(id, Math.min(count, itemStackLimit(id)));
   });
   return hotbar;
@@ -811,6 +815,8 @@ function requestLock() {
 
 function pauseGame() {
   if (!state.mode) return;
+  // Pausing is a natural save point, and it is cheap.
+  saveProgress();
   clearButtons();
   document.exitPointerLock?.();
   if (ui.isChatOpen()) ui.closeChat();
@@ -1020,6 +1026,14 @@ function resize() {
 }
 
 window.addEventListener('resize', resize);
+
+// A reload or a closed tab is not a clean quit: 1.12.2 would have written the
+// world out, so write it here too rather than losing the last half minute.
+window.addEventListener('pagehide', () => saveProgress());
+window.addEventListener('beforeunload', () => saveProgress());
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') saveProgress();
+});
 
 function updateHud(now) {
   if (!state.player) return;

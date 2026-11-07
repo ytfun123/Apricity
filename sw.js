@@ -1,4 +1,4 @@
-const CACHE = 'apricity-v2';
+const CACHE = 'apricity-v3';
 const PRECACHE = [
   '/',
   '/index.html',
@@ -25,10 +25,31 @@ self.addEventListener('fetch', e => {
   // Only handle GET requests
   if (e.request.method !== 'GET') return;
 
+  const url = new URL(e.request.url);
+  const sameOrigin = url.origin === self.location.origin;
+
   // For navigation requests: network first, fall back to cached index
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request).catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // The games are code that ships with a deploy, not static art: serve them
+  // network first, so a returning visitor never keeps running an old build out
+  // of the cache. The cache is only a fallback for being offline.
+  if (sameOrigin && url.pathname.startsWith('/games/')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          if (res && res.status === 200 && res.type === 'basic') {
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
     );
     return;
   }
