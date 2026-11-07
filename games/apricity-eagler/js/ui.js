@@ -160,6 +160,27 @@ export class UI {
 
   wire() {
     const on = (id, fn) => $(id)?.addEventListener('click', fn);
+
+    // Chat and command line. T opens this field (see main.js), Enter sends the
+    // line and Escape throws it away. stopPropagation keeps the window keydown
+    // handler from reading the keys you type as movement -- that handler already
+    // bails while the field is open, but stopping here also keeps Escape from
+    // falling through to the pause menu.
+    this.chatInput?.addEventListener('keydown', (event) => {
+      event.stopPropagation();
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const line = this.chatInput.value;
+        this.chatInput.value = '';
+        this.closeChat();
+        if (line.trim()) this.handlers.onSendChat?.(line);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        this.chatInput.value = '';
+        this.closeChat();
+      }
+    });
+
     on('btn-singleplayer', () => this.handlers.onSingleplayer?.());
     on('btn-multiplayer', () => this.handlers.onMultiplayer?.());
     on('btn-options', () => this.handlers.onOpenOptions?.());
