@@ -1268,8 +1268,12 @@ function frame(now) {
       { x: p.x, y: p.eyeY(), z: p.z, yaw: p.yaw, pitch: p.pitch, fov: options.fov },
       width / Math.max(1, height),
       selection,
-      [...(state.mobs ? state.mobs.boxes() : []), ...(state.drops ? state.drops.cubes() : [])],
-      state.drops ? state.drops.sprites() : []
+      [
+        ...(renderer.mobTexture || !state.mobs ? [] : state.mobs.boxes()),
+        ...(state.drops ? state.drops.cubes() : []),
+      ],
+      state.drops ? state.drops.sprites() : [],
+      renderer.mobTexture && state.mobs ? state.mobs.parts() : []
     );
     updateHud(now);
   } else {
@@ -1310,6 +1314,22 @@ async function loadAtlas() {
   } catch (err) {
     ui.setAssetWarning(`Could not load textures (${err.message}) — run: node tools/build-assets.mjs`);
   }
+}
+
+// The animals' own entity textures, copied out of the same pack by
+// tools/entity-textures.mjs. Without them the mobs fall back to coloured boxes.
+async function loadMobAtlas() {
+  const response = await fetch('./assets/mob-atlas.json', { cache: 'no-cache' });
+  if (!response.ok) throw new Error(`mob-atlas.json ${response.status}`);
+  const meta = await response.json();
+  const image = await new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('mob-atlas.png failed to load'));
+    img.src = `./assets/mob-atlas.png?v=${Date.now()}`;
+  });
+  renderer.setMobTexture(image, meta);
+  console.log(`mob atlas loaded: ${Object.keys(meta.mobs).join(', ')}`);
 }
 
 // ── mining ─────────────────────────────────────────────────────────────────
@@ -1520,6 +1540,7 @@ ui.renderServers(loadServers());
 selectSlot(0);
 requestAnimationFrame(frame);
 loadAtlas();
+loadMobAtlas().catch((err) => console.warn('animal textures unavailable', err.message));
 loadItems().catch((err) => {
   console.warn('item registry unavailable', err);
 });

@@ -66,6 +66,8 @@ into `assets/`:
 | `assets/hud-xp-bg.png` / `hud-xp-fill.png` | the XP bar sliced out of that sheet |
 | `assets/font.png` + `font.json` | the pack's 8×8 bitmap font, with measured glyph advances |
 | `assets/sounds/*.ogg` | the pack's dig samples: four variants each for stone, wood, grass, sand, gravel, cloth and snow, plus the UI click |
+| `assets/mob/*.png` | the pack's own 64×32 animal skins, copied as-is: `pig`, `cow`, `sheep`, `chicken`, `rabbit` |
+| `assets/mob-atlas.png` + `mob-atlas.json` | those skins stacked into one sheet for the animal renderer, with each animal's slot |
 
 1.12.2 stores grass, leaves, vines and lily pads as **greyscale** and colours
 them with the biome colour while drawing — which is why those tiles used to
@@ -201,6 +203,7 @@ js/compression.js   zlib in/out once a server enables compression
 tools/epk.mjs       Eaglercraft .epk reader/extractor
 tools/png.mjs       PNG decode/encode for every bit depth the pack uses
 tools/build-assets.mjs  packs -> atlas.png + atlas.json + GUI art + sounds
+tools/entity-textures.mjs  packs -> assets/mob/*.png + mob-atlas.png + mob-atlas.json
 tools/atlas-report.mjs  per-tile colour and coverage (finds untinted grey tiles)
 serve.mjs           loopback static server
 test/               headless checks: a local mock server, live servers, saves

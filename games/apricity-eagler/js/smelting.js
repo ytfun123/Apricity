@@ -25,6 +25,7 @@ export const SMELT = {
   'item:porkchop_raw': out('item', 'porkchop_cooked'),
   'item:chicken_raw': out('item', 'chicken_cooked'),
   'item:mutton_raw': out('item', 'mutton_cooked'),
+  'item:rabbit_raw': out('item', 'rabbit_cooked'),
   // Logs burn down to charcoal, which the pack calls coal. This client has no
   // block metadata, so the two log ids it knows are the ones listed here.
   'block:Oak Wood': out('item', 'coal'),

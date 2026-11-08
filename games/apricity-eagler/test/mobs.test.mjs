@@ -5,7 +5,7 @@
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { MAX_MOBS, MOB_TYPES, Mobs, rayBox } from '../js/mobs.js';
+import { MAX_MOBS, MOB_MODELS, MOB_TYPES, Mobs, rayBox } from '../js/mobs.js';
 
 const k = (x, y, z) => `${x},${y},${z}`;
 
@@ -142,6 +142,39 @@ check('every animal drops meat that exists in the pack', () => {
     assert.ok(keys.has(type.drop), `${kind} drops ${type.drop}, which is not an item`);
     assert.ok(type.dropMax >= type.dropMin);
     assert.ok(type.health > 0 && type.width > 0 && type.height > 0);
+  }
+});
+
+check('every animal has a textured model that fits inside its own skin', () => {
+  const atlas = JSON.parse(readFileSync(new URL('../assets/mob-atlas.json', import.meta.url), 'utf8'));
+  for (const [kind, type] of Object.entries(MOB_TYPES)) {
+    const model = MOB_MODELS[type.model];
+    assert.ok(model, `${kind} has no model`);
+    assert.ok(atlas.mobs[type.model], `${type.model} is not in the mob atlas`);
+    assert.ok(model.parts.length >= 3, `${kind} has only ${model.parts.length} parts`);
+    for (const part of model.parts) {
+      const [w, h, d] = part.size;
+      const [u, v] = part.uv;
+      // A box unwraps into two depth columns and two width columns side by side,
+      // with the top and bottom pair above them, so it has to fit the 64x32 skin.
+      assert.ok(u + 2 * d + 2 * w <= 64, `${kind} part at u=${u} runs off the skin`);
+      assert.ok(v + d + h <= 32, `${kind} part at v=${v} runs off the skin`);
+      assert.ok(part.at.every((n) => Number.isFinite(n)), `${kind} part has no position`);
+    }
+  }
+});
+
+check('parts are turned, scaled and sample the atlas', () => {
+  const mobs = new Mobs(world());
+  const pig = mobs.spawn('pig', 0.5, 1, 0.5);
+  const parts = pig.parts();
+  assert.equal(parts.length, MOB_MODELS.pig.parts.length);
+  for (const part of parts) {
+    assert.equal(part.mob, 'pig');
+    assert.equal(part.uv.length, 2);
+    assert.equal(part.px.length, 3);
+    assert.ok(part.size.every((s) => s > 0), 'part has volume');
+    assert.ok(part.y > 0.9 && part.y < 2.4, `part sits at y ${part.y}`);
   }
 });
 

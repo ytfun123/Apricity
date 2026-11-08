@@ -24,6 +24,7 @@ export const MOB_TYPES = {
     drop: 'porkchop_raw',
     dropMin: 1,
     dropMax: 3,
+    model: 'pig',
   },
   cow: {
     name: 'Cow',
@@ -37,6 +38,7 @@ export const MOB_TYPES = {
     drop: 'beef_raw',
     dropMin: 1,
     dropMax: 3,
+    model: 'cow',
   },
   sheep: {
     name: 'Sheep',
@@ -50,6 +52,7 @@ export const MOB_TYPES = {
     drop: 'mutton_raw',
     dropMin: 1,
     dropMax: 2,
+    model: 'sheep',
   },
   chicken: {
     name: 'Chicken',
@@ -63,8 +66,93 @@ export const MOB_TYPES = {
     drop: 'chicken_raw',
     dropMin: 1,
     dropMax: 1,
+    model: 'chicken',
+  },
+  rabbit: {
+    name: 'Rabbit',
+    health: 3,
+    width: 0.45,
+    height: 0.5,
+    speed: 1.3,
+    body: [0.45, 0.32, 0.22],
+    head: [0.5, 0.36, 0.26],
+    snout: [0.6, 0.45, 0.32],
+    drop: 'rabbit_raw',
+    dropMin: 1,
+    dropMax: 1,
+    model: 'rabbit',
   },
 };
+
+// The animal models in vanilla model pixels: box sizes, box centres measured up
+// from the feet, and the box's place in its own 64x32 entity texture. `scale`
+// shrinks the model down onto the hitbox. +z is the way the animal faces.
+const MODELS = {
+  pig: {
+    scale: 0.8,
+    parts: [
+      { size: [10, 16, 8], at: [0, 9, 1], uv: [28, 8] },
+      { size: [8, 8, 8], at: [0, 6, 10], uv: [0, 0] },
+      { size: [4, 6, 4], at: [-3, 3, 5], uv: [0, 16] },
+      { size: [4, 6, 4], at: [3, 3, 5], uv: [0, 16] },
+      { size: [4, 6, 4], at: [-3, 3, -7], uv: [0, 16] },
+      { size: [4, 6, 4], at: [3, 3, -7], uv: [0, 16] },
+    ],
+  },
+  cow: {
+    scale: 0.95,
+    parts: [
+      { size: [12, 18, 10], at: [0, 8, 2], uv: [18, 4] },
+      { size: [8, 8, 6], at: [0, 6, 9], uv: [0, 0] },
+      { size: [1, 3, 1], at: [-4, 11, 8], uv: [22, 0] },
+      { size: [1, 3, 1], at: [4, 11, 8], uv: [22, 0] },
+      { size: [4, 12, 4], at: [-4, 6, 5], uv: [0, 16] },
+      { size: [4, 12, 4], at: [4, 6, 5], uv: [0, 16] },
+      { size: [4, 12, 4], at: [-4, 6, -7], uv: [0, 16] },
+      { size: [4, 12, 4], at: [4, 6, -7], uv: [0, 16] },
+    ],
+  },
+  sheep: {
+    scale: 0.85,
+    parts: [
+      { size: [8, 16, 6], at: [0, 9, 4], uv: [28, 8] },
+      { size: [6, 6, 8], at: [0, 7, 10], uv: [0, 0] },
+      { size: [4, 12, 4], at: [-3, 6, 5], uv: [0, 16] },
+      { size: [4, 12, 4], at: [3, 6, 5], uv: [0, 16] },
+      { size: [4, 12, 4], at: [-3, 6, -7], uv: [0, 16] },
+      { size: [4, 12, 4], at: [3, 6, -7], uv: [0, 16] },
+    ],
+  },
+  chicken: {
+    scale: 0.75,
+    parts: [
+      { size: [6, 8, 6], at: [0, 8, 0], uv: [0, 9] },
+      { size: [4, 6, 3], at: [0, 12, 5], uv: [0, 0] },
+      { size: [4, 2, 2], at: [0, 12, 7], uv: [14, 0] },
+      { size: [2, 2, 2], at: [0, 10, 6], uv: [14, 4] },
+      { size: [1, 4, 6], at: [-3.2, 8, 0], uv: [24, 13] },
+      { size: [1, 4, 6], at: [3.2, 8, 0], uv: [24, 13] },
+      { size: [3, 5, 3], at: [-1.6, 5, 0], uv: [26, 0] },
+      { size: [3, 5, 3], at: [1.6, 5, 0], uv: [26, 0] },
+    ],
+  },
+  // Rabbit is its own model in 1.12.2 rather than a quadruped: a long body, a
+  // separate nose and two tall ears, each with its own place on the skin.
+  rabbit: {
+    scale: 0.5,
+    parts: [
+      { size: [5, 5, 10], at: [0, 4, 0], uv: [28, 8] },
+      { size: [5, 5, 5], at: [0, 8, 6], uv: [0, 0] },
+      { size: [2, 2, 2], at: [0, 8, 9], uv: [0, 24] },
+      { size: [2, 5, 1], at: [-1.2, 13, 5], uv: [0, 10] },
+      { size: [2, 5, 1], at: [1.2, 13, 5], uv: [6, 10] },
+      { size: [2, 4, 2], at: [-1.5, 2, 3], uv: [26, 24] },
+      { size: [2, 4, 2], at: [1.5, 2, 3], uv: [26, 24] },
+    ],
+  },
+};
+
+export const MOB_MODELS = MODELS;
 
 const rand = (min, max) => min + Math.random() * (max - min);
 
@@ -197,7 +285,38 @@ export class Mob {
     this.y = nextY;
   }
 
-  /** Renderer boxes: a body, a head and a snout, turned to face the walk. */
+  /**
+   * The textured parts for the renderer: every box of the model, turned to face
+   * the walk and scaled from model pixels onto the animal's hitbox.
+   */
+  parts() {
+    const model = MODELS[this.type.model];
+    if (!model) return [];
+    const k = model.scale / 16;
+    const cos = Math.cos(this.yaw);
+    const sin = Math.sin(this.yaw);
+    const out = [];
+    for (const part of model.parts) {
+      const [px, py, pz] = part.at;
+      const [w, h, d] = part.size;
+      out.push({
+        mob: this.type.model,
+        x: this.x + (px * cos - pz * sin) * k,
+        y: this.y + py * k,
+        z: this.z + (px * sin + pz * cos) * k,
+        yaw: this.yaw,
+        size: [w * k, h * k, d * k],
+        px: [w, h, d],
+        uv: part.uv,
+      });
+    }
+    return out;
+  }
+
+  /**
+   * The same animal as plain coloured boxes, for when the entity textures are
+   * missing: a body, a head and a snout, turned to face the walk.
+   */
   boxes() {
     const t = this.type;
     const bodySize = t.width * 0.95;
@@ -328,6 +447,13 @@ export class Mobs {
   boxes() {
     const out = [];
     for (const mob of this.list) out.push(...mob.boxes());
+    return out;
+  }
+
+  /** Every animal part, textured from the entity atlas. */
+  parts() {
+    const out = [];
+    for (const mob of this.list) out.push(...mob.parts());
     return out;
   }
 }

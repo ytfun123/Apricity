@@ -15,6 +15,8 @@ export const FOOD = {
   chicken_cooked: { food: 6, saturation: 3.6 },
   mutton_raw: { food: 2, saturation: 0.6 },
   mutton_cooked: { food: 6, saturation: 4.8 },
+  rabbit_raw: { food: 3, saturation: 1.8 },
+  rabbit_cooked: { food: 5, saturation: 6.0 },
   apple: { food: 4, saturation: 2.4 },
   bread: { food: 5, saturation: 3.0 },
 };

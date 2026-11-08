@@ -132,6 +132,71 @@ function pushCube(out, offset, cube) {
   return offset;
 }
 
+/**
+ * One animal part: a box unwrapped from its own entity texture. Minecraft boxes
+ * use the classic layout — a depth column, a width column, another depth column
+ * and another width column for the sides, with the top and bottom pair above
+ * them — so a part only needs its size, its texture offset and the atlas slot
+ * the animal lives in.
+ */
+function pushPart(out, offset, part, atlas) {
+  const mob = atlas.mobs[part.mob];
+  if (!mob) return offset;
+  const [w, h, d] = part.size;
+  const [pw, ph, pd] = part.px;
+  const [tu, tv] = part.uv;
+  const yaw = part.yaw ?? 0;
+  const cos = Math.cos(yaw);
+  const sin = Math.sin(yaw);
+  const uOf = (px) => px / atlas.width;
+  const vOf = (py) => (mob.y + py) / atlas.height;
+
+  const rects = {
+    north: [tu + pd, tv + pd, pw, ph],
+    south: [tu + pd + pw + pd, tv + pd, pw, ph],
+    west: [tu, tv + pd, pd, ph],
+    east: [tu + pd + pw, tv + pd, pd, ph],
+    top: [tu + pd, tv, pw, pd],
+    bottom: [tu + pd + pw, tv, pw, pd],
+  };
+
+  const hx = w / 2;
+  const hy = h / 2;
+  const hz = d / 2;
+  // Corners run bottom-left, bottom-right, top-right, top-left as seen from
+  // outside the face, so the texture lands the right way up and unmirrored.
+  const faces = [
+    { key: 'north', shade: 0.8, quad: [[hx, -hy, hz], [-hx, -hy, hz], [-hx, hy, hz], [hx, hy, hz]] },
+    { key: 'south', shade: 0.8, quad: [[-hx, -hy, -hz], [hx, -hy, -hz], [hx, hy, -hz], [-hx, hy, -hz]] },
+    { key: 'east', shade: 0.65, quad: [[hx, -hy, -hz], [hx, -hy, hz], [hx, hy, hz], [hx, hy, -hz]] },
+    { key: 'west', shade: 0.65, quad: [[-hx, -hy, hz], [-hx, -hy, -hz], [-hx, hy, -hz], [-hx, hy, hz]] },
+    { key: 'top', shade: 1, quad: [[-hx, hy, hz], [hx, hy, hz], [hx, hy, -hz], [-hx, hy, -hz]] },
+    { key: 'bottom', shade: 0.5, quad: [[-hx, -hy, -hz], [hx, -hy, -hz], [hx, -hy, hz], [-hx, -hy, hz]] },
+  ];
+  const corners = [[0, 1], [1, 1], [1, 0], [0, 0]];
+
+  for (const face of faces) {
+    const [rx, ry, rw, rh] = rects[face.key];
+    const u0 = uOf(rx);
+    const u1 = uOf(rx + rw);
+    const v0 = vOf(ry);
+    const v1 = vOf(ry + rh);
+    for (const index of [0, 1, 2, 0, 2, 3]) {
+      const [lx, ly, lz] = face.quad[index];
+      const [cu, cv] = corners[index];
+      out[offset++] = part.x + lx * cos - lz * sin;
+      out[offset++] = part.y + ly;
+      out[offset++] = part.z + lx * sin + lz * cos;
+      out[offset++] = cu ? u1 : u0;
+      out[offset++] = cv ? v1 : v0;
+      out[offset++] = face.shade;
+      out[offset++] = face.shade;
+      out[offset++] = face.shade;
+    }
+  }
+  return offset;
+}
+
 export class Renderer {
   constructor(canvas) {
     const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
@@ -159,6 +224,8 @@ export class Renderer {
     this.lineBuffer = gl.createBuffer();
     this.cubeBuffer = gl.createBuffer();
     this.texture = null;
+    this.mobTexture = null;
+    this.mobAtlas = null;
 
     gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.CULL_FACE);
@@ -177,6 +244,22 @@ export class Renderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.texture = texture;
+  }
+
+  /** Upload the animal atlas: the entity textures stacked in one 64 wide image. */
+  setMobTexture(image, meta) {
+    const gl = this.gl;
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    this.mobTexture = texture;
+    this.mobAtlas = meta;
+    if (this.texture) gl.bindTexture(gl.TEXTURE_2D, this.texture);
   }
 
   setSize(width, height) {
@@ -249,6 +332,27 @@ export class Renderer {
     gl.uniform1f(this.uTextured, this.texture ? 1 : 0);
   }
 
+  /** The animals: every part sampled from its own entity texture. */
+  drawMobs(parts) {
+    if (!parts || !parts.length || !this.mobTexture || !this.mobAtlas) return;
+    const gl = this.gl;
+    const data = new Float32Array(parts.length * 36 * 8);
+    let offset = 0;
+    for (const part of parts) offset = pushPart(data, offset, part, this.mobAtlas);
+    if (!offset) return;
+
+    gl.bindTexture(gl.TEXTURE_2D, this.mobTexture);
+    gl.uniform1f(this.uTextured, 1);
+    gl.uniform1f(this.uAlpha, 1);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.cubeBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data.subarray(0, offset), gl.DYNAMIC_DRAW);
+    gl.vertexAttribPointer(this.aPos, 3, gl.FLOAT, false, STRIDE, 0);
+    gl.vertexAttribPointer(this.aUV, 2, gl.FLOAT, false, STRIDE, 12);
+    gl.vertexAttribPointer(this.aColor, 3, gl.FLOAT, false, STRIDE, 20);
+    gl.drawArrays(gl.TRIANGLES, 0, offset / 8);
+    if (this.texture) gl.bindTexture(gl.TEXTURE_2D, this.texture);
+  }
+
   /**
    * Item drops with no block form: one camera-facing quad each, textured with
    * the item's own icon out of the atlas. The quad is turned to the viewer on
@@ -302,7 +406,7 @@ export class Renderer {
     gl.disable(gl.BLEND);
   }
 
-  render(camera, aspect, selection, cubes = [], sprites = []) {
+  render(camera, aspect, selection, cubes = [], sprites = [], mobs = []) {
     const gl = this.gl;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(this.program);
@@ -338,6 +442,7 @@ export class Renderer {
     }
 
     this.drawCubes(cubes);
+    this.drawMobs(mobs);
     this.drawSprites(sprites, camera);
 
     // Water: drawn after the opaque world, blended and with depth writes off, so
