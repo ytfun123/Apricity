@@ -26,6 +26,8 @@ import { playBlockSound, playClick, playHurt, playPickup } from './sound.js';
 import { isCommand, runCommand } from './commands.js';
 import { addToHotbar, emptyHotbar, fillHotbarWith, slot, slotIsEmpty, takeFromSlot } from './inventory.js';
 import { BlockPhysics } from './physics.js';
+import { Mobs } from './mobs.js';
+import { eat } from './food.js';
 import { Vitals, EXHAUSTION, fallDamage } from './survival.js';
 import { Drops } from './items.js';
 import { GAMEMODES, gameModeFlags, gamemodeName, normalizeGamemode } from './gamemode.js';
@@ -82,10 +84,13 @@ const state = {
   // Which mouse buttons are down, so holding one keeps mining or placing.
   buttons: { left: false, right: false },
   nextPlaceAt: 0,
+  nextMobHit: 0,
+  nextEatAt: 0,
   lastSave: 0,
   gamemode: 'survival',
   vitals: new Vitals(),
   drops: null,
+  mobs: null,
   teleported: false,
   chunksDone: 0,
   fps: 0,
@@ -772,6 +777,9 @@ function playWorld(record) {
   // leaves the oceans the generator laid down perfectly still.
   state.physics = new BlockPhysics(world);
   world.onBlockSet = (x, y, z) => state.physics?.touch(x, y, z);
+  // A few animals around the spawn: hunger needs something to fill it with.
+  state.mobs = new Mobs(world);
+  state.mobs.spawnNear(player, { count: 7 });
   // Whatever the player was carrying when they left comes back with them.
   state.hotbar = restoreHotbar(record.hotbar);
   state.backpack = restoreHotbar(record.backpack, 27);
@@ -891,8 +899,10 @@ function joinServer(server) {
   state.gamemode = 'survival';
   state.vitals = new Vitals();
   state.drops = null;
-  // A server world's blocks belong to the server, so no local physics.
+  // A server world's blocks belong to the server, so no local physics, and the
+  // animals on it are the server's to send.
   state.physics = null;
+  state.mobs = null;
   state.hotbar = fillHotbarWith(emptyHotbar(), PALETTE);
   ui.setGamemode('survival');
   ui.renderBars(state.vitals.health, state.vitals.food);
@@ -976,6 +986,7 @@ function quitToTitle() {
   state.world = null;
   state.player = null;
   state.physics = null;
+  state.mobs = null;
   state.worldRecord = null;
   clearChunks();
   ui.showScreen('title');
@@ -1095,12 +1106,17 @@ canvas.addEventListener('mousedown', (event) => {
 
   if (event.button === 0) {
     state.buttons.left = true;
-    if (!hit || !flags.canBreak) return;
+    if (!flags.canBreak) return;
+    // An animal in front of you takes the swing instead of the block behind it.
+    if (swingAtMob()) return;
+    if (!hit) return;
     // 1.12.2 mines as you hold the button: hardness decides how long it takes and
     // the frame loop finishes the job, then picks up the next block you look at.
     startMining(hit);
   } else if (event.button === 2) {
     state.buttons.right = true;
+    // Food in hand is eaten; a block in hand is placed as before.
+    if (eatHeld()) return;
     if (!hit || !flags.canPlace) return;
     // A crafting table opens its own grid, and a furnace its own three slots,
     // rather than being built on.
@@ -1210,6 +1226,7 @@ function frame(now) {
     if (state.mode === 'single') {
       updateSurvival(dt, input);
       state.physics?.tick(dt);
+      state.mobs?.update(dt, state.player);
     }
     // 1.12.2 autosaves singleplayer every half minute; a closed tab loses less.
     if (state.mode === 'single' && now - state.lastSave > 30000) {
@@ -1251,7 +1268,7 @@ function frame(now) {
       { x: p.x, y: p.eyeY(), z: p.z, yaw: p.yaw, pitch: p.pitch, fov: options.fov },
       width / Math.max(1, height),
       selection,
-      state.drops ? state.drops.cubes() : [],
+      [...(state.mobs ? state.mobs.boxes() : []), ...(state.drops ? state.drops.cubes() : [])],
       state.drops ? state.drops.sprites() : []
     );
     updateHud(now);
@@ -1327,6 +1344,46 @@ function clearButtons() {
   state.buttons.right = false;
 }
 
+/**
+ * Hit the animal under the crosshair. Returns true when there was one, so the
+ * swing does not also mine the block behind it.
+ */
+function swingAtMob() {
+  if (state.mode !== 'single' || !state.mobs || !state.player) return false;
+  const mob = state.mobs.underCrosshair(state.player, 3.4);
+  if (!mob) return false;
+  const now = performance.now();
+  if (now < state.nextMobHit) return true;
+  state.nextMobHit = now + 400;
+  const died = state.mobs.hit(mob, 4, state.player.lookDirection());
+  playHurt();
+  if (died) {
+    const id = itemIdByKey(mob.type.drop);
+    if (id && state.drops) {
+      const count = mob.type.dropMin + Math.floor(Math.random() * (mob.type.dropMax - mob.type.dropMin + 1));
+      state.drops.spawn(id, mob.x, mob.y + 0.4, mob.z, { count, vy: 1.8 });
+    }
+    state.mobs.remove(mob);
+  }
+  return true;
+}
+
+/** Eat the food in hand, if the hunger bar has room. Returns whether it ate. */
+function eatHeld() {
+  if (state.mode !== 'single' || !state.player) return false;
+  const now = performance.now();
+  if (now < state.nextEatAt) return false;
+  const item = state.hotbar[state.selectedSlot];
+  if (slotIsEmpty(item) || isBlockItem(item.id)) return false;
+  if (eat(state.vitals, itemKey(item.id)) <= 0) return false;
+  state.nextEatAt = now + 500;
+  takeFromSlot(item, 1);
+  selectSlot(state.selectedSlot);
+  ui.renderBars(state.vitals.health, state.vitals.food);
+  playClick();
+  return true;
+}
+
 /** Start on a block, unless it is the one already being mined. */
 function startMining(hit) {
   if (!hit || blockDef(hit.id)?.hardness < 0) return;
@@ -1371,11 +1428,14 @@ function updateRepeatActions(now) {
   const flags = gameModeFlags(state.gamemode);
 
   if (state.buttons.left && flags.canBreak) {
-    const hit = state.player.raycast(6);
-    if (hit) startMining(hit);
+    if (!swingAtMob()) {
+      const hit = state.player.raycast(6);
+      if (hit) startMining(hit);
+    }
   }
 
   if (state.buttons.right && flags.canPlace) {
+    if (eatHeld()) return;
     if (now < state.nextPlaceAt) return;
     const hit = state.player.raycast(6);
     if (!hit) return;

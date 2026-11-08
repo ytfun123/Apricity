@@ -190,5 +190,26 @@ check('the clocks step on their own timers', () => {
   assert.equal(world.getBlock(0, 5, 0), 0, 'the sand dropped once the clock ran out');
 });
 
+check('breaking the floor under the last cell lets the flow carry on', () => {
+  // Ground at y=2 with a one block room underneath it, so a hole in the ground
+  // has somewhere for the water to go.
+  const world = new FakeWorld().floor(1, 16, 0).floor(1, 16, 2);
+  const physics = make(world);
+  world.place(0, 3, 0, WATER);
+  fluidSteps(physics, 30);
+  assert.equal(world.getBlock(7, 3, 0), WATER_FLOW, 'the stream reached its seventh block');
+  assert.equal(world.getBlock(8, 3, 0), 0, 'and could not go further');
+
+  // Dig the ground out from under the last cell: the water falls into the room,
+  // and landing resets its distance from the source, so it spreads seven more
+  // blocks across the room floor instead of stopping dead.
+  world.place(7, 2, 0, 0);
+  fluidSteps(physics, 60);
+  assert.equal(world.getBlock(7, 1, 0), WATER_FLOW, 'the water dropped into the room');
+  assert.equal(world.getBlock(7, 3, 0), WATER_FLOW, 'the cell above the hole still feeds the fall');
+  assert.equal(world.getBlock(12, 1, 0), WATER_FLOW, 'the new pool spread five blocks out');
+  assert.equal(world.getBlock(14, 1, 0), WATER_FLOW, 'and all the way to seven');
+});
+
 console.log(`physics: PASS ${passed.length}`);
 for (const name of passed) console.log(`  ok  ${name}`);

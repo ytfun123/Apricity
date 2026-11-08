@@ -20,6 +20,11 @@ export const SMELT = {
   'block:Clay': out('block', 'Terracotta'),
   'item:clay_ball': out('item', 'brick'),
   'block:Cactus': out('item', 'dye_powder_green'),
+  // Raw meat from the animals cooks into the cuts that actually fill you up.
+  'item:beef_raw': out('item', 'beef_cooked'),
+  'item:porkchop_raw': out('item', 'porkchop_cooked'),
+  'item:chicken_raw': out('item', 'chicken_cooked'),
+  'item:mutton_raw': out('item', 'mutton_cooked'),
   // Logs burn down to charcoal, which the pack calls coal. This client has no
   // block metadata, so the two log ids it knows are the ones listed here.
   'block:Oak Wood': out('item', 'coal'),

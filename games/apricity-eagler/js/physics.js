@@ -176,8 +176,10 @@ export class BlockPhysics {
 
   flowFrom(x, y, z, id) {
     const level = this.levelAt(x, y, z);
-    // A liquid with somewhere to fall does not spread sideways.
-    if (this.tryFlow(x, y - 1, z, id, level)) return 1;
+    // A liquid with somewhere to fall does not spread sideways, and a fall
+    // resets the distance from the source: dig the floor out from under the last
+    // cell and the water keeps going from where it lands, as it does in 1.12.2.
+    if (this.tryFlow(x, y - 1, z, id, 0)) return 1;
     if (level >= maxLevel(id)) return 0;
     let spread = 0;
     for (const [dx, dz] of SIDES) {
@@ -219,11 +221,13 @@ export class BlockPhysics {
    */
   drain(x, y, z, id) {
     const mine = this.levelAt(x, y, z);
-    const supplied = (nx, ny, nz, allowEqual) => {
+    const supplied = (nx, ny, nz, fromAbove) => {
       const nid = this.world.getBlock(nx, ny, nz);
       if (!isFluid(nid) || isWater(nid) !== isWater(id)) return false;
-      const level = this.levelAt(nx, ny, nz);
-      return allowEqual ? level <= mine : level < mine;
+      // Water directly above always feeds the cell below it: a falling column
+      // has no level of its own to compare against.
+      if (fromAbove) return true;
+      return this.levelAt(nx, ny, nz) < mine;
     };
     if (supplied(x, y + 1, z, true)) return false;
     for (const [dx, dz] of SIDES) {
