@@ -40,6 +40,52 @@ const FACES = [
   },
 ];
 
+const WATER_IDS = new Set([8, 9]);
+const LAVA_IDS = new Set([10, 11]);
+const isWaterId = (id) => WATER_IDS.has(id);
+const isFluid = (id) => WATER_IDS.has(id) || LAVA_IDS.has(id);
+const sameFluid = (a, b) =>
+  (WATER_IDS.has(a) && WATER_IDS.has(b)) || (LAVA_IDS.has(a) && LAVA_IDS.has(b));
+
+// The top face's corner order: (0,0), (0,1), (1,1), (1,0) in block-local x,z.
+const TOP_CORNERS = [[0, 0], [0, 1], [1, 1], [1, 0]];
+// Which two corner heights the top edge of each side face runs between.
+const SIDE_TOP = {
+  2: [3, 2], // +x
+  3: [1, 0], // -x
+  4: [2, 1], // +z
+  5: [0, 3], // -z
+};
+
+/**
+ * How tall a fluid cell is drawn. 1.12.2 keeps a source at eight ninths of a
+ * block and drops one ninth per step away from it, so a stream visibly gets
+ * shallower as it runs. A cell with the same fluid above it is part of a
+ * falling column and is drawn full height.
+ */
+function fluidSurface(world, x, y, z) {
+  const id = world.probeBlock(x, y, z);
+  if (!isFluid(id)) return null;
+  if (sameFluid(world.probeBlock(x, y + 1, z), id)) return 1;
+  const level = world.probeFluidLevel ? world.probeFluidLevel(x, y, z) : 1;
+  return Math.max(1 / 9, (8 - level) / 9);
+}
+
+/** Corner height, averaged over the fluid cells that share that corner. */
+function fluidCorner(world, x, y, z, cx, cz, base) {
+  const dx = cx === 0 ? -1 : 1;
+  const dz = cz === 0 ? -1 : 1;
+  let sum = base;
+  let count = 1;
+  for (const [ox, oz] of [[dx, 0], [0, dz], [dx, dz]]) {
+    const h = fluidSurface(world, x + ox, y, z + oz);
+    if (h === null) continue;
+    sum += h;
+    count++;
+  }
+  return sum / count;
+}
+
 export function buildMesh(world, cx, cz) {
   const atlas = getAtlas();
   const ts = atlas ? atlas.tileSize : 16;
@@ -57,20 +103,28 @@ export function buildMesh(world, cx, cz) {
         const id = world.getBlock(baseX + lx, y, baseZ + lz);
         if (!id) continue;
         const transparent = isTransparent(id);
-
-        const isWater = id === 8 || id === 9;
-        // Lava is a full block; only water sits slightly below the block top.
-        const heightScale = isWater ? 0.9 : 1;
+        const fluid = isFluid(id);
+        const isWater = isWaterId(id);
         const target = isWater ? waterVertices : vertices;
+        // Water and lava tops slope down one ninth per step from the source,
+        // averaged at the corners so the surface reads as a slope, not stairs.
+        const heights = fluid
+          ? TOP_CORNERS.map(([cx, cz]) =>
+              fluidCorner(world, baseX + lx, y, baseZ + lz, cx, cz, fluidSurface(world, baseX + lx, y, baseZ + lz))
+            )
+          : null;
 
-        for (const face of FACES) {
+        for (let f = 0; f < FACES.length; f++) {
+          const face = FACES[f];
           const nx = baseX + lx + face.n[0];
           const ny = y + face.n[1];
           const nz = baseZ + lz + face.n[2];
           if (world.probeIsOpaque(nx, ny, nz)) continue;
+          const nid = world.probeBlock(nx, ny, nz);
           // Transparent blocks hide the faces they share with themselves, so a
-          // sea is one surface instead of a lattice of internal water planes.
-          if (transparent && world.probeBlock(nx, ny, nz) === id) continue;
+          // sea is one surface instead of a lattice of internal water planes;
+          // a source and a flowing cell are the same liquid, not two blocks.
+          if (transparent && (nid === id || (fluid && sameFluid(nid, id)))) continue;
 
           const tile = tileFor(id, face.slot);
           let tu0 = 0;
@@ -97,9 +151,13 @@ export function buildMesh(world, cx, cz) {
           for (const cornerIndex of [0, 1, 2, 0, 2, 3]) {
             const [ox, oy, oz] = face.corners[cornerIndex];
             const [cu, cv] = face.uv[cornerIndex];
+            let vy = y + oy;
+            if (fluid && oy === 1) {
+              vy = y + heights[f === 0 ? cornerIndex : SIDE_TOP[f][cornerIndex - 2]];
+            }
             target.push(
               baseX + lx + ox,
-              y + oy * heightScale,
+              vy,
               baseZ + lz + oz,
               cu ? tu1 : tu0,
               cv ? tv1 : tv0,

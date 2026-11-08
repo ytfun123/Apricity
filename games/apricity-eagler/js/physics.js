@@ -47,8 +47,10 @@ export class BlockPhysics {
     // Cells whose block above may be unsupported, and fluid cells to re-check.
     this.falls = new Set();
     this.active = new Set();
-    // "x,y,z" -> distance from the source, for flowing cells only.
-    this.levels = new Map();
+    // "x,y,z" -> distance from the source, for flowing cells only. The world
+    // owns the map too, because the mesher draws water lower the further it has
+    // flow from its source.
+    this.levels = world.fluidLevels ?? new Map();
     this.fallClock = 0;
     this.waterClock = 0;
     this.lavaClock = 0;

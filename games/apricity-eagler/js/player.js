@@ -137,6 +137,10 @@ export class Player {
     const accel = Math.min(1, dt * (this.flying ? 10 : 16));
     this.vx += (targetVX - this.vx) * accel;
     this.vz += (targetVZ - this.vz) * accel;
+    // A collision zeroes the velocity, so keep the direction being pushed in:
+    // stepping out of water needs to know which bank the player is against.
+    const pushX = this.vx;
+    const pushZ = this.vz;
 
     this.onGround = false;
 
@@ -158,6 +162,13 @@ export class Player {
 
     this._moveAxis('x', this.vx * dt);
     this._moveAxis('z', this.vz * dt);
+    // Leaving the water is a step, not a jump: the surface sits just under the
+    // bank, so a swimmer pressed against it gets lifted onto the shore. Without
+    // this, getting out depended on the exact angle you happened to face.
+    if (this._stepOutOfWater(pushX, pushZ)) {
+      this._moveAxis('x', this.vx * dt);
+      this._moveAxis('z', this.vz * dt);
+    }
     this._moveAxis('y', this.vy * dt);
 
     // A fall is measured from the highest point you were airborne at, which is
@@ -178,6 +189,44 @@ export class Player {
     if (this.y < -8) {
       this.spawnAt(Math.floor(this.x), Math.floor(this.z));
     }
+  }
+
+  /**
+   * Swim up onto a one block lip. 1.12.2 floats a swimmer just under the block
+   * top, so walking into the bank carries you onto it; here the same thing has
+   * to be an explicit step up. Returns true, and moves the player onto the
+   * bank, when it fired.
+   */
+  _stepOutOfWater(pushX = 0, pushZ = 0) {
+    if (!this.inWater || this.flying || this.noClip) return false;
+    const half = this.width / 2;
+    const dirs = [];
+    if (Math.abs(pushX) > 0.05) dirs.push([Math.sign(pushX), 0]);
+    if (Math.abs(pushZ) > 0.05) dirs.push([0, Math.sign(pushZ)]);
+    const base = Math.floor(this.y);
+    for (const [dx, dz] of dirs) {
+      const bx = Math.floor(this.x + dx * (half + 0.06));
+      const bz = Math.floor(this.z + dz * (half + 0.06));
+      for (let y = base; y <= base + 1; y++) {
+        if (!isSolid(this.world.getBlock(bx, y, bz))) continue;
+        // Headroom above the bank, and only a lip you are already floating at:
+        // a deep wall stays a wall instead of becoming a ladder.
+        if (isSolid(this.world.getBlock(bx, y + 1, bz))) continue;
+        const top = y + 1;
+        const rise = top - this.y;
+        if (rise <= 1e-3 || rise > 0.4) continue;
+        const nx = this.x + dx * 0.32;
+        const nz = this.z + dz * 0.32;
+        if (this._collides(nx, top + 1e-3, nz)) continue;
+        this.x = nx;
+        this.z = nz;
+        this.y = top + 1e-3;
+        this.vy = 0;
+        this.onGround = true;
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

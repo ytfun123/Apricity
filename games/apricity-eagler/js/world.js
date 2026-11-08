@@ -209,6 +209,9 @@ export class World {
     this.chunks = new Map();
     this.dirty = new Set();
     this.edits = new Map();
+    // How far each flowing cell is from its source. Runtime only, shared with
+    // the block physics: "x,y,z" -> distance, 0 for a source.
+    this.fluidLevels = new Map();
     for (const [x, y, z, id] of edits) this.edits.set(`${x},${y},${z}`, id);
   }
 
@@ -298,6 +301,17 @@ export class World {
 
   probeIsOpaque(x, y, z) {
     return !isTransparent(this.probeBlock(x, y, z));
+  }
+
+  /**
+   * Distance from a fluid's source, for rendering and flow. A source is 0; a
+   * flowing cell the physics has not seen (one loaded from a save) counts as a
+   * single step out rather than a source.
+   */
+  probeFluidLevel(x, y, z) {
+    const id = this.probeBlock(x, y, z);
+    if (id === 8 || id === 10) return 0;
+    return this.fluidLevels.get(`${x},${y},${z}`) ?? 1;
   }
 
   takeDirty() {
