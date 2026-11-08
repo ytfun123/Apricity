@@ -25,6 +25,7 @@ import { matchRecipe } from './recipes.js';
 import { playBlockSound, playClick, playHurt, playPickup } from './sound.js';
 import { isCommand, runCommand } from './commands.js';
 import { addToHotbar, emptyHotbar, fillHotbarWith, slot, slotIsEmpty, takeFromSlot } from './inventory.js';
+import { BlockPhysics } from './physics.js';
 import { Vitals, EXHAUSTION, fallDamage } from './survival.js';
 import { Drops } from './items.js';
 import { GAMEMODES, gameModeFlags, gamemodeName, normalizeGamemode } from './gamemode.js';
@@ -767,6 +768,10 @@ function playWorld(record) {
   state.gamemode = normalizeGamemode(record.gamemode) ?? 'survival';
   state.vitals = new Vitals();
   state.drops = new Drops(world);
+  // Sand, gravel and liquids: only cells a change disturbs get simulated, which
+  // leaves the oceans the generator laid down perfectly still.
+  state.physics = new BlockPhysics(world);
+  world.onBlockSet = (x, y, z) => state.physics?.touch(x, y, z);
   // Whatever the player was carrying when they left comes back with them.
   state.hotbar = restoreHotbar(record.hotbar);
   state.backpack = restoreHotbar(record.backpack, 27);
@@ -886,6 +891,8 @@ function joinServer(server) {
   state.gamemode = 'survival';
   state.vitals = new Vitals();
   state.drops = null;
+  // A server world's blocks belong to the server, so no local physics.
+  state.physics = null;
   state.hotbar = fillHotbarWith(emptyHotbar(), PALETTE);
   ui.setGamemode('survival');
   ui.renderBars(state.vitals.health, state.vitals.food);
@@ -968,6 +975,7 @@ function quitToTitle() {
   state.mode = null;
   state.world = null;
   state.player = null;
+  state.physics = null;
   state.worldRecord = null;
   clearChunks();
   ui.showScreen('title');
@@ -1199,7 +1207,10 @@ function frame(now) {
   if (state.mode && state.player) {
     state.player.update(dt, input);
 
-    if (state.mode === 'single') updateSurvival(dt, input);
+    if (state.mode === 'single') {
+      updateSurvival(dt, input);
+      state.physics?.tick(dt);
+    }
     // 1.12.2 autosaves singleplayer every half minute; a closed tab loses less.
     if (state.mode === 'single' && now - state.lastSave > 30000) {
       state.lastSave = now;

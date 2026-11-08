@@ -268,6 +268,8 @@ export class World {
     if ((x & 15) === 15) this.dirty.add(chunkKey(cx + 1, cz));
     if ((z & 15) === 0) this.dirty.add(chunkKey(cx, cz - 1));
     if ((z & 15) === 15) this.dirty.add(chunkKey(cx, cz + 1));
+    // Block physics listens here so sand, gravel and liquids react to changes.
+    this.onBlockSet?.(x, y, z, id);
     return true;
   }
 
