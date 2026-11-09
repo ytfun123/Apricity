@@ -1,0 +1,10 @@
+{
+  "name": "apricity-eaglercraft",
+  "version": "1.8.0",
+  "private": true,
+  "type": "module",
+  "description": "From-scratch browser client core for Eaglercraft servers: direct WebSocket connect, no relay, no back-end. This folder is the 1.8.0v build for Minecraft 1.12.2.",
+  "scripts": {
+    "test": "node test/protocol-test.mjs"
+  }
+}

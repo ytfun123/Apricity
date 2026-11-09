@@ -21,9 +21,9 @@ import { readPack, findEmbeddedPack } from './epk.mjs';
 
 const OUT = 'assets';
 const PACK_FILES = [
-  '../mc.html',
-  '../eagler-1.20-main/javascript/builds/0.2.0/assets.epk',
-  '../eagler-1.20-main/javascript/builds/0.1.0/assets.epk',
+  '../../../mc.html',
+  '../../../eagler-1.20-main/javascript/builds/0.2.0/assets.epk',
+  '../../../eagler-1.20-main/javascript/builds/0.1.0/assets.epk',
 ];
 const PREFIX = 'assets/minecraft/';
 

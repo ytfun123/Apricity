@@ -1,8 +1,8 @@
 // Builds the client's textures, GUI art and menu strings from the Eaglercraft
 // asset packs already on this machine:
-//   ../mc.html                                                  (1.12.2 client, pack embedded)
-//   ../eagler-1.20-main/javascript/builds/0.2.0/assets.epk       (fallback)
-//   ../eagler-1.20-main/javascript/builds/0.1.0/assets.epk       (fallback)
+//   ../../../mc.html                                                  (1.12.2 client, pack embedded)
+//   ../../../eagler-1.20-main/javascript/builds/0.2.0/assets.epk       (fallback)
+//   ../../../eagler-1.20-main/javascript/builds/0.1.0/assets.epk       (fallback)
 //
 //   node tools/build-assets.mjs
 //
@@ -17,9 +17,9 @@ import { BLOCK_TEX, BLOCKS } from '../js/blocks.js';
 
 const OUT = 'assets';
 const PACK_FILES = [
-  '../mc.html',
-  '../eagler-1.20-main/javascript/builds/0.2.0/assets.epk',
-  '../eagler-1.20-main/javascript/builds/0.1.0/assets.epk',
+  '../../../mc.html',
+  '../../../eagler-1.20-main/javascript/builds/0.2.0/assets.epk',
+  '../../../eagler-1.20-main/javascript/builds/0.1.0/assets.epk',
 ];
 const PREFIX = 'assets/minecraft/';
 

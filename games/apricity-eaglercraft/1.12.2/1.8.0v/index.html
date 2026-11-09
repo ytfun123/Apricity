@@ -136,39 +136,6 @@
   /* The four small buttons of the 1.12.2 selection screens are 74 wide. */
   button.mc-button.list-btn { width: calc(74px * var(--gui)); }
 
-  /* ── launcher: pick the version, then start the game ──────────────── */
-  #screen-launcher {
-    background-image: url("./assets/title-bg.png");
-    background-size: cover;
-    background-position: center;
-    justify-content: center;
-    gap: calc(5px * var(--gui));
-  }
-  #screen-launcher::before {
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.78));
-  }
-  .launcher-group {
-    display: grid;
-    justify-items: center;
-    gap: calc(3px * var(--gui));
-    margin-top: calc(8px * var(--gui));
-  }
-  .launcher-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: calc(3px * var(--gui));
-    justify-content: center;
-  }
-  button.mc-button.launcher-choice {
-    width: auto;
-    min-width: calc(96px * var(--gui));
-    padding: 0 calc(10px * var(--gui));
-  }
-  button.mc-button.launcher-choice.selected {
-    background-image: url("./assets/gui-button-hover.png");
-    color: #ffffa0;
-  }
-
   .menu { display: grid; gap: calc(4px * var(--gui)); justify-items: center; }
   .row { display: flex; gap: calc(4px * var(--gui)); flex-wrap: wrap; justify-content: center; align-items: center; }
   /* Button rows stack with the same 4px rhythm the game uses between widgets. */
@@ -731,24 +698,7 @@
   <div id="click-to-play"></div>
 </div>
 
-<section id="screen-launcher" class="screen active">
-  <div id="launcher-title" class="mc-text"></div>
-  <div id="launcher-subtitle" class="mc-text" style="color:#b8b8b8"></div>
-  <div class="launcher-group">
-    <div id="launcher-mc-label" class="mc-text"></div>
-    <div id="launcher-mc-list" class="launcher-list"></div>
-  </div>
-  <div class="launcher-group">
-    <div id="launcher-game-label" class="mc-text"></div>
-    <div id="launcher-game-list" class="launcher-list"></div>
-  </div>
-  <div class="row" style="margin-top:calc(14px * var(--gui))">
-    <button id="btn-launch" class="mc-button"></button>
-  </div>
-  <div id="launcher-footer" class="mc-text title-footer" style="right:2px"></div>
-</section>
-
-<section id="screen-title" class="screen">
+<section id="screen-title" class="screen active">
   <img id="title-logo" src="./assets/gui-logo.png" alt="">
   <div id="splash-row"><div id="splash" class="mc-text"></div></div>
   <div id="title-buttons">

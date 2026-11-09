@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Apricity Eaglercraft launcher - pick a Minecraft version and a game build, then start the client">
+<title>Apricity Eaglercraft launcher</title>
+<style>
+  :root {
+    --bg: #07090c; --panel: #0b0f14; --line: #1c2530;
+    --text: #c9d6e3; --dim: #64748b; --faint: #33414f;
+    --ok: #4ade80; --pick: #60a5fa; --warn: #fbbf24; --err: #f87171;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    display: flex; flex-direction: column;
+    font: 13px/1.6 "Cascadia Mono", "JetBrains Mono", Consolas, ui-monospace, monospace;
+  }
+  header {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  header .name { color: #fff; font-weight: 700; letter-spacing: .3px; }
+  header .tag { color: var(--dim); font-size: 11px; }
+  header .build { margin-left: auto; color: var(--faint); font-size: 11px; }
+  #log { flex: 1; min-height: 120px; overflow: auto; padding: 12px 14px; }
+  .ln { display: block; white-space: pre-wrap; word-break: break-word; }
+  .ln .time { color: var(--faint); }
+  .ln .src { color: var(--dim); }
+  .ln.ok .msg { color: var(--ok); }
+  .ln.pick .msg { color: var(--pick); }
+  .ln.warn .msg { color: var(--warn); }
+  .ln.err .msg { color: var(--err); }
+  #prompt {
+    border-top: 1px solid var(--line); background: var(--panel);
+    padding: 10px 14px 12px; display: grid; gap: 7px;
+  }
+  .row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; min-height: 26px; }
+  .row > .key { color: var(--dim); width: 172px; flex: none; }
+  .row > .key::before { content: "> "; color: var(--faint); }
+  button {
+    font: inherit; font-size: 12px; color: var(--text); cursor: pointer;
+    background: #0f1620; border: 1px solid #22303e; border-radius: 3px; padding: 3px 10px;
+  }
+  button:hover:not(:disabled) { border-color: #35506b; color: #fff; }
+  button.on { border-color: var(--pick); color: var(--pick); background: #0c1622; }
+  button#go {
+    color: #0b1210; background: var(--ok); border-color: var(--ok);
+    font-weight: 700; padding: 4px 20px;
+  }
+  button#go:hover:not(:disabled) { background: #6ee79b; color: #08120c; }
+  button#go.busy { background: var(--warn); border-color: var(--warn); }
+  button:disabled { opacity: .5; cursor: default; }
+  #where { color: var(--faint); font-size: 11px; }
+  footer { padding: 7px 14px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11px; }
+  @media (max-width: 560px) { .row > .key { width: 100%; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="name">apricity eaglercraft</span>
+  <span class="tag">launcher</span>
+  <span class="build" id="build"></span>
+</header>
+
+<main id="log" aria-live="polite"></main>
+
+<div id="prompt">
+  <div class="row"><span class="key">minecraft version</span><span id="minecraft" class="row"></span></div>
+  <div class="row"><span class="key">game version</span><span id="game" class="row"></span></div>
+  <div class="row"><button id="go" type="button">launch</button><span id="where"></span></div>
+</div>
+
+<footer>static build &middot; everything runs in your browser</footer>
+
+<script>
+  // One entry per Minecraft version folder, listing the game builds inside it.
+  // A launch opens ./<minecraft>/<game>/, so adding a build is a folder plus one
+  // string here -- the launcher never needs to know what a build contains.
+  const VERSIONS = {
+    '1.12.2': ['1.8.0v'],
+  };
+
+  const logEl = document.getElementById('log');
+  const buildEl = document.getElementById('build');
+  const whereEl = document.getElementById('where');
+  const goBtn = document.getElementById('go');
+  const lists = {
+    minecraft: document.getElementById('minecraft'),
+    game: document.getElementById('game'),
+  };
+
+  // The pick survives a reload. A remembered version that is no longer offered
+  // falls back to the first of its row instead of launching a folder that is
+  // not there.
+  const pick = (() => {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem('apricity.launcher') || '{}') || {}; } catch {}
+    const minecraft = VERSIONS[saved.minecraft] ? saved.minecraft : Object.keys(VERSIONS)[0];
+    const game = VERSIONS[minecraft].includes(saved.game) ? saved.game : VERSIONS[minecraft][0];
+    return { minecraft, game };
+  })();
+
+  function log(src, msg, kind) {
+    const line = document.createElement('span');
+    line.className = kind ? 'ln ' + kind : 'ln';
+    const now = new Date();
+    const stamp = [now.getHours(), now.getMinutes(), now.getSeconds()]
+      .map((n) => String(n).padStart(2, '0')).join(':');
+    const time = document.createElement('span');
+    time.className = 'time';
+    time.textContent = stamp;
+    const source = document.createElement('span');
+    source.className = 'src';
+    source.textContent = ' [' + src + '] ';
+    const text = document.createElement('span');
+    text.className = 'msg';
+    text.textContent = msg;
+    line.append(time, source, text);
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function save() {
+    try { localStorage.setItem('apricity.launcher', JSON.stringify(pick)); } catch {}
+  }
+
+  function draw() {
+    for (const kind of ['minecraft', 'game']) {
+      const options = kind === 'minecraft' ? Object.keys(VERSIONS) : VERSIONS[pick.minecraft];
+      lists[kind].textContent = '';
+      for (const id of options) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = id;
+        button.className = id === pick[kind] ? 'on' : '';
+        button.addEventListener('click', () => {
+          if (pick[kind] === id) return;
+          pick[kind] = id;
+          if (kind === 'minecraft' && !VERSIONS[pick.minecraft].includes(pick.game)) {
+            pick.game = VERSIONS[pick.minecraft][0];
+          }
+          save();
+          log('picker', kind + ' ' + id, 'pick');
+          draw();
+        });
+        lists[kind].appendChild(button);
+      }
+    }
+    const target = pick.minecraft + '/' + pick.game;
+    whereEl.textContent = './' + target + '/';
+    buildEl.textContent = pick.minecraft + ' / ' + pick.game;
+  }
+
+  goBtn.addEventListener('click', () => {
+    const target = pick.minecraft + '/' + pick.game;
+    goBtn.disabled = true;
+    goBtn.classList.add('busy');
+    goBtn.textContent = 'starting...';
+    log('launch', 'minecraft ' + pick.minecraft, 'ok');
+    log('launch', 'game ' + pick.game, 'ok');
+    log('launch', 'loading ./' + target + '/index.html');
+    setTimeout(() => { window.location.href = './' + target + '/'; }, 220);
+  });
+
+  log('launcher', 'apricity eaglercraft');
+  log('launcher', 'catalogue: ' + Object.keys(VERSIONS).length + ' minecraft version(s)');
+  log('version', 'minecraft ' + pick.minecraft + ' - world format and protocol', 'ok');
+  log('version', 'game ' + pick.game + ' - current build', 'ok');
+  log('launcher', 'pick a version, then press launch');
+  draw();
+</script>
+</body>
+</html>

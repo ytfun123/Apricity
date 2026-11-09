@@ -13,8 +13,12 @@ you ─── wss://the-server-you-picked/ ───► that server
 
 ## Play it
 
+`games/apricity-eaglercraft/index.html` is the launcher: it lists one Minecraft
+version (**1.12.2**) and the game builds inside it (**1.8.0v**) and opens the one
+you pick. This folder *is* that 1.8.0v build, so you can also serve it on its own:
+
 ```bash
-node games/apricity-eagler/serve.mjs   # static server, then open the printed URL
+node games/apricity-eaglercraft/1.12.2/1.8.0v/serve.mjs   # static server, then open the printed URL
 ```
 
 - **Singleplayer** — generates biomes, caves, ores and vegetation from a seed,
@@ -120,7 +124,7 @@ of `games/mc.html` (and falls back to the 0.2.0 / 0.1.0 packs that ship with the
 site for anything 1.12.2 leaves out), so no extraction directories are needed:
 
 ```bash
-cd games/apricity-eagler && node tools/build-assets.mjs
+cd games/apricity-eaglercraft/1.12.2/1.8.0v && node tools/build-assets.mjs
 ```
 
 To read a pack by hand:
