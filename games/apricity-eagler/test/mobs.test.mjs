@@ -145,37 +145,63 @@ check('every animal drops meat that exists in the pack', () => {
   }
 });
 
-check('every animal has a textured model that fits inside its own skin', () => {
+check('every animal samples only its own skin', () => {
   const atlas = JSON.parse(readFileSync(new URL('../assets/mob-atlas.json', import.meta.url), 'utf8'));
   for (const [kind, type] of Object.entries(MOB_TYPES)) {
     const model = MOB_MODELS[type.model];
     assert.ok(model, `${kind} has no model`);
-    assert.ok(atlas.mobs[type.model], `${type.model} is not in the mob atlas`);
+    const skin = atlas.mobs[model.texture];
+    assert.ok(skin, `${kind} has no slot in the mob atlas`);
     assert.ok(model.parts.length >= 3, `${kind} has only ${model.parts.length} parts`);
     for (const part of model.parts) {
-      const [w, h, d] = part.size;
-      const [u, v] = part.uv;
-      // A box unwraps into two depth columns and two width columns side by side,
-      // with the top and bottom pair above them, so it has to fit the 64x32 skin.
-      assert.ok(u + 2 * d + 2 * w <= 64, `${kind} part at u=${u} runs off the skin`);
-      assert.ok(v + d + h <= 32, `${kind} part at v=${v} runs off the skin`);
+      assert.equal(part.faces.length, 6, `${kind} part without six faces`);
       assert.ok(part.at.every((n) => Number.isFinite(n)), `${kind} part has no position`);
+      for (const face of part.faces) {
+        assert.equal(face.pos.length, 4);
+        assert.equal(face.uv.length, 4);
+        assert.ok(face.shade > 0 && face.shade <= 1, `${kind} face with shade ${face.shade}`);
+        for (const [u, v] of face.uv) {
+          assert.ok(u >= 0 && u <= skin.width, `${kind} samples past the skin at u=${u}`);
+          assert.ok(v >= 0 && v <= skin.height, `${kind} samples past the skin at v=${v}`);
+        }
+      }
     }
   }
 });
 
-check('parts are turned, scaled and sample the atlas', () => {
+check('the animals are built the way 1.12.2 builds them', () => {
+  const span = (part, axis) => {
+    const values = part.faces.flatMap((face) => face.pos.map((p) => p[axis]));
+    return Math.max(...values) - Math.min(...values);
+  };
+  // A pig is a body, a head, a snout and four legs, and its body is modelled
+  // upright then tipped a quarter turn, so it lies along the animal.
+  const pig = MOB_MODELS.pig;
+  assert.equal(pig.parts.length, 7);
+  assert.ok(span(pig.parts[1], 2) > span(pig.parts[1], 1) * 1.6, 'the pig body lies down');
+
+  // Every animal has to stand on its own feet, in model units from the ground.
+  for (const [kind, type] of Object.entries(MOB_TYPES)) {
+    const model = MOB_MODELS[type.model];
+    const lowest = Math.min(...model.parts.flatMap((part) =>
+      part.at[1] + Math.min(...part.faces.flatMap((face) => face.pos.map((p) => p[1])))));
+    // A tilted box can dip a hair under the ground plane, as the rabbit's do.
+    assert.ok(lowest >= -0.5 && lowest < 1, `${kind} stands ${lowest.toFixed(1)} units off the ground`);
+  }
+});
+
+check('parts stand on the animal and turn with it', () => {
   const mobs = new Mobs(world());
   const pig = mobs.spawn('pig', 0.5, 1, 0.5);
   const parts = pig.parts();
   assert.equal(parts.length, MOB_MODELS.pig.parts.length);
   for (const part of parts) {
     assert.equal(part.mob, 'pig');
-    assert.equal(part.uv.length, 2);
-    assert.equal(part.px.length, 3);
-    assert.ok(part.size.every((s) => s > 0), 'part has volume');
-    assert.ok(part.y > 0.9 && part.y < 2.4, `part sits at y ${part.y}`);
+    assert.equal(part.faces.length, 6, 'part without six faces');
   }
+  const ys = parts.flatMap((part) => part.faces.flatMap((face) => face.pos.map((p) => part.y + p[1])));
+  assert.ok(Math.abs(Math.min(...ys) - pig.y) < 0.02, `the pig's feet are at ${Math.min(...ys)}`);
+  assert.ok(Math.max(...ys) - pig.y > 0.7, 'the pig is as tall as a pig');
 });
 
 check('the render boxes carry a size and a colour', () => {

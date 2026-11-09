@@ -3,7 +3,7 @@
 //
 //   assets/mob/pig.png      the copied 64x32 entity texture, untouched pixels
 //   assets/mob/cow.png
-//   assets/mob/sheep.png
+//   assets/mob/sheep_fur.png
 //   assets/mob/chicken.png
 //   assets/mob/rabbit.png
 //   assets/mob-atlas.png    all of them stacked, 64 wide
@@ -31,7 +31,7 @@ const PREFIX = 'assets/minecraft/';
 const MOBS = [
   ['pig', ['textures/entity/pig/pig.png']],
   ['cow', ['textures/entity/cow/cow.png']],
-  ['sheep', ['textures/entity/sheep/sheep.png', 'textures/entity/sheep/sheep_fur.png']],
+  ['sheep_fur', ['textures/entity/sheep/sheep_fur.png', 'textures/entity/sheep/sheep.png']],
   ['chicken', ['textures/entity/chicken.png']],
   ['rabbit', ['textures/entity/rabbit/rabbit_brown.png', 'textures/entity/rabbit/brown.png', 'textures/entity/rabbit/white.png']],
 ];

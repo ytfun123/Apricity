@@ -66,7 +66,7 @@ into `assets/`:
 | `assets/hud-xp-bg.png` / `hud-xp-fill.png` | the XP bar sliced out of that sheet |
 | `assets/font.png` + `font.json` | the pack's 8×8 bitmap font, with measured glyph advances |
 | `assets/sounds/*.ogg` | the pack's dig samples: four variants each for stone, wood, grass, sand, gravel, cloth and snow, plus the UI click |
-| `assets/mob/*.png` | the pack's own 64×32 animal skins, copied as-is: `pig`, `cow`, `sheep`, `chicken`, `rabbit` |
+| `assets/mob/*.png` | the pack's own 64×32 animal skins, copied as-is: `pig`, `cow`, `sheep_fur`, `chicken`, `rabbit` |
 | `assets/mob-atlas.png` + `mob-atlas.json` | those skins stacked into one sheet for the animal renderer, with each animal's slot |
 
 1.12.2 stores grass, leaves, vines and lily pads as **greyscale** and colours

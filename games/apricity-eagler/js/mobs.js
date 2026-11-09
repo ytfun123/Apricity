@@ -1,9 +1,13 @@
-// Passive animals: pigs, cows, sheep and chickens that wander the surface, can
-// be hit, and drop the raw meat that keeps the hunger bar full.
+// Passive animals: pigs, cows, sheep, chickens and rabbits that wander the
+// surface, can be hit, and drop the raw meat that keeps the hunger bar full.
 //
-// They are deliberately cheap — a few coloured boxes for the renderer, a wander
-// clock and the same point physics the item drops use. No pathfinding, no biome
-// rules: a mob is an animal standing on solid ground near the player.
+// They are deliberately cheap — a wander clock, the same point physics the item
+// drops use, and a handful of boxes per animal. No pathfinding, no biome rules:
+// a mob is an animal standing on solid ground near the player.
+//
+// The boxes are the ones 1.12.2 itself builds for each animal: the same texture
+// offset, the same addBox size, the same rotation point and tilt, so the skin
+// lands on the animal the way it does in game.
 
 import { isSolid } from './blocks.js';
 
@@ -84,75 +88,219 @@ export const MOB_TYPES = {
   },
 };
 
-// The animal models in vanilla model pixels: box sizes, box centres measured up
-// from the feet, and the box's place in its own 64x32 entity texture. `scale`
-// shrinks the model down onto the hitbox. +z is the way the animal faces.
+// ── animal models ──────────────────────────────────────────────────────────
+//
+// Vanilla model space measures y down from 24 at the feet and puts the animal's
+// face at -z. Everything here is converted to this game's space on the way out:
+// y runs up from the feet, +z is the way the animal faces, and one unit is a
+// sixteenth of a block.
+
+/** A vanilla box centre (y down, face at -z) in this game's space. */
+const at = (x, y, z) => [x, 24 - y, -z];
+
+const HALF_TURN = Math.PI / 2;
+
+function rotate(v, rx, ry) {
+  let [x, y, z] = v;
+  if (rx) {
+    const c = Math.cos(rx);
+    const s = Math.sin(rx);
+    [y, z] = [y * c - z * s, y * s + z * c];
+  }
+  if (ry) {
+    const c = Math.cos(ry);
+    const s = Math.sin(ry);
+    [x, z] = [x * c + z * s, -x * s + z * c];
+  }
+  return [x, y, z];
+}
+
+/**
+ * One box of a vanilla model: `uv` is the texture offset its ModelRenderer was
+ * built with, `size` the addBox dimensions, `centre` the box centre in vanilla
+ * model space, `grow` the inflate on every side (the sheep's wool uses it) and
+ * `rx` / `ry` the tilt the model gives it.
+ *
+ * The six faces, their corner order and the rectangle of skin each one reads are
+ * a straight port of ModelBox and TexturedQuad, so a box shows exactly the patch
+ * of skin it shows in game — which is the whole point of copying the textures.
+ */
+function box(uv, size, centre, { grow = 0, rx = 0, ry = 0 } = {}) {
+  const [w, h, d] = size;
+  const hw = w / 2 + grow;
+  const hh = h / 2 + grow;
+  const hd = d / 2 + grow;
+  const [u, v] = uv;
+  const corner = [
+    [-hw, -hh, -hd], [hw, -hh, -hd], [hw, hh, -hd], [-hw, hh, -hd],
+    [-hw, -hh, hd], [hw, -hh, hd], [hw, hh, hd], [-hw, hh, hd],
+  ];
+  const [a0, a1, a2, a3, a4, a5, a6, a7] = corner;
+  // Face order and skin rectangles exactly as ModelBox lays them out: a depth
+  // column, a width column, another depth column and another width column for
+  // the sides, with the top and bottom pair above them.
+  const quads = [
+    [[a5, a1, a2, a6], [u + d + w, v + d, u + d + w + d, v + d + h]],
+    [[a0, a4, a7, a3], [u, v + d, u + d, v + d + h]],
+    [[a5, a4, a0, a1], [u + d, v, u + d + w, v + d]],
+    [[a2, a3, a7, a6], [u + d + w, v + d, u + d + w + w, v]],
+    [[a1, a0, a3, a2], [u + d, v + d, u + d + w, v + d + h]],
+    [[a4, a5, a6, a7], [u + d + w + d, v + d, u + d + w + d + w, v + d + h]],
+  ];
+
+  const faces = [];
+  for (const [quad, [ux1, vy1, ux2, vy2]] of quads) {
+    let pos = quad.map(([x, y, z]) => {
+      const r = rotate([x, y, z], rx, ry);
+      return [r[0], -r[1], -r[2]];
+    });
+    // TexturedQuad hands the corners (u2,v1), (u1,v1), (u1,v2), (u2,v2).
+    let uvCorners = [[ux2, vy1], [ux1, vy1], [ux1, vy2], [ux2, vy2]];
+
+    // The outward normal of the box's own face, so the face is shaded and wound
+    // the same way a block face is. A face's corners average to a point on the
+    // outside, which is all it takes to know which way is out of the box.
+    const [p0, p1, p2] = pos;
+    const e1 = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]];
+    const e2 = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
+    const normal = [
+      e1[1] * e2[2] - e1[2] * e2[1],
+      e1[2] * e2[0] - e1[0] * e2[2],
+      e1[0] * e2[1] - e1[1] * e2[0],
+    ];
+    const out = pos.reduce((sum, p) => [sum[0] + p[0] / 4, sum[1] + p[1] / 4, sum[2] + p[2] / 4], [0, 0, 0]);
+    if (normal[0] * out[0] + normal[1] * out[1] + normal[2] * out[2] < 0) {
+      pos = pos.reverse();
+      uvCorners = uvCorners.reverse();
+      normal[0] = -normal[0];
+      normal[1] = -normal[1];
+      normal[2] = -normal[2];
+    }
+
+    const ax = Math.abs(normal[0]);
+    const ay = Math.abs(normal[1]);
+    const az = Math.abs(normal[2]);
+    let shade = 0.8;
+    if (ay >= ax && ay >= az) shade = normal[1] > 0 ? 1 : 0.5;
+    else if (ax >= az) shade = 0.65;
+
+    faces.push({ pos, uv: uvCorners, shade });
+  }
+  return { at: at(...centre), size, faces };
+}
+
+/**
+ * The stock four-legged animal of 1.12.2: a head, a body that is modelled
+ * upright and then tipped a quarter turn (which is why a pig is long and not
+ * tall) and four legs as tall as the model's leg height.
+ */
+function quadruped(legHeight) {
+  const legTop = 24 - legHeight / 2;
+  return [
+    box([0, 0], [8, 8, 8], [0, 18 - legHeight, -10]),
+    box([28, 8], [10, 16, 8], [0, 20 - legHeight, 0], { rx: HALF_TURN }),
+    box([0, 16], [4, legHeight, 4], [-3, legTop, 7]),
+    box([0, 16], [4, legHeight, 4], [3, legTop, 7]),
+    box([0, 16], [4, legHeight, 4], [-3, legTop, -5]),
+    box([0, 16], [4, legHeight, 4], [3, legTop, -5]),
+  ];
+}
+
 const MODELS = {
   pig: {
-    scale: 0.8,
+    texture: 'pig',
+    scale: 1,
     parts: [
-      { size: [10, 16, 8], at: [0, 9, 1], uv: [28, 8] },
-      { size: [8, 8, 8], at: [0, 6, 10], uv: [0, 0] },
-      { size: [4, 6, 4], at: [-3, 3, 5], uv: [0, 16] },
-      { size: [4, 6, 4], at: [3, 3, 5], uv: [0, 16] },
-      { size: [4, 6, 4], at: [-3, 3, -7], uv: [0, 16] },
-      { size: [4, 6, 4], at: [3, 3, -7], uv: [0, 16] },
+      ...quadruped(6),
+      box([16, 16], [4, 3, 1], [0, 13.5, -14.5]),
     ],
   },
   cow: {
-    scale: 0.95,
+    texture: 'cow',
+    scale: 1,
     parts: [
-      { size: [12, 18, 10], at: [0, 8, 2], uv: [18, 4] },
-      { size: [8, 8, 6], at: [0, 6, 9], uv: [0, 0] },
-      { size: [1, 3, 1], at: [-4, 11, 8], uv: [22, 0] },
-      { size: [1, 3, 1], at: [4, 11, 8], uv: [22, 0] },
-      { size: [4, 12, 4], at: [-4, 6, 5], uv: [0, 16] },
-      { size: [4, 12, 4], at: [4, 6, 5], uv: [0, 16] },
-      { size: [4, 12, 4], at: [-4, 6, -7], uv: [0, 16] },
-      { size: [4, 12, 4], at: [4, 6, -7], uv: [0, 16] },
+      box([0, 0], [8, 8, 6], [0, 4, -11]),
+      box([22, 0], [1, 3, 1], [-4.5, 0.5, -11.5]),
+      box([22, 0], [1, 3, 1], [4.5, 0.5, -11.5]),
+      box([18, 4], [12, 18, 10], [0, 7, 1], { rx: HALF_TURN }),
+      box([52, 0], [4, 6, 1], [0, 12.5, 7], { rx: HALF_TURN }),
+      box([0, 16], [4, 12, 4], [-4, 18, 7]),
+      box([0, 16], [4, 12, 4], [4, 18, 7]),
+      box([0, 16], [4, 12, 4], [-4, 18, -6]),
+      box([0, 16], [4, 12, 4], [4, 18, -6]),
     ],
   },
+  // A sheep in game is the wool coat, ModelSheep2, over the shaved skin. The
+  // wool is thinner than the skin it covers, which is what the grow is for.
   sheep: {
-    scale: 0.85,
+    texture: 'sheep_fur',
+    scale: 1,
     parts: [
-      { size: [8, 16, 6], at: [0, 9, 4], uv: [28, 8] },
-      { size: [6, 6, 8], at: [0, 7, 10], uv: [0, 0] },
-      { size: [4, 12, 4], at: [-3, 6, 5], uv: [0, 16] },
-      { size: [4, 12, 4], at: [3, 6, 5], uv: [0, 16] },
-      { size: [4, 12, 4], at: [-3, 6, -7], uv: [0, 16] },
-      { size: [4, 12, 4], at: [3, 6, -7], uv: [0, 16] },
+      box([0, 0], [6, 6, 8], [0, 5, -10], { grow: 0.6 }),
+      box([28, 8], [8, 16, 6], [0, 9, 0], { grow: 1.75, rx: HALF_TURN }),
+      box([0, 16], [4, 12, 4], [-3, 18, 7]),
+      box([0, 16], [4, 12, 4], [3, 18, 7]),
+      box([0, 16], [4, 12, 4], [-3, 18, -5]),
+      box([0, 16], [4, 12, 4], [3, 18, -5]),
     ],
   },
   chicken: {
-    scale: 0.75,
+    texture: 'chicken',
+    scale: 1,
     parts: [
-      { size: [6, 8, 6], at: [0, 8, 0], uv: [0, 9] },
-      { size: [4, 6, 3], at: [0, 12, 5], uv: [0, 0] },
-      { size: [4, 2, 2], at: [0, 12, 7], uv: [14, 0] },
-      { size: [2, 2, 2], at: [0, 10, 6], uv: [14, 4] },
-      { size: [1, 4, 6], at: [-3.2, 8, 0], uv: [24, 13] },
-      { size: [1, 4, 6], at: [3.2, 8, 0], uv: [24, 13] },
-      { size: [3, 5, 3], at: [-1.6, 5, 0], uv: [26, 0] },
-      { size: [3, 5, 3], at: [1.6, 5, 0], uv: [26, 0] },
+      box([0, 0], [4, 6, 3], [0, 12, -4.5]),
+      box([14, 0], [4, 2, 2], [0, 12, -7]),
+      box([14, 4], [2, 2, 2], [0, 14, -6]),
+      box([0, 9], [6, 8, 6], [0, 16, 0], { rx: HALF_TURN }),
+      box([26, 0], [3, 5, 3], [-1.5, 21.5, -0.5]),
+      box([26, 0], [3, 5, 3], [1.5, 21.5, -0.5]),
+      box([24, 13], [1, 4, 6], [-3.5, 15, 0]),
+      box([24, 13], [1, 4, 6], [3.5, 15, 0]),
     ],
   },
-  // Rabbit is its own model in 1.12.2 rather than a quadruped: a long body, a
-  // separate nose and two tall ears, each with its own place on the skin.
+  // The rabbit is its own model: a slim body tipped forward, a separate nose,
+  // two long ears splayed apart, and arms and thighs on their own tilts.
   rabbit: {
-    scale: 0.5,
+    texture: 'rabbit',
+    scale: 1,
     parts: [
-      { size: [5, 5, 10], at: [0, 4, 0], uv: [28, 8] },
-      { size: [5, 5, 5], at: [0, 8, 6], uv: [0, 0] },
-      { size: [2, 2, 2], at: [0, 8, 9], uv: [0, 24] },
-      { size: [2, 5, 1], at: [-1.2, 13, 5], uv: [0, 10] },
-      { size: [2, 5, 1], at: [1.2, 13, 5], uv: [6, 10] },
-      { size: [2, 4, 2], at: [-1.5, 2, 3], uv: [26, 24] },
-      { size: [2, 4, 2], at: [1.5, 2, 3], uv: [26, 24] },
+      box([0, 0], [6, 5, 10], [0, 17.7597, 3.1305], { rx: -0.34906584 }),
+      box([32, 0], [5, 4, 5], [0, 14, -3.5]),
+      box([32, 9], [1, 1, 1], [0, 14, -6]),
+      box([52, 0], [2, 5, 1], [-1.32, 9.5, -1.87], { ry: -0.2617994 }),
+      box([58, 0], [2, 5, 1], [1.32, 9.5, -1.87], { ry: 0.2617994 }),
+      box([26, 24], [2, 1, 7], [3, 23, 3.5]),
+      box([8, 24], [2, 1, 7], [-3, 23, 3.5]),
+      box([30, 15], [2, 4, 5], [3, 20.234, 5.3652], { rx: -0.34906584 }),
+      box([16, 15], [2, 4, 5], [-3, 20.234, 5.3652], { rx: -0.34906584 }),
+      box([8, 15], [2, 7, 2], [3, 20.4472, -1.608], { rx: -0.17453292 }),
+      box([0, 15], [2, 7, 2], [-3, 20.4472, -1.608], { rx: -0.17453292 }),
+      box([52, 6], [3, 3, 2], [0, 20.342, 7.9397], { rx: -0.3490659 }),
     ],
   },
 };
 
 export const MOB_MODELS = MODELS;
+
+// Model units per block. Faces are scaled once per animal rather than on every
+// frame, since a model never changes shape.
+const scaledModels = new Map();
+
+function scaledParts(model) {
+  let cached = scaledModels.get(model);
+  if (cached) return cached;
+  const k = model.scale / 16;
+  cached = model.parts.map((part) => ({
+    at: part.at,
+    faces: part.faces.map((face) => ({
+      shade: face.shade,
+      pos: face.pos.map(([x, y, z]) => [x * k, y * k, z * k]),
+      uv: face.uv,
+    })),
+  }));
+  scaledModels.set(model, cached);
+  return cached;
+}
 
 const rand = (min, max) => min + Math.random() * (max - min);
 
@@ -287,7 +435,7 @@ export class Mob {
 
   /**
    * The textured parts for the renderer: every box of the model, turned to face
-   * the walk and scaled from model pixels onto the animal's hitbox.
+   * the walk, with the six faces it samples out of the animal's own skin.
    */
   parts() {
     const model = MODELS[this.type.model];
@@ -296,18 +444,15 @@ export class Mob {
     const cos = Math.cos(this.yaw);
     const sin = Math.sin(this.yaw);
     const out = [];
-    for (const part of model.parts) {
+    for (const part of scaledParts(model)) {
       const [px, py, pz] = part.at;
-      const [w, h, d] = part.size;
       out.push({
-        mob: this.type.model,
+        mob: model.texture,
         x: this.x + (px * cos - pz * sin) * k,
         y: this.y + py * k,
         z: this.z + (px * sin + pz * cos) * k,
         yaw: this.yaw,
-        size: [w * k, h * k, d * k],
-        px: [w, h, d],
-        uv: part.uv,
+        faces: part.faces,
       });
     }
     return out;

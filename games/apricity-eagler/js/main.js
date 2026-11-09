@@ -1368,14 +1368,21 @@ function clearButtons() {
  * Hit the animal under the crosshair. Returns true when there was one, so the
  * swing does not also mine the block behind it.
  */
+/**
+ * 1.12.2 gives an empty hand one point of damage, and a hurt animal cannot be
+ * hurt again for ten ticks, so a pig takes ten punches however fast you click.
+ */
+const HAND_DAMAGE = 1;
+const HIT_INTERVAL = 500;
+
 function swingAtMob() {
   if (state.mode !== 'single' || !state.mobs || !state.player) return false;
   const mob = state.mobs.underCrosshair(state.player, 3.4);
   if (!mob) return false;
   const now = performance.now();
   if (now < state.nextMobHit) return true;
-  state.nextMobHit = now + 400;
-  const died = state.mobs.hit(mob, 4, state.player.lookDirection());
+  state.nextMobHit = now + HIT_INTERVAL;
+  const died = state.mobs.hit(mob, HAND_DAMAGE, state.player.lookDirection());
   playHurt();
   if (died) {
     const id = itemIdByKey(mob.type.drop);

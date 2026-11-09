@@ -133,65 +133,32 @@ function pushCube(out, offset, cube) {
 }
 
 /**
- * One animal part: a box unwrapped from its own entity texture. Minecraft boxes
- * use the classic layout — a depth column, a width column, another depth column
- * and another width column for the sides, with the top and bottom pair above
- * them — so a part only needs its size, its texture offset and the atlas slot
- * the animal lives in.
+ * One animal part: a few boxes, each already carrying the six faces it shows
+ * and the patch of the animal's own skin each face reads. All that is left here
+ * is turning the part to the way the animal walks and pointing the skin pixels
+ * at the mobile atlas, which holds every animal one under the other.
  */
 function pushPart(out, offset, part, atlas) {
   const mob = atlas.mobs[part.mob];
-  if (!mob) return offset;
-  const [w, h, d] = part.size;
-  const [pw, ph, pd] = part.px;
-  const [tu, tv] = part.uv;
+  if (!mob || !part.faces) return offset;
   const yaw = part.yaw ?? 0;
   const cos = Math.cos(yaw);
   const sin = Math.sin(yaw);
-  const uOf = (px) => px / atlas.width;
-  const vOf = (py) => (mob.y + py) / atlas.height;
+  const width = atlas.width;
+  const height = atlas.height;
 
-  const rects = {
-    north: [tu + pd, tv + pd, pw, ph],
-    south: [tu + pd + pw + pd, tv + pd, pw, ph],
-    west: [tu, tv + pd, pd, ph],
-    east: [tu + pd + pw, tv + pd, pd, ph],
-    top: [tu + pd, tv, pw, pd],
-    bottom: [tu + pd + pw, tv, pw, pd],
-  };
-
-  const hx = w / 2;
-  const hy = h / 2;
-  const hz = d / 2;
-  // Corners run bottom-left, bottom-right, top-right, top-left as seen from
-  // outside the face, so the texture lands the right way up and unmirrored.
-  const faces = [
-    { key: 'north', shade: 0.8, quad: [[hx, -hy, hz], [-hx, -hy, hz], [-hx, hy, hz], [hx, hy, hz]] },
-    { key: 'south', shade: 0.8, quad: [[-hx, -hy, -hz], [hx, -hy, -hz], [hx, hy, -hz], [-hx, hy, -hz]] },
-    { key: 'east', shade: 0.65, quad: [[hx, -hy, -hz], [hx, -hy, hz], [hx, hy, hz], [hx, hy, -hz]] },
-    { key: 'west', shade: 0.65, quad: [[-hx, -hy, hz], [-hx, -hy, -hz], [-hx, hy, -hz], [-hx, hy, hz]] },
-    { key: 'top', shade: 1, quad: [[-hx, hy, hz], [hx, hy, hz], [hx, hy, -hz], [-hx, hy, -hz]] },
-    { key: 'bottom', shade: 0.5, quad: [[-hx, -hy, -hz], [hx, -hy, -hz], [hx, -hy, hz], [-hx, -hy, hz]] },
-  ];
-  const corners = [[0, 1], [1, 1], [1, 0], [0, 0]];
-
-  for (const face of faces) {
-    const [rx, ry, rw, rh] = rects[face.key];
-    const u0 = uOf(rx);
-    const u1 = uOf(rx + rw);
-    const v0 = vOf(ry);
-    const v1 = vOf(ry + rh);
+  for (const face of part.faces) {
+    const { pos, uv, shade } = face;
     for (const index of [0, 1, 2, 0, 2, 3]) {
-      const [lx, ly, lz] = face.quad[index];
-      const [cu, cv] = corners[index];
+      const [lx, ly, lz] = pos[index];
       out[offset++] = part.x + lx * cos - lz * sin;
       out[offset++] = part.y + ly;
       out[offset++] = part.z + lx * sin + lz * cos;
-      out[offset++] = cu ? u1 : u0;
-      out[offset++] = cv ? v1 : v0;
-      out[offset++] = face.shade;
-      out[offset++] = face.shade;
-      out[offset++] = face.shade;
+      out[offset++] = uv[index][0] / width;
+      out[offset++] = (mob.y + uv[index][1]) / height;
+      out[offset++] = shade;
+      out[offset++] = shade;
+      out[offset++] = shade;
     }
   }
   return offset;
