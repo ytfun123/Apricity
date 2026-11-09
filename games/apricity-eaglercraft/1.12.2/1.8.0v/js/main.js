@@ -244,7 +244,7 @@ const ui = new UI({
     ui.renderServers(servers);
   },
   onResume: () => resumeGame(),
-  onQuit: () => quitToTitle(),
+  onQuit: () => quitToTitle({ launcher: true }),
   onCancelConnect: () => {
     // Also covers the kicked case: drop the session and reset back to the title.
     stopSession();
@@ -304,7 +304,7 @@ const ui = new UI({
     state.player = null;
     state.worldRecord = null;
     clearChunks();
-    ui.showQuitNotice();
+    backToLauncher();
   },
 });
 
@@ -980,7 +980,15 @@ function resumeGame() {
   requestLock();
 }
 
-function quitToTitle() {
+// The launcher page that started this build sits two folders up:
+// <launcher>/1.12.2/1.8.0v/ -> <launcher>/.
+const LAUNCHER_URL = '../../';
+
+function backToLauncher() {
+  window.location.href = LAUNCHER_URL;
+}
+
+function quitToTitle({ launcher = false } = {}) {
   if (saveProgress()) ui.toast('World saved');
   stopSession();
   document.exitPointerLock?.();
@@ -991,7 +999,8 @@ function quitToTitle() {
   state.mobs = null;
   state.worldRecord = null;
   clearChunks();
-  ui.showScreen('title');
+  if (launcher) backToLauncher();
+  else ui.showScreen('title');
 }
 
 // ── input ──────────────────────────────────────────────────────────────────
