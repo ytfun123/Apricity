@@ -44,7 +44,21 @@
     background: #0f1620; border: 1px solid #22303e; border-radius: 3px; padding: 3px 10px;
   }
   button:hover:not(:disabled) { border-color: #35506b; color: #fff; }
-  button.on { border-color: var(--pick); color: var(--pick); background: #0c1622; }
+  select {
+    font: inherit; font-size: 12px; color: var(--pick); cursor: pointer;
+    background-color: #0c1622; border: 1px solid #22303e; border-radius: 3px;
+    padding: 3px 26px 3px 8px; min-width: 140px;
+    appearance: none; -webkit-appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--dim) 50%),
+      linear-gradient(135deg, var(--dim) 50%, transparent 50%);
+    background-position: calc(100% - 14px) calc(50% + 1px), calc(100% - 9px) calc(50% + 1px);
+    background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+  }
+  select:hover { border-color: #35506b; }
+  select:focus-visible { outline: none; border-color: var(--pick); }
+  select option { background: #0b0f14; color: var(--text); }
+  select option:checked { color: var(--pick); }
   button#go {
     color: #0b1210; background: var(--ok); border-color: var(--ok);
     font-weight: 700; padding: 4px 20px;
@@ -67,8 +81,8 @@
 <main id="log" aria-live="polite"></main>
 
 <div id="prompt">
-  <div class="row"><span class="key">minecraft version</span><span id="minecraft" class="row"></span></div>
-  <div class="row"><span class="key">game version</span><span id="game" class="row"></span></div>
+  <div class="row"><label class="key" for="minecraft">minecraft version</label><select id="minecraft"></select></div>
+  <div class="row"><label class="key" for="game">game version</label><select id="game"></select></div>
   <div class="row"><button id="go" type="button">launch</button><span id="where"></span></div>
 </div>
 
@@ -126,31 +140,56 @@
     try { localStorage.setItem('apricity.launcher', JSON.stringify(pick)); } catch {}
   }
 
-  function draw() {
-    for (const kind of ['minecraft', 'game']) {
-      const options = kind === 'minecraft' ? Object.keys(VERSIONS) : VERSIONS[pick.minecraft];
-      lists[kind].textContent = '';
-      for (const id of options) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = id;
-        button.className = id === pick[kind] ? 'on' : '';
-        button.addEventListener('click', () => {
-          if (pick[kind] === id) return;
-          pick[kind] = id;
-          if (kind === 'minecraft' && !VERSIONS[pick.minecraft].includes(pick.game)) {
-            pick.game = VERSIONS[pick.minecraft][0];
-          }
-          save();
-          log('picker', kind + ' ' + id, 'pick');
-          draw();
-        });
-        lists[kind].appendChild(button);
+  // Newest first: the dropdown reads 1.12.2, then 1.10.2, then 1.8.0v. Numbers
+  // compare as numbers so 1.10 beats 1.8, and a trailing letter (1.8.0v) breaks
+  // ties, which is all the version names these folders use need.
+  function newestFirst(a, b) {
+    const parts = (v) => v.match(/\d+|[a-z]+/gi) ?? [v];
+    const left = parts(a);
+    const right = parts(b);
+    for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+      const l = left[i] ?? '';
+      const r = right[i] ?? '';
+      if (/^\d+$/.test(l) && /^\d+$/.test(r)) {
+        if (Number(l) !== Number(r)) return Number(r) - Number(l);
+      } else if (l !== r) {
+        return l > r ? -1 : 1;
       }
     }
+    return 0;
+  }
+
+  function fill(kind, ids) {
+    const select = lists[kind];
+    select.textContent = '';
+    for (const id of [...ids].sort(newestFirst)) {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = id;
+      select.appendChild(option);
+    }
+    select.value = pick[kind];
+  }
+
+  function draw() {
+    fill('minecraft', Object.keys(VERSIONS));
+    fill('game', VERSIONS[pick.minecraft]);
     const target = pick.minecraft + '/' + pick.game;
     whereEl.textContent = './' + target + '/';
     buildEl.textContent = pick.minecraft + ' / ' + pick.game;
+  }
+
+  for (const kind of ['minecraft', 'game']) {
+    lists[kind].addEventListener('change', (event) => {
+      pick[kind] = event.target.value;
+      // A different Minecraft version may not ship the build that was picked.
+      if (kind === 'minecraft' && !VERSIONS[pick.minecraft].includes(pick.game)) {
+        pick.game = VERSIONS[pick.minecraft][0];
+      }
+      save();
+      log('picker', kind + ' ' + pick[kind], 'pick');
+      draw();
+    });
   }
 
   goBtn.addEventListener('click', () => {
