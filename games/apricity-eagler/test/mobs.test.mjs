@@ -150,10 +150,11 @@ check('every animal samples only its own skin', () => {
   for (const [kind, type] of Object.entries(MOB_TYPES)) {
     const model = MOB_MODELS[type.model];
     assert.ok(model, `${kind} has no model`);
-    const skin = atlas.mobs[model.texture];
-    assert.ok(skin, `${kind} has no slot in the mob atlas`);
     assert.ok(model.parts.length >= 3, `${kind} has only ${model.parts.length} parts`);
     for (const part of model.parts) {
+      // A part may name its own skin: the sheep's wool layer is a second one.
+      const skin = atlas.mobs[part.texture ?? model.texture];
+      assert.ok(skin, `${kind} part has no slot in the mob atlas`);
       assert.equal(part.faces.length, 6, `${kind} part without six faces`);
       assert.ok(part.at.every((n) => Number.isFinite(n)), `${kind} part has no position`);
       for (const face of part.faces) {

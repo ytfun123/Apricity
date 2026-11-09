@@ -125,7 +125,7 @@ function rotate(v, rx, ry) {
  * a straight port of ModelBox and TexturedQuad, so a box shows exactly the patch
  * of skin it shows in game — which is the whole point of copying the textures.
  */
-function box(uv, size, centre, { grow = 0, rx = 0, ry = 0 } = {}) {
+function box(uv, size, centre, { grow = 0, rx = 0, ry = 0, texture = null } = {}) {
   const [w, h, d] = size;
   const hw = w / 2 + grow;
   const hh = h / 2 + grow;
@@ -186,7 +186,7 @@ function box(uv, size, centre, { grow = 0, rx = 0, ry = 0 } = {}) {
 
     faces.push({ pos, uv: uvCorners, shade });
   }
-  return { at: at(...centre), size, faces };
+  return { at: at(...centre), size, faces, texture };
 }
 
 /**
@@ -230,18 +230,28 @@ const MODELS = {
       box([0, 16], [4, 12, 4], [4, 18, -6]),
     ],
   },
-  // A sheep in game is the wool coat, ModelSheep2, over the shaved skin. The
-  // wool is thinner than the skin it covers, which is what the grow is for.
+  // 1.12.2 draws a sheep twice: the shaved sheep, which carries the face, and
+  // then the wool coat over it as a render layer. The coat's head is two pixels
+  // shorter at the front, which is the only reason the face still shows.
   sheep: {
-    texture: 'sheep_fur',
+    texture: 'sheep',
     scale: 1,
     parts: [
-      box([0, 0], [6, 6, 8], [0, 5, -10], { grow: 0.6 }),
-      box([28, 8], [8, 16, 6], [0, 9, 0], { grow: 1.75, rx: HALF_TURN }),
+      // ModelSheep2, the skin: head, body and full-length legs.
+      box([0, 0], [6, 6, 8], [0, 5, -10]),
+      box([28, 8], [8, 16, 6], [0, 9, 0], { rx: HALF_TURN }),
       box([0, 16], [4, 12, 4], [-3, 18, 7]),
       box([0, 16], [4, 12, 4], [3, 18, 7]),
       box([0, 16], [4, 12, 4], [-3, 18, -5]),
       box([0, 16], [4, 12, 4], [3, 18, -5]),
+      // ModelSheep1, the wool layer: same shapes, inflated, with a short head
+      // and legs that only cover the fluffy top half.
+      box([0, 0], [6, 6, 6], [0, 5, -9], { grow: 0.6, texture: 'sheep_fur' }),
+      box([28, 8], [8, 16, 6], [0, 9, 0], { grow: 1.75, rx: HALF_TURN, texture: 'sheep_fur' }),
+      box([0, 16], [4, 6, 4], [-3, 15, 7], { grow: 0.5, texture: 'sheep_fur' }),
+      box([0, 16], [4, 6, 4], [3, 15, 7], { grow: 0.5, texture: 'sheep_fur' }),
+      box([0, 16], [4, 6, 4], [-3, 15, -5], { grow: 0.5, texture: 'sheep_fur' }),
+      box([0, 16], [4, 6, 4], [3, 15, -5], { grow: 0.5, texture: 'sheep_fur' }),
     ],
   },
   chicken: {
@@ -292,6 +302,7 @@ function scaledParts(model) {
   const k = model.scale / 16;
   cached = model.parts.map((part) => ({
     at: part.at,
+    texture: part.texture,
     faces: part.faces.map((face) => ({
       shade: face.shade,
       pos: face.pos.map(([x, y, z]) => [x * k, y * k, z * k]),
@@ -447,7 +458,7 @@ export class Mob {
     for (const part of scaledParts(model)) {
       const [px, py, pz] = part.at;
       out.push({
-        mob: model.texture,
+        mob: part.texture ?? model.texture,
         x: this.x + (px * cos - pz * sin) * k,
         y: this.y + py * k,
         z: this.z + (px * sin + pz * cos) * k,

@@ -1,6 +1,6 @@
 {
   "width": 64,
-  "height": 160,
+  "height": 192,
   "tileHeight": 32,
   "mobs": {
     "pig": {
@@ -13,18 +13,23 @@
       "width": 64,
       "height": 32
     },
-    "sheep_fur": {
+    "sheep": {
       "y": 64,
       "width": 64,
       "height": 32
     },
-    "chicken": {
+    "sheep_fur": {
       "y": 96,
       "width": 64,
       "height": 32
     },
-    "rabbit": {
+    "chicken": {
       "y": 128,
+      "width": 64,
+      "height": 32
+    },
+    "rabbit": {
+      "y": 160,
       "width": 64,
       "height": 32
     }

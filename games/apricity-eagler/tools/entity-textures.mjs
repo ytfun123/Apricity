@@ -3,6 +3,7 @@
 //
 //   assets/mob/pig.png      the copied 64x32 entity texture, untouched pixels
 //   assets/mob/cow.png
+//   assets/mob/sheep.png
 //   assets/mob/sheep_fur.png
 //   assets/mob/chicken.png
 //   assets/mob/rabbit.png
@@ -31,7 +32,10 @@ const PREFIX = 'assets/minecraft/';
 const MOBS = [
   ['pig', ['textures/entity/pig/pig.png']],
   ['cow', ['textures/entity/cow/cow.png']],
-  ['sheep_fur', ['textures/entity/sheep/sheep_fur.png', 'textures/entity/sheep/sheep.png']],
+  // Both sheep skins: the shaved one carries the face, the fur one is the coat
+  // drawn over it.
+  ['sheep', ['textures/entity/sheep/sheep.png']],
+  ['sheep_fur', ['textures/entity/sheep/sheep_fur.png']],
   ['chicken', ['textures/entity/chicken.png']],
   ['rabbit', ['textures/entity/rabbit/rabbit_brown.png', 'textures/entity/rabbit/brown.png', 'textures/entity/rabbit/white.png']],
 ];
