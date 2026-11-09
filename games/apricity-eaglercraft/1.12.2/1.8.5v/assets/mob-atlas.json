@@ -1,0 +1,42 @@
+{
+  "width": 64,
+  "height": 448,
+  "tileHeight": 64,
+  "mobs": {
+    "pig": {
+      "y": 0,
+      "width": 64,
+      "height": 32
+    },
+    "cow": {
+      "y": 64,
+      "width": 64,
+      "height": 32
+    },
+    "sheep": {
+      "y": 128,
+      "width": 64,
+      "height": 32
+    },
+    "sheep_fur": {
+      "y": 192,
+      "width": 64,
+      "height": 32
+    },
+    "chicken": {
+      "y": 256,
+      "width": 64,
+      "height": 32
+    },
+    "rabbit": {
+      "y": 320,
+      "width": 64,
+      "height": 32
+    },
+    "steve": {
+      "y": 384,
+      "width": 64,
+      "height": 64
+    }
+  }
+}
