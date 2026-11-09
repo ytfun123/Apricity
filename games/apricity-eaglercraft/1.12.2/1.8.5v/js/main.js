@@ -363,12 +363,7 @@ const ui = new UI({
   onInventorySlot: (container, index, detail) => handleInventorySlot(container, index, detail),
   onFurnaceSlot: (name, detail) => handleFurnaceSlot(name, detail),
   onOpenCreative: () => openCreative(),
-  onPickBlock: (id) => {
-    state.hotbar[state.selectedSlot] = slot(id, Math.min(itemStackLimit(id), 64));
-    selectSlot(state.selectedSlot);
-    playClick();
-    ui.toast(`Picked ${itemName(id)}`);
-  },
+  onPickBlock: (id) => pickBlock(id),
   onCraftSlot: (index, size, detail) => handleCraftSlot(index, size, detail),
   onCraftResult: (size, detail) => handleCraftResult(size, detail),
   getCreativeIds: (tab, query) => creativeIds(tab, query),
@@ -808,6 +803,19 @@ function handleCraftResult(size, { shift = false } = {}) {
   ui.toast(`Crafted ${itemName(crafted.id)} x${crafted.count}`);
 }
 
+/**
+ * 1.12.2's pick block: copy something into the selected slot so it is in your
+ * hand straight away. The creative palette calls this with the item you click,
+ * and middle-clicking the world calls it with the block under the crosshair.
+ */
+function pickBlock(id) {
+  if (!id) return;
+  state.hotbar[state.selectedSlot] = slot(id, Math.min(itemStackLimit(id), 64));
+  selectSlot(state.selectedSlot);
+  playClick();
+  ui.toast(`Picked ${itemName(id)}`);
+}
+
 /** Ids the creative menu shows for a tab, narrowed by the search box. */
 function creativeIds(tab, query) {
   const text = String(query ?? '').toLowerCase().trim();
@@ -1216,6 +1224,11 @@ canvas.addEventListener('mousedown', (event) => {
       return;
     }
     if (placeBlockAt(hit)) state.nextPlaceAt = performance.now() + PLACE_INTERVAL;
+  } else if (event.button === 1) {
+    // Middle click copies the block under the crosshair into your hand, which is
+    // what pick block does in 1.12.2 -- the same copy the creative palette does.
+    event.preventDefault();
+    if (hit) pickBlock(hit.id);
   }
 });
 
