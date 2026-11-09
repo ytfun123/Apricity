@@ -53,6 +53,16 @@ const FALLBACK_STRINGS = {
   clickToPlay: 'Click to play',
 };
 
+// What the launcher can start. The Minecraft version is the world format and
+// protocol this client speaks; the game version is the build of the client
+// itself. Adding an entry to either list is all it takes to offer it.
+export const LAUNCHER_VERSIONS = {
+  minecraft: [{ id: '1.12.2', label: '1.12.2' }],
+  game: [{ id: '1.8.0v', label: '1.8.0v' }],
+};
+
+const LAUNCHER_KEY = 'apricity.launcher';
+
 // Not full cubes, so 1.12.2 draws these as their flat sprite rather than a cube.
 const FLAT_BLOCKS = new Set([6, 50, 51, 59, 65, 66, 78, 83, 106, 111]);
 
@@ -78,6 +88,7 @@ export class UI {
     this.strings = { ...FALLBACK_STRINGS };
     this.splashes = ['Eagler!'];
     this.screens = {
+      launcher: $('screen-launcher'),
       title: $('screen-title'),
       worlds: $('screen-worlds'),
       servers: $('screen-servers'),
@@ -125,9 +136,12 @@ export class UI {
     this.creativeQuery = '';
     this.craftState = null;
     this.tableState = null;
+    this.launcher = { minecraft: LAUNCHER_VERSIONS.minecraft[0].id, game: LAUNCHER_VERSIONS.game[0].id };
 
+    this.loadLauncherChoice();
     this.wire();
     this.applyLabels();
+    this.renderLauncher();
   }
 
   /** Load the pack's font, its strings and its splash list, then draw everything. */
@@ -163,6 +177,7 @@ export class UI {
     this.renderOptions();
     this.renderWorlds(this.handlers.getWorlds?.() ?? []);
     this.renderServers(this.handlers.getServers?.() ?? []);
+    this.renderLauncher();
   }
 
   wire() {
@@ -197,6 +212,7 @@ export class UI {
       this.buildCreative();
     });
 
+    on('btn-launch', () => this.handlers.onLaunch?.());
     on('btn-singleplayer', () => this.handlers.onSingleplayer?.());
     on('btn-multiplayer', () => this.handlers.onMultiplayer?.());
     on('btn-options', () => this.handlers.onOpenOptions?.());
@@ -306,12 +322,18 @@ export class UI {
     put('btn-statistics', s.statistics);
     put('btn-pause-options', s.options);
     put('btn-quit', s.saveQuit);
-    put('pause-footer', 'Minecraft 1.12.2', 1);
+    put('pause-footer', `Minecraft ${this.launcher.minecraft} - ${this.launcher.game}`, 1);
     put('btn-cancel-connect', s.cancel);
     put('inventory-title', s.inventory);
     put('btn-open-creative', s.creative);
     put('click-to-play', s.clickToPlay);
-    put('title-bottom-left', 'Minecraft 1.12.2', 1);
+    put('title-bottom-left', `Minecraft ${this.launcher.minecraft} - ${this.launcher.game}`, 1);
+    put('launcher-title', 'Apricity Eagler');
+    put('launcher-subtitle', 'Choose a version, then launch');
+    put('launcher-mc-label', 'Minecraft version');
+    put('launcher-game-label', 'Game version');
+    put('btn-launch', 'Launch');
+    put('launcher-footer', `${this.launcher.minecraft} / ${this.launcher.game}`, 1);
     put('title-bottom-right', 'Not affiliated with Mojang or Microsoft', 1);
     if (this.debugLines.length) this.setDebug(this.lastDebug ?? '');
     put('connect-title', this.connectTitle?.dataset.text || s.connecting);
@@ -410,6 +432,57 @@ export class UI {
 
       this.optionsMenu.appendChild(slider);
     }
+  }
+
+  /* ── launcher ────────────────────────────────────────────────────────── */
+
+  /** The last version picked, or the only one there is. */
+  loadLauncherChoice() {
+    const first = (kind) => LAUNCHER_VERSIONS[kind][0].id;
+    try {
+      const saved = JSON.parse(localStorage.getItem(LAUNCHER_KEY) || 'null');
+      for (const kind of ['minecraft', 'game']) {
+        const known = LAUNCHER_VERSIONS[kind].some((entry) => entry.id === saved?.[kind]);
+        this.launcher[kind] = known ? saved[kind] : first(kind);
+      }
+    } catch {
+      this.launcher = { minecraft: first('minecraft'), game: first('game') };
+    }
+  }
+
+  saveLauncherChoice() {
+    try {
+      localStorage.setItem(LAUNCHER_KEY, JSON.stringify(this.launcher));
+    } catch {
+      // A private window can refuse storage; the pick still holds this run.
+    }
+  }
+
+  /** Draw both version rows, marking the one that is picked. */
+  renderLauncher() {
+    const build = (host, kind) => {
+      if (!host) return;
+      host.innerHTML = '';
+      for (const entry of LAUNCHER_VERSIONS[kind]) {
+        const button = document.createElement('button');
+        button.className = 'mc-button launcher-choice';
+        button.dataset.version = entry.id;
+        button.addEventListener('click', () => this.pickVersion(kind, entry.id));
+        if (this.launcher[kind] === entry.id) button.classList.add('selected');
+        setText(button, entry.label);
+        host.appendChild(button);
+      }
+    };
+    build($('launcher-mc-list'), 'minecraft');
+    build($('launcher-game-list'), 'game');
+  }
+
+  pickVersion(kind, id) {
+    this.launcher[kind] = id;
+    this.saveLauncherChoice();
+    this.renderLauncher();
+    // The title and pause footers name the pair that was picked.
+    this.applyLabels();
   }
 
   /* ── screens ─────────────────────────────────────────────────────────── */

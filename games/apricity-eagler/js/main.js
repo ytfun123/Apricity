@@ -201,6 +201,7 @@ function scanAroundPlayer(radius) {
 // ── UI ─────────────────────────────────────────────────────────────────────
 
 const ui = new UI({
+  onLaunch: () => ui.showScreen('title'),
   onSingleplayer: () => {
     ui.renderWorlds(loadWorlds());
     ui.showScreen('worlds');
@@ -910,6 +911,8 @@ function joinServer(server) {
   const session = new MultiplayerSession({
     address: server.address,
     username: ui.getNickname(),
+    // The launcher's game version is what the server is told we run.
+    clientVersion: ui.launcher.game,
     world,
     handlers: {
       onLog: (line) => ui.log(line),
@@ -1541,7 +1544,7 @@ function spawnDrops(hit) {
 resize();
 applyOptions();
 ui.init();
-ui.showScreen('title');
+ui.showScreen('launcher');
 ui.renderWorlds(loadWorlds());
 ui.renderServers(loadServers());
 selectSlot(0);
