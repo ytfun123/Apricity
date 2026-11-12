@@ -2273,6 +2273,14 @@ function generateFingerprint() {
                                 <option value="fr">Français</option>
                                 <option value="de">Deutsch</option>
                                 <option value="pt-BR">Português (Brasil)</option>
+                                <option value="it">Italiano</option>
+                                <option value="nl">Nederlands</option>
+                                <option value="pl">Polski</option>
+                                <option value="ru">Русский</option>
+                                <option value="tr">Türkçe</option>
+                                <option value="ja">日本語</option>
+                                <option value="zh">中文</option>
+                                <option value="hi">हिन्दी</option>
                             </select>
                         </div>
                     </div>
@@ -4654,7 +4662,15 @@ function generateFingerprint() {
         'es': 'Español',
         'fr': 'Français',
         'de': 'Deutsch',
-        'pt-BR': 'Português (Brasil)'
+        'pt-BR': 'Português (Brasil)',
+        'it': 'Italiano',
+        'nl': 'Nederlands',
+        'pl': 'Polski',
+        'ru': 'Русский',
+        'tr': 'Türkçe',
+        'ja': '日本語',
+        'zh': '中文',
+        'hi': 'हिन्दी'
     };
 
     const APRICITY_STRINGS = {
@@ -4682,6 +4698,219 @@ function generateFingerprint() {
         'lang.name': { en: "Interface Language", es: "Idioma de la interfaz", fr: "Langue de l'interface", de: "Sprache der Oberfläche", 'pt-BR': "Idioma da interface" },
         'lang.desc': { en: "Changes the language of the Apricity menus, buttons and settings. Games and apps keep their own language.", es: "Cambia el idioma de los menús, botones y ajustes de Apricity. Los juegos y las apps mantienen su propio idioma.", fr: "Change la langue des menus, boutons et paramètres d'Apricity. Les jeux et applis gardent leur propre langue.", de: "Ändert die Sprache der Menüs, Schaltflächen und Einstellungen von Apricity. Spiele und Apps behalten ihre eigene Sprache.", 'pt-BR': "Muda o idioma dos menus, botões e ajustes do Apricity. Os jogos e apps mantêm o próprio idioma." }
     };
+
+    // Languages added later live in their own table, one block per language,
+    // and get folded into APRICITY_STRINGS at load. Adding a language is then a
+    // single self-contained block instead of 23 separate line edits above.
+    const APRICITY_LANG_TABLES = {
+        'it': {
+            'home.searchPh': "Digita per iniziare a cercare...",
+            'home.apps': "App",
+            'home.games': "Giochi",
+            'home.movies': "Film",
+            'home.youtube': "YouTube",
+            'home.chillcord': "Chillcord",
+            'home.console': "Console",
+            'home.updateLog': "Registro aggiornamenti",
+            'games.title': "Giochi",
+            'games.all': "Tutti i giochi",
+            'apps.all': "Tutte le app",
+            'utopia.title': "Giochi Utopia",
+            'games.searchPh': "Cerca giochi...",
+            'saves.export': "Esporta salvataggi",
+            'saves.import': "Importa salvataggi",
+            'customize.title': "Personalizza",
+            'tab.themes': "Temi",
+            'tab.backgrounds': "Sfondi",
+            'tab.settings': "Impostazioni",
+            'modal.close': "Chiudi",
+            'lang.sectionTitle': "Lingua",
+            'lang.name': "Lingua dell'interfaccia",
+            'lang.desc': "Cambia la lingua dei menu, dei pulsanti e delle impostazioni di Apricity. Giochi e app mantengono la propria lingua."
+        },
+        'nl': {
+            'home.searchPh': "Typ om te beginnen met zoeken...",
+            'home.apps': "Apps",
+            'home.games': "Spellen",
+            'home.movies': "Films",
+            'home.youtube': "YouTube",
+            'home.chillcord': "Chillcord",
+            'home.console': "Console",
+            'home.updateLog': "Wijzigingenlog",
+            'games.title': "Spellen",
+            'games.all': "Alle spellen",
+            'apps.all': "Alle apps",
+            'utopia.title': "Utopia-spellen",
+            'games.searchPh': "Spellen zoeken...",
+            'saves.export': "Voortgang exporteren",
+            'saves.import': "Voortgang importeren",
+            'customize.title': "Aanpassen",
+            'tab.themes': "Thema's",
+            'tab.backgrounds': "Achtergronden",
+            'tab.settings': "Instellingen",
+            'modal.close': "Sluiten",
+            'lang.sectionTitle': "Taal",
+            'lang.name': "Taal van de interface",
+            'lang.desc': "Verandert de taal van de menu's, knoppen en instellingen van Apricity. Spellen en apps houden hun eigen taal."
+        },
+        'pl': {
+            'home.searchPh': "Zacznij pisać, aby wyszukać...",
+            'home.apps': "Aplikacje",
+            'home.games': "Gry",
+            'home.movies': "Filmy",
+            'home.youtube': "YouTube",
+            'home.chillcord': "Chillcord",
+            'home.console': "Konsola",
+            'home.updateLog': "Dziennik zmian",
+            'games.title': "Gry",
+            'games.all': "Wszystkie gry",
+            'apps.all': "Wszystkie aplikacje",
+            'utopia.title': "Gry Utopia",
+            'games.searchPh': "Szukaj gier...",
+            'saves.export': "Eksportuj zapisy",
+            'saves.import': "Importuj zapisy",
+            'customize.title': "Dostosuj",
+            'tab.themes': "Motywy",
+            'tab.backgrounds': "Tła",
+            'tab.settings': "Ustawienia",
+            'modal.close': "Zamknij",
+            'lang.sectionTitle': "Język",
+            'lang.name': "Język interfejsu",
+            'lang.desc': "Zmienia język menu, przycisków i ustawień Apricity. Gry i aplikacje zachowują własny język."
+        },
+        'ru': {
+            'home.searchPh': "Начните вводить для поиска...",
+            'home.apps': "Приложения",
+            'home.games': "Игры",
+            'home.movies': "Фильмы",
+            'home.youtube': "YouTube",
+            'home.chillcord': "Chillcord",
+            'home.console': "Консоль",
+            'home.updateLog': "Журнал обновлений",
+            'games.title': "Игры",
+            'games.all': "Все игры",
+            'apps.all': "Все приложения",
+            'utopia.title': "Игры Utopia",
+            'games.searchPh': "Поиск игр...",
+            'saves.export': "Экспорт сохранений",
+            'saves.import': "Импорт сохранений",
+            'customize.title': "Настроить",
+            'tab.themes': "Темы",
+            'tab.backgrounds': "Фоны",
+            'tab.settings': "Настройки",
+            'modal.close': "Закрыть",
+            'lang.sectionTitle': "Язык",
+            'lang.name': "Язык интерфейса",
+            'lang.desc': "Меняет язык меню, кнопок и настроек Apricity. Игры и приложения сохраняют свой язык."
+        },
+        'tr': {
+            'home.searchPh': "Aramak için yazmaya başlayın...",
+            'home.apps': "Uygulamalar",
+            'home.games': "Oyunlar",
+            'home.movies': "Filmler",
+            'home.youtube': "YouTube",
+            'home.chillcord': "Chillcord",
+            'home.console': "Konsol",
+            'home.updateLog': "Güncelleme Kaydı",
+            'games.title': "Oyunlar",
+            'games.all': "Tüm Oyunlar",
+            'apps.all': "Tüm Uygulamalar",
+            'utopia.title': "Utopia Oyunları",
+            'games.searchPh': "Oyun ara...",
+            'saves.export': "Kayıtları dışa aktar",
+            'saves.import': "Kayıtları içe aktar",
+            'customize.title': "Özelleştir",
+            'tab.themes': "Temalar",
+            'tab.backgrounds': "Arka planlar",
+            'tab.settings': "Ayarlar",
+            'modal.close': "Kapat",
+            'lang.sectionTitle': "Dil",
+            'lang.name': "Arayüz Dili",
+            'lang.desc': "Apricity menülerinin, düğmelerinin ve ayarlarının dilini değiştirir. Oyunlar ve uygulamalar kendi dilini korur."
+        },
+        'ja': {
+            'home.searchPh': "検索するには入力してください...",
+            'home.apps': "アプリ",
+            'home.games': "ゲーム",
+            'home.movies': "映画",
+            'home.youtube': "YouTube",
+            'home.chillcord': "Chillcord",
+            'home.console': "コンソール",
+            'home.updateLog': "更新履歴",
+            'games.title': "ゲーム",
+            'games.all': "すべてのゲーム",
+            'apps.all': "すべてのアプリ",
+            'utopia.title': "Utopia ゲーム",
+            'games.searchPh': "ゲームを検索...",
+            'saves.export': "セーブを書き出す",
+            'saves.import': "セーブを読み込む",
+            'customize.title': "カスタマイズ",
+            'tab.themes': "テーマ",
+            'tab.backgrounds': "背景",
+            'tab.settings': "設定",
+            'modal.close': "閉じる",
+            'lang.sectionTitle': "言語",
+            'lang.name': "表示言語",
+            'lang.desc': "Apricity のメニュー・ボタン・設定の言語を変更します。ゲームとアプリはそれぞれの言語のままです。"
+        },
+        'zh': {
+            'home.searchPh': "输入以开始搜索...",
+            'home.apps': "应用",
+            'home.games': "游戏",
+            'home.movies': "电影",
+            'home.youtube': "YouTube",
+            'home.chillcord': "Chillcord",
+            'home.console': "控制台",
+            'home.updateLog': "更新日志",
+            'games.title': "游戏",
+            'games.all': "所有游戏",
+            'apps.all': "所有应用",
+            'utopia.title': "Utopia 游戏",
+            'games.searchPh': "搜索游戏...",
+            'saves.export': "导出存档",
+            'saves.import': "导入存档",
+            'customize.title': "自定义",
+            'tab.themes': "主题",
+            'tab.backgrounds': "背景",
+            'tab.settings': "设置",
+            'modal.close': "关闭",
+            'lang.sectionTitle': "语言",
+            'lang.name': "界面语言",
+            'lang.desc': "更改 Apricity 菜单、按钮和设置的语言。游戏和应用保持各自的语言。"
+        },
+        'hi': {
+            'home.searchPh': "खोजना शुरू करने के लिए टाइप करें...",
+            'home.apps': "ऐप्स",
+            'home.games': "गेम्स",
+            'home.movies': "फ़िल्में",
+            'home.youtube': "YouTube",
+            'home.chillcord': "Chillcord",
+            'home.console': "कंसोल",
+            'home.updateLog': "अपडेट लॉग",
+            'games.title': "गेम्स",
+            'games.all': "सभी गेम्स",
+            'apps.all': "सभी ऐप्स",
+            'utopia.title': "यूटोपिया गेम्स",
+            'games.searchPh': "गेम्स खोजें...",
+            'saves.export': "सेव निर्यात करें",
+            'saves.import': "सेव आयात करें",
+            'customize.title': "अनुकूलित करें",
+            'tab.themes': "थीम",
+            'tab.backgrounds': "बैकग्राउंड",
+            'tab.settings': "सेटिंग्स",
+            'modal.close': "बंद करें",
+            'lang.sectionTitle': "भाषा",
+            'lang.name': "इंटरफ़ेस भाषा",
+            'lang.desc': "Apricity के मेनू, बटन और सेटिंग्स की भाषा बदलता है। गेम्स और ऐप्स अपनी भाषा में ही रहते हैं।"
+        }
+    };
+
+    Object.keys(APRICITY_LANG_TABLES).forEach(lang => {
+        const table = APRICITY_LANG_TABLES[lang];
+        Object.keys(table).forEach(key => {
+            if (APRICITY_STRINGS[key]) APRICITY_STRINGS[key][lang] = table[key];
+        });
+    });
 
     function apricityLang() {
         try { return localStorage.getItem('apricity-language') || 'en'; } catch (e) { return 'en'; }
@@ -7571,6 +7800,9 @@ function generateFingerprint() {
 
     function showConsolePage() {
         document.getElementById('console-page').style.display = 'flex';
+        // Lets the CSS hide the floating Discord/TikTok dock while the console
+        // is up — those two buttons sat on top of the terminal otherwise.
+        document.body.classList.add('console-open');
         document.getElementById('home-page').classList.remove('active');
         updateBgLayerVisibility();
         if (consoleStyle === 'cli') {
@@ -7595,6 +7827,7 @@ function generateFingerprint() {
 
     function hideConsolePage() {
         document.getElementById('console-page').style.display = 'none';
+        document.body.classList.remove('console-open');
         document.getElementById('home-page').classList.add('active');
         updateBgLayerVisibility();
     }
@@ -8505,6 +8738,7 @@ function generateFingerprint() {
         '.social-popup-open{width:100%;padding:12px;border-radius:14px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:var(--font-ui);font-size:14px;font-weight:600;cursor:pointer;}',
         '.social-popup-open:hover{opacity:0.9;}',
         '@media (max-width:600px){#apricity-socials{left:10px;bottom:10px;}.soc-btn{padding:7px 11px;font-size:11.5px;}}',
+        'body.console-open #apricity-socials, body.console-open #social-popup{display:none !important;}',
         'body:has(#sunlit-page.active, #desktop-page.active, #discord-page.active, #hollow-knight-page.active, #snow-rider-page.active, #search-page.active, #gemini-page.active, #meet-stable-page.active, #spotify-page.active, #youtube-page.yt-overlay-mode, #movies-page.mv-overlay-mode, #discord-page.discord-overlay-mode, #game-fullscreen-overlay.active, #gamesFsOverlay.active, #appsFsOverlay.active, #mv-player-overlay.active, #mv-detail-overlay.active) #apricity-socials,',
         'body:has(#sunlit-page.active, #desktop-page.active, #discord-page.active, #hollow-knight-page.active, #snow-rider-page.active, #search-page.active, #gemini-page.active, #meet-stable-page.active, #spotify-page.active, #youtube-page.yt-overlay-mode, #movies-page.mv-overlay-mode, #discord-page.discord-overlay-mode, #game-fullscreen-overlay.active, #gamesFsOverlay.active, #appsFsOverlay.active, #mv-player-overlay.active, #mv-detail-overlay.active) #social-popup{display:none !important;}'
     ].join('\n');
