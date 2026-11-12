@@ -2284,6 +2284,16 @@ function generateFingerprint() {
                                 <option value="uk">Українська</option>
                             </select>
                         </div>
+                        <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
+                            <canvas id="langFormQr" width="88" height="88" title="Open the language form"
+                                style="width:88px;height:88px;border-radius:10px;background:#fff;padding:5px;flex:none;border:1px solid var(--yt-border2);cursor:pointer;"
+                                onclick="openLangForm()"></canvas>
+                            <div>
+                                <div class="setting-desc" style="margin:0 0 5px;">Missing your language, or found a wrong translation? Tell us here.</div>
+                                <a href="https://bit.ly/apricity-language-form" target="_blank" rel="noopener"
+                                    style="font-size:12.5px;font-weight:600;color:var(--md-sys-color-primary);word-break:break-all;">https://bit.ly/apricity-language-form</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3339,6 +3349,7 @@ function generateFingerprint() {
     function openModal(tab) {
         document.getElementById('modalOverlay').style.display = 'flex';
         switchTab(tab);
+        renderLangFormQr();
     }
     function closeModal() {
         document.getElementById('modalOverlay').style.display = 'none';
@@ -4955,6 +4966,7 @@ function generateFingerprint() {
     // Customize modal translates without a data-i18n attribute on every node.
     // Anything that is not in this table stays as it is.
     const SETTINGS_I18N = {
+        'Missing your language, or found a wrong translation? Tell us here.': { es: "¿Falta tu idioma o has visto una traducción incorrecta? Cuéntanoslo aquí.", fr: "Votre langue manque, ou une traduction est fausse ? Dites-le-nous ici.", de: "Fehlt deine Sprache oder ist eine Übersetzung falsch? Sag es uns hier.", 'pt-BR': "Falta o seu idioma ou achou uma tradução errada? Fale com a gente aqui.", it: "Manca la tua lingua o hai trovato una traduzione sbagliata? Diccelo qui.", nl: "Ontbreekt jouw taal of is een vertaling fout? Laat het ons hier weten.", pl: "Brakuje Twojego języka lub znalazłeś złe tłumaczenie? Napisz nam tutaj.", ru: "Нет вашего языка или нашлась неверная фраза? Напишите нам здесь.", tr: "Diliniz yok mu ya da yanlış bir çeviri mi buldunuz? Buradan bize yazın.", ja: "言語がない、または翻訳が間違っている場合は、ここから教えてください。", zh: "缺少你的语言，或发现翻译有误？请在这里告诉我们。", hi: "आपकी भाषा नहीं है या कोई अनुवाद गलत है? हमें यहाँ बताएँ।", uk: "Немає вашої мови або знайшли помилковий переклад? Напишіть нам тут." },
         'Tab System': { es: "Sistema de pestañas", fr: "Système d'onglets", de: "Tab-System", 'pt-BR': "Sistema de abas", it: "Sistema delle schede", nl: "Tabbensysteem", pl: "System kart", ru: "Система вкладок", tr: "Sekme Sistemi", ja: "タブシステム", zh: "标签页系统", hi: "टैब सिस्टम", uk: "Система вкладок" },
         'Tab Cloaking': { es: "Ocultación de pestaña", fr: "Camouflage d'onglet", de: "Tab-Tarnung", 'pt-BR': "Camuflagem de aba", it: "Mimetizzazione scheda", nl: "Tabvermommen", pl: "Maskowanie karty", ru: "Маскировка вкладки", tr: "Sekme Gizleme", ja: "タブ偽装", zh: "标签页伪装", hi: "टैब छुपाना", uk: "Маскування вкладки" },
         'Tab Appearance': { es: "Apariencia de la pestaña", fr: "Apparence de l'onglet", de: "Tab-Aussehen", 'pt-BR': "Aparência da aba", it: "Aspetto della scheda", nl: "Tabuiterlijk", pl: "Wygląd karty", ru: "Внешний вид вкладки", tr: "Sekme Görünümü", ja: "タブの外観", zh: "标签页外观", hi: "टैब रूप", uk: "Вигляд вкладки" },
@@ -5090,6 +5102,44 @@ function generateFingerprint() {
         });
     }
 
+    // Link + QR for the language feedback form, shown under the language picker.
+    const LANGUAGE_FORM_URL = 'https://bit.ly/apricity-language-form';
+
+    function openLangForm() {
+        window.open(LANGUAGE_FORM_URL, '_blank', 'noopener');
+    }
+
+    // Draws the form's QR with the qrcode.js bundled further down the page, so
+    // the code always matches LANGUAGE_FORM_URL instead of a stale image.
+    function renderLangFormQr() {
+        const canvas = document.getElementById('langFormQr');
+        if (!canvas || canvas.dataset.drawn === '1') return;
+        if (typeof qrcode !== 'function') return;
+        try {
+            const qr = qrcode(0, 'M');
+            qr.addData(LANGUAGE_FORM_URL);
+            qr.make();
+            const count = qr.getModuleCount();
+            const quiet = 2, scale = 8;
+            const total = (count + quiet * 2) * scale;
+            const dpr = Math.min(window.devicePixelRatio || 1, 3);
+            canvas.width = total * dpr;
+            canvas.height = total * dpr;
+            const c2 = canvas.getContext('2d');
+            if (!c2) return;
+            c2.setTransform(dpr, 0, 0, dpr, 0, 0);
+            c2.fillStyle = '#ffffff';
+            c2.fillRect(0, 0, total, total);
+            c2.fillStyle = '#000000';
+            for (let r = 0; r < count; r++) {
+                for (let c = 0; c < count; c++) {
+                    if (qr.isDark(r, c)) c2.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+                }
+            }
+            canvas.dataset.drawn = '1';
+        } catch (e) { /* leave the canvas blank rather than break the modal */ }
+    }
+
     function applyLanguage(code) {
         const lang = APRICITY_LANGS[code] ? code : 'en';
         document.documentElement.lang = lang;
@@ -5106,6 +5156,7 @@ function generateFingerprint() {
         ['content-themes', 'content-backgrounds', 'content-settings'].forEach(id => {
             translateModalText(document.getElementById(id));
         });
+        renderLangFormQr();
         const sel = document.getElementById('languageSelect');
         if (sel) sel.value = lang;
     }
