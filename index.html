@@ -2289,8 +2289,9 @@ function generateFingerprint() {
                                 style="width:88px;height:88px;border-radius:10px;background:#fff;padding:5px;flex:none;border:1px solid var(--yt-border2);cursor:pointer;"
                                 onclick="openLangForm()"></canvas>
                             <div>
+                                <div class="setting-name" style="margin-bottom:4px;">Request your language</div>
                                 <div class="setting-desc" style="margin:0 0 5px;">Missing your language, or found a wrong translation? Tell us here.</div>
-                                <a href="https://bit.ly/apricity-language-form" target="_blank" rel="noopener"
+                                <a href="https://bit.ly/apricity-language-form" target="_blank" rel="noopener" title="Submit a language request"
                                     style="font-size:12.5px;font-weight:600;color:var(--md-sys-color-primary);word-break:break-all;">https://bit.ly/apricity-language-form</a>
                             </div>
                         </div>
@@ -4966,6 +4967,7 @@ function generateFingerprint() {
     // Customize modal translates without a data-i18n attribute on every node.
     // Anything that is not in this table stays as it is.
     const SETTINGS_I18N = {
+        'Request your language': { es: "Solicita tu idioma", fr: "Demandez votre langue", de: "Sprache anfragen", 'pt-BR': "Solicite seu idioma", it: "Richiedi la tua lingua", nl: "Vraag je taal aan", pl: "Poproś o swój język", ru: "Запросить свой язык", tr: "Dilinizi isteyin", ja: "言語をリクエスト", zh: "申请你的语言", hi: "अपनी भाषा का अनुरोध करें", uk: "Запропонувати свою мову" },
         'Missing your language, or found a wrong translation? Tell us here.': { es: "¿Falta tu idioma o has visto una traducción incorrecta? Cuéntanoslo aquí.", fr: "Votre langue manque, ou une traduction est fausse ? Dites-le-nous ici.", de: "Fehlt deine Sprache oder ist eine Übersetzung falsch? Sag es uns hier.", 'pt-BR': "Falta o seu idioma ou achou uma tradução errada? Fale com a gente aqui.", it: "Manca la tua lingua o hai trovato una traduzione sbagliata? Diccelo qui.", nl: "Ontbreekt jouw taal of is een vertaling fout? Laat het ons hier weten.", pl: "Brakuje Twojego języka lub znalazłeś złe tłumaczenie? Napisz nam tutaj.", ru: "Нет вашего языка или нашлась неверная фраза? Напишите нам здесь.", tr: "Diliniz yok mu ya da yanlış bir çeviri mi buldunuz? Buradan bize yazın.", ja: "言語がない、または翻訳が間違っている場合は、ここから教えてください。", zh: "缺少你的语言，或发现翻译有误？请在这里告诉我们。", hi: "आपकी भाषा नहीं है या कोई अनुवाद गलत है? हमें यहाँ बताएँ।", uk: "Немає вашої мови або знайшли помилковий переклад? Напишіть нам тут." },
         'Tab System': { es: "Sistema de pestañas", fr: "Système d'onglets", de: "Tab-System", 'pt-BR': "Sistema de abas", it: "Sistema delle schede", nl: "Tabbensysteem", pl: "System kart", ru: "Система вкладок", tr: "Sekme Sistemi", ja: "タブシステム", zh: "标签页系统", hi: "टैब सिस्टम", uk: "Система вкладок" },
         'Tab Cloaking': { es: "Ocultación de pestaña", fr: "Camouflage d'onglet", de: "Tab-Tarnung", 'pt-BR': "Camuflagem de aba", it: "Mimetizzazione scheda", nl: "Tabvermommen", pl: "Maskowanie karty", ru: "Маскировка вкладки", tr: "Sekme Gizleme", ja: "タブ偽装", zh: "标签页伪装", hi: "टैब छुपाना", uk: "Маскування вкладки" },
