@@ -2281,7 +2281,12 @@ function generateFingerprint() {
                                 <option value="ja">日本語</option>
                                 <option value="zh">中文</option>
                                 <option value="hi">हिन्दी</option>
+                                <option value="uk">Українська</option>
                             </select>
+                            <button class="home-btn" onclick="copyLanguageList()" title="Copy the language list" style="margin-top:0;padding:8px 12px;font-size:13px;white-space:nowrap;">
+                                <span class="material-symbols-outlined" style="font-size:16px;">content_copy</span>
+                                <span data-i18n="lang.copyList" id="copyLangLabel">Copy list</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -4670,10 +4675,13 @@ function generateFingerprint() {
         'tr': 'Türkçe',
         'ja': '日本語',
         'zh': '中文',
-        'hi': 'हिन्दी'
+        'hi': 'हिन्दी',
+        'uk': 'Українська'
     };
 
     const APRICITY_STRINGS = {
+        'lang.copyList': { en: "Copy list", es: "Copiar lista", fr: "Copier la liste", de: "Liste kopieren", 'pt-BR': "Copiar lista" },
+        'lang.copied': { en: "Copied!", es: "¡Copiado!", fr: "Copié !", de: "Kopiert!", 'pt-BR': "Copiado!" },
         'home.searchPh': { en: "Type to start searching...", es: "Escribe para empezar a buscar...", fr: "Tapez pour commencer la recherche...", de: "Tippen, um die Suche zu starten...", 'pt-BR': "Digite para começar a pesquisar..." },
         'home.apps': { en: "Apps", es: "Apps", fr: "Applis", de: "Apps", 'pt-BR': "Apps" },
         'home.games': { en: "Games", es: "Juegos", fr: "Jeux", de: "Spiele", 'pt-BR': "Jogos" },
@@ -4704,6 +4712,8 @@ function generateFingerprint() {
     // single self-contained block instead of 23 separate line edits above.
     const APRICITY_LANG_TABLES = {
         'it': {
+            'lang.copyList': "Copia elenco",
+            'lang.copied': "Copiato!",
             'home.searchPh': "Digita per iniziare a cercare...",
             'home.apps': "App",
             'home.games': "Giochi",
@@ -4729,6 +4739,8 @@ function generateFingerprint() {
             'lang.desc': "Cambia la lingua dei menu, dei pulsanti e delle impostazioni di Apricity. Giochi e app mantengono la propria lingua."
         },
         'nl': {
+            'lang.copyList': "Lijst kopiëren",
+            'lang.copied': "Gekopieerd!",
             'home.searchPh': "Typ om te beginnen met zoeken...",
             'home.apps': "Apps",
             'home.games': "Spellen",
@@ -4754,6 +4766,8 @@ function generateFingerprint() {
             'lang.desc': "Verandert de taal van de menu's, knoppen en instellingen van Apricity. Spellen en apps houden hun eigen taal."
         },
         'pl': {
+            'lang.copyList': "Kopiuj listę",
+            'lang.copied': "Skopiowano!",
             'home.searchPh': "Zacznij pisać, aby wyszukać...",
             'home.apps': "Aplikacje",
             'home.games': "Gry",
@@ -4779,6 +4793,8 @@ function generateFingerprint() {
             'lang.desc': "Zmienia język menu, przycisków i ustawień Apricity. Gry i aplikacje zachowują własny język."
         },
         'ru': {
+            'lang.copyList': "Копировать список",
+            'lang.copied': "Скопировано!",
             'home.searchPh': "Начните вводить для поиска...",
             'home.apps': "Приложения",
             'home.games': "Игры",
@@ -4804,6 +4820,8 @@ function generateFingerprint() {
             'lang.desc': "Меняет язык меню, кнопок и настроек Apricity. Игры и приложения сохраняют свой язык."
         },
         'tr': {
+            'lang.copyList': "Listeyi kopyala",
+            'lang.copied': "Kopyalandı!",
             'home.searchPh': "Aramak için yazmaya başlayın...",
             'home.apps': "Uygulamalar",
             'home.games': "Oyunlar",
@@ -4829,6 +4847,8 @@ function generateFingerprint() {
             'lang.desc': "Apricity menülerinin, düğmelerinin ve ayarlarının dilini değiştirir. Oyunlar ve uygulamalar kendi dilini korur."
         },
         'ja': {
+            'lang.copyList': "リストをコピー",
+            'lang.copied': "コピーしました",
             'home.searchPh': "検索するには入力してください...",
             'home.apps': "アプリ",
             'home.games': "ゲーム",
@@ -4854,6 +4874,8 @@ function generateFingerprint() {
             'lang.desc': "Apricity のメニュー・ボタン・設定の言語を変更します。ゲームとアプリはそれぞれの言語のままです。"
         },
         'zh': {
+            'lang.copyList': "复制列表",
+            'lang.copied': "已复制",
             'home.searchPh': "输入以开始搜索...",
             'home.apps': "应用",
             'home.games': "游戏",
@@ -4879,6 +4901,8 @@ function generateFingerprint() {
             'lang.desc': "更改 Apricity 菜单、按钮和设置的语言。游戏和应用保持各自的语言。"
         },
         'hi': {
+            'lang.copyList': "सूची कॉपी करें",
+            'lang.copied': "कॉपी हो गया",
             'home.searchPh': "खोजना शुरू करने के लिए टाइप करें...",
             'home.apps': "ऐप्स",
             'home.games': "गेम्स",
@@ -4902,6 +4926,33 @@ function generateFingerprint() {
             'lang.sectionTitle': "भाषा",
             'lang.name': "इंटरफ़ेस भाषा",
             'lang.desc': "Apricity के मेनू, बटन और सेटिंग्स की भाषा बदलता है। गेम्स और ऐप्स अपनी भाषा में ही रहते हैं।"
+        },
+        'uk': {
+            'lang.copyList': "Копіювати список",
+            'lang.copied': "Скопійовано!",
+            'home.searchPh': "Почніть вводити для пошуку...",
+            'home.apps': "Застосунки",
+            'home.games': "Ігри",
+            'home.movies': "Фільми",
+            'home.youtube': "YouTube",
+            'home.chillcord': "Chillcord",
+            'home.console': "Консоль",
+            'home.updateLog': "Журнал оновлень",
+            'games.title': "Ігри",
+            'games.all': "Усі ігри",
+            'apps.all': "Усі застосунки",
+            'utopia.title': "Ігри Utopia",
+            'games.searchPh': "Пошук ігор...",
+            'saves.export': "Експорт збережень",
+            'saves.import': "Імпорт збережень",
+            'customize.title': "Налаштувати",
+            'tab.themes': "Теми",
+            'tab.backgrounds': "Фони",
+            'tab.settings': "Налаштування",
+            'modal.close': "Закрити",
+            'lang.sectionTitle': "Мова",
+            'lang.name': "Мова інтерфейсу",
+            'lang.desc': "Змінює мову меню, кнопок і налаштувань Apricity. Ігри та застосунки зберігають свою мову."
         }
     };
 
@@ -4943,6 +4994,38 @@ function generateFingerprint() {
         const lang = (sel && APRICITY_LANGS[sel.value]) ? sel.value : 'en';
         try { localStorage.setItem('apricity-language', lang); } catch (e) {}
         applyLanguage(lang);
+    }
+
+    // Copies the language list to the clipboard, one "code — name" per line, so
+    // the list can be pasted into a commit message, a doc or a chat.
+    function copyLanguageList() {
+        const text = Object.keys(APRICITY_LANGS)
+            .map(code => code + ' — ' + APRICITY_LANGS[code])
+            .join('\n');
+        const flash = () => {
+            const label = document.getElementById('copyLangLabel');
+            if (!label) return;
+            label.textContent = aprT('lang.copied');
+            setTimeout(() => { label.textContent = aprT('lang.copyList'); }, 1600);
+        };
+        const legacyCopy = () => {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.top = '-1000px';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            ta.remove();
+            flash();
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(flash).catch(legacyCopy);
+        } else {
+            legacyCopy();
+        }
     }
 
     // ===== DOWNLOAD BUTTONS (console-gated) =====
