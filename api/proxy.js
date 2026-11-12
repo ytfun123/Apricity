@@ -173,11 +173,17 @@ async function handleSupabase(req) {
     }
   }
 
+  // Publishable/secret keys (sb_publishable_..., sb_secret_...) are opaque
+  // strings, NOT JWTs. They belong only in `apikey`; sending one as
+  // `Authorization: Bearer` makes the gateway hand it to PostgREST, which
+  // rejects it because it can't be parsed as a JWT. Legacy anon/service_role
+  // keys are real JWTs, so those still go in both headers as before.
+  const isOpaqueKey = /^sb_(publishable|secret)_/.test(supaKey);
   const fetchHeaders = {
     apikey: supaKey,
-    Authorization: `Bearer ${supaKey}`,
     ...(extraHeaders || {}),
   };
+  if (!isOpaqueKey) fetchHeaders.Authorization = `Bearer ${supaKey}`;
   if (body) fetchHeaders['Content-Type'] = 'application/json';
 
   const upstream = await fetch(`${supaUrl}${path}`, {

@@ -1172,6 +1172,23 @@ function generateFingerprint() {
             width: 100%; height: 100%; object-fit: cover; display: block;
         }
         .games-fs-name { font-weight: 500; text-align: center; font-size: 0.95rem; }
+        /* Download button (only rendered by downloadBtnHTML when the console
+           command "sudo install apps allow" has turned downloads on) */
+        .games-fs-card { position: relative; }
+        .games-fs-dl {
+            position: absolute; top: 8px; right: 8px;
+            width: 28px; height: 28px; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; cursor: pointer;
+            border: 1px solid var(--yt-border2);
+            background: var(--md-sys-color-surface-container-highest);
+            color: var(--md-sys-color-on-surface-variant);
+            opacity: 0.75; transition: opacity 0.15s, background 0.18s, color 0.18s;
+        }
+        .games-fs-card:hover .games-fs-dl { opacity: 1; }
+        .games-fs-dl:hover { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+        .games-fs-dl .material-symbols-outlined { font-size: 16px; }
+        .games-fs-dl.na { color: var(--md-sys-color-outline); opacity: 0.5; }
         .games-fs-tag {
             font-size: 0.7rem; padding: 2px 10px; border-radius: 100px;
             background: var(--md-sys-color-surface-container-highest);
@@ -2124,12 +2141,12 @@ function generateFingerprint() {
 <!-- Combined Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
     <div class="modal" onclick="event.stopPropagation()">
-        <h2 style="margin:0; font-weight:700; font-size:18px;">Customize</h2>
+        <h2 style="margin:0; font-weight:700; font-size:18px;" data-i18n="customize.title">Customize</h2>
 
         <div class="modal-tabs">
-            <button class="modal-tab active" id="tab-themes" onclick="switchTab('themes')">Themes</button>
-            <button class="modal-tab" id="tab-backgrounds" onclick="switchTab('backgrounds')">Backgrounds</button>
-            <button class="modal-tab" id="tab-settings" onclick="switchTab('settings')">Settings</button>
+            <button class="modal-tab active" id="tab-themes" onclick="switchTab('themes')"><span data-i18n="tab.themes">Themes</span></button>
+            <button class="modal-tab" id="tab-backgrounds" onclick="switchTab('backgrounds')"><span data-i18n="tab.backgrounds">Backgrounds</span></button>
+            <button class="modal-tab" id="tab-settings" onclick="switchTab('settings')"><span data-i18n="tab.settings">Settings</span></button>
         </div>
 
         <!-- THEMES TAB -->
@@ -2243,6 +2260,25 @@ function generateFingerprint() {
 
         <!-- SETTINGS TAB -->
         <div class="modal-tab-content" id="content-settings">
+            <div class="settings-section">
+                <div class="settings-section-title" data-i18n="lang.sectionTitle">Language</div>
+                <div class="setting-row" style="border-bottom:none;padding-bottom:0;">
+                    <div class="setting-info" style="width:100%">
+                        <div class="setting-name" data-i18n="lang.name">Interface Language</div>
+                        <div class="setting-desc" data-i18n="lang.desc">Changes the language of Apricity's menus, buttons and settings. Games and apps keep their own language.</div>
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <select class="bg-custom-input" id="languageSelect" onchange="onLanguageChange()" style="flex:1;margin-top:0;">
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                                <option value="fr">Français</option>
+                                <option value="de">Deutsch</option>
+                                <option value="pt-BR">Português (Brasil)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="settings-section">
                 <div class="settings-section-title">Tab System</div>
                 <div class="setting-row">
@@ -2493,7 +2529,7 @@ function generateFingerprint() {
             </div>
         </div>
 
-        <button class="home-btn" style="width:100%;margin-top:16px;justify-content:center;" onclick="closeModal()">Close</button>
+        <button class="home-btn" style="width:100%;margin-top:16px;justify-content:center;" onclick="closeModal()"><span data-i18n="modal.close">Close</span></button>
     </div>
 </div>
 
@@ -2579,7 +2615,7 @@ function generateFingerprint() {
 <!-- Games Panel -->
 <div class="apps-overlay" id="gamesOverlay" onclick="toggleGames()">
     <div class="apps-panel" onclick="event.stopPropagation()">
-        <h2>Games</h2>
+        <h2 data-i18n="games.title">Games</h2>
         <div class="app-item" onclick="openGame('gn-math', './games/gn-math.html')">
             <div class="app-icon"><span class="material-symbols-outlined">gamepad</span></div>
             GN Math
@@ -2612,14 +2648,14 @@ function generateFingerprint() {
 <!-- Fullscreen Games List -->
 <div class="games-fs-overlay" id="gamesFsOverlay">
     <div class="games-fs-header">
-        <h2>All Games</h2>
+        <h2 data-i18n="games.all">All Games</h2>
         <div style="flex:1"></div>
-        <input type="search" id="mainGamesSearch" name="gfs" placeholder="Search games..." autocomplete="off" data-1p-ignore="true" oninput="renderGamesFullscreenGrid()" style="background:var(--md-sys-color-surface-container);border:1px solid var(--yt-border2);border-radius:8px;padding:6px 12px;color:var(--md-sys-color-on-surface);font-size:14px;width:200px;margin-right:12px;">
+        <input type="search" id="mainGamesSearch" name="gfs" placeholder="Search games..." data-i18n-ph="games.searchPh" autocomplete="off" data-1p-ignore="true" oninput="renderGamesFullscreenGrid()" style="background:var(--md-sys-color-surface-container);border:1px solid var(--yt-border2);border-radius:8px;padding:6px 12px;color:var(--md-sys-color-on-surface);font-size:14px;width:200px;margin-right:12px;">
         <button onclick="exportGameSaves()" title="Download all game saves as a backup file" style="background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:8px;padding:6px 12px;color:var(--md-sys-color-on-surface);font-size:13px;margin-right:8px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
-            <span class="material-symbols-outlined" style="font-size:16px;">download</span> Export saves
+            <span class="material-symbols-outlined" style="font-size:16px;">download</span> <span data-i18n="saves.export">Export saves</span>
         </button>
         <button onclick="importGameSaves()" title="Restore game saves from a backup file" style="background:var(--md-sys-color-surface-container-high);border:1px solid var(--yt-border2);border-radius:8px;padding:6px 12px;color:var(--md-sys-color-on-surface);font-size:13px;margin-right:12px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
-            <span class="material-symbols-outlined" style="font-size:16px;">upload</span> Import saves
+            <span class="material-symbols-outlined" style="font-size:16px;">upload</span> <span data-i18n="saves.import">Import saves</span>
         </button>
         <button class="games-fs-close" onclick="toggleGamesFullscreen()">
             <span class="material-symbols-outlined">close</span>
@@ -2636,9 +2672,9 @@ function generateFingerprint() {
         <button class="games-fs-close" onclick="toggleUtopiaGames(); toggleGamesFullscreen();" style="margin-right:12px;">
             <span class="material-symbols-outlined">arrow_back</span>
         </button>
-        <h2>Utopia Games</h2>
+        <h2 data-i18n="utopia.title">Utopia Games</h2>
         <div style="flex:1"></div>
-        <input type="search" id="utopiaGamesSearch" name="ufs" placeholder="Search games..." autocomplete="off" data-1p-ignore="true" oninput="renderUtopiaGamesGrid()" style="background:var(--md-sys-color-surface-container);border:1px solid var(--yt-border2);border-radius:8px;padding:6px 12px;color:var(--md-sys-color-on-surface);font-size:14px;width:200px;margin-right:12px;">
+        <input type="search" id="utopiaGamesSearch" name="ufs" placeholder="Search games..." data-i18n-ph="games.searchPh" autocomplete="off" data-1p-ignore="true" oninput="renderUtopiaGamesGrid()" style="background:var(--md-sys-color-surface-container);border:1px solid var(--yt-border2);border-radius:8px;padding:6px 12px;color:var(--md-sys-color-on-surface);font-size:14px;width:200px;margin-right:12px;">
         <button class="games-fs-close" onclick="toggleUtopiaIconMode()" id="utopiaIconToggle" style="margin-right:8px;font-size:12px;padding:4px 10px;" title="Toggle icons/images">
             <span class="material-symbols-outlined">image</span>
         </button>
@@ -2654,7 +2690,7 @@ function generateFingerprint() {
 <!-- Fullscreen Apps List -->
 <div class="games-fs-overlay" id="appsFsOverlay">
     <div class="games-fs-header">
-        <h2>All Apps</h2>
+        <h2 data-i18n="apps.all">All Apps</h2>
         <button class="games-fs-close" onclick="toggleAppsFullscreen()">
             <span class="material-symbols-outlined">close</span>
         </button>
@@ -3006,37 +3042,37 @@ function generateFingerprint() {
         <div class="logo">Apricity</div>
         <div class="search-container">
             <span class="material-symbols-outlined search-icon" onclick="goSearch()" style="cursor:pointer;">search</span>
-            <input type="text" class="search-bar" id="homeSearch" placeholder="Type to start searching..." autofocus
+            <input type="text" class="search-bar" id="homeSearch" placeholder="Type to start searching..." data-i18n-ph="home.searchPh" autofocus
                 onkeydown="if(event.key==='Enter') goSearch()">
         </div>
         <div class="btn-group">
-            <button class="home-btn" onclick="toggleApps()">Apps</button>
-            <button class="home-btn" onclick="toggleGames()">Games</button>
+            <button class="home-btn" onclick="toggleApps()"><span data-i18n="home.apps">Apps</span></button>
+            <button class="home-btn" onclick="toggleGames()"><span data-i18n="home.games">Games</span></button>
             <button class="home-btn home-btn-movies" onclick="showMovies()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/>
                 </svg>
-                Movies
+                <span data-i18n="home.movies">Movies</span>
             </button>
             <button class="home-btn home-btn-youtube" onclick="showYouTube()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/>
                 </svg>
-                YouTube
+                <span data-i18n="home.youtube">YouTube</span>
             </button>
             <button class="home-btn home-btn-discord" onclick="openDiscordApp()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.128 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.04.106c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.055c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028ZM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.955 2.418-2.157 2.418Zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418Z"/>
                 </svg>
-                Chillcord
+                <span data-i18n="home.chillcord">Chillcord</span>
             </button>
             <button class="home-btn" id="console-nav-btn" style="display:none;" onclick="showConsolePage()">
                 <span class="material-symbols-outlined" style="font-size:16px;">terminal</span>
-                Console
+                <span data-i18n="home.console">Console</span>
             </button>
             <button class="home-btn" id="updateLogBtn" onclick="openUpdateLog()">
                 <span class="material-symbols-outlined" style="font-size:16px;">new_releases</span>
-                Update Log
+                <span data-i18n="home.updateLog">Update Log</span>
                 <span class="update-log-dot" id="updateLogDot">!</span>
             </button>
         </div>
@@ -4610,6 +4646,136 @@ function generateFingerprint() {
         { id: 'retrobowl',      name: 'Retro Bowl', icon: 'sports_football',           src: './games/retrobowl.html', placeholder: false },
     ];
 
+    // ===== INTERFACE LANGUAGE =====
+    // Only the strings tagged with data-i18n / data-i18n-ph in the markup are
+    // translated. Games and apps ship their own text, so they stay as they are.
+    const APRICITY_LANGS = {
+        'en': 'English',
+        'es': 'Español',
+        'fr': 'Français',
+        'de': 'Deutsch',
+        'pt-BR': 'Português (Brasil)'
+    };
+
+    const APRICITY_STRINGS = {
+        'home.searchPh': { en: "Type to start searching...", es: "Escribe para empezar a buscar...", fr: "Tapez pour commencer la recherche...", de: "Tippen, um die Suche zu starten...", 'pt-BR': "Digite para começar a pesquisar..." },
+        'home.apps': { en: "Apps", es: "Apps", fr: "Applis", de: "Apps", 'pt-BR': "Apps" },
+        'home.games': { en: "Games", es: "Juegos", fr: "Jeux", de: "Spiele", 'pt-BR': "Jogos" },
+        'home.movies': { en: "Movies", es: "Películas", fr: "Films", de: "Filme", 'pt-BR': "Filmes" },
+        'home.youtube': { en: "YouTube", es: "YouTube", fr: "YouTube", de: "YouTube", 'pt-BR': "YouTube" },
+        'home.chillcord': { en: "Chillcord", es: "Chillcord", fr: "Chillcord", de: "Chillcord", 'pt-BR': "Chillcord" },
+        'home.console': { en: "Console", es: "Consola", fr: "Console", de: "Konsole", 'pt-BR': "Console" },
+        'home.updateLog': { en: "Update Log", es: "Registro de cambios", fr: "Journal des mises à jour", de: "Änderungsprotokoll", 'pt-BR': "Registro de atualizações" },
+        'games.title': { en: "Games", es: "Juegos", fr: "Jeux", de: "Spiele", 'pt-BR': "Jogos" },
+        'games.all': { en: "All Games", es: "Todos los juegos", fr: "Tous les jeux", de: "Alle Spiele", 'pt-BR': "Todos os jogos" },
+        'apps.all': { en: "All Apps", es: "Todas las apps", fr: "Toutes les applis", de: "Alle Apps", 'pt-BR': "Todos os apps" },
+        'utopia.title': { en: "Utopia Games", es: "Juegos Utopia", fr: "Jeux Utopia", de: "Utopia-Spiele", 'pt-BR': "Jogos Utopia" },
+        'games.searchPh': { en: "Search games...", es: "Buscar juegos...", fr: "Rechercher des jeux...", de: "Spiele suchen...", 'pt-BR': "Pesquisar jogos..." },
+        'saves.export': { en: "Export saves", es: "Exportar partidas", fr: "Exporter les sauvegardes", de: "Spielstände exportieren", 'pt-BR': "Exportar salvamentos" },
+        'saves.import': { en: "Import saves", es: "Importar partidas", fr: "Importer les sauvegardes", de: "Spielstände importieren", 'pt-BR': "Importar salvamentos" },
+        'customize.title': { en: "Customize", es: "Personalizar", fr: "Personnaliser", de: "Anpassen", 'pt-BR': "Personalizar" },
+        'tab.themes': { en: "Themes", es: "Temas", fr: "Thèmes", de: "Designs", 'pt-BR': "Temas" },
+        'tab.backgrounds': { en: "Backgrounds", es: "Fondos", fr: "Arrière-plans", de: "Hintergründe", 'pt-BR': "Planos de fundo" },
+        'tab.settings': { en: "Settings", es: "Ajustes", fr: "Paramètres", de: "Einstellungen", 'pt-BR': "Configurações" },
+        'modal.close': { en: "Close", es: "Cerrar", fr: "Fermer", de: "Schließen", 'pt-BR': "Fechar" },
+        'lang.sectionTitle': { en: "Language", es: "Idioma", fr: "Langue", de: "Sprache", 'pt-BR': "Idioma" },
+        'lang.name': { en: "Interface Language", es: "Idioma de la interfaz", fr: "Langue de l'interface", de: "Sprache der Oberfläche", 'pt-BR': "Idioma da interface" },
+        'lang.desc': { en: "Changes the language of the Apricity menus, buttons and settings. Games and apps keep their own language.", es: "Cambia el idioma de los menús, botones y ajustes de Apricity. Los juegos y las apps mantienen su propio idioma.", fr: "Change la langue des menus, boutons et paramètres d'Apricity. Les jeux et applis gardent leur propre langue.", de: "Ändert die Sprache der Menüs, Schaltflächen und Einstellungen von Apricity. Spiele und Apps behalten ihre eigene Sprache.", 'pt-BR': "Muda o idioma dos menus, botões e ajustes do Apricity. Os jogos e apps mantêm o próprio idioma." }
+    };
+
+    function apricityLang() {
+        try { return localStorage.getItem('apricity-language') || 'en'; } catch (e) { return 'en'; }
+    }
+
+    // Look up a UI string in the current language, falling back to English.
+    function aprT(key) {
+        const entry = APRICITY_STRINGS[key];
+        if (!entry) return key;
+        return entry[apricityLang()] || entry.en || key;
+    }
+
+    function applyLanguage(code) {
+        const lang = APRICITY_LANGS[code] ? code : 'en';
+        document.documentElement.lang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const val = aprT(el.getAttribute('data-i18n'));
+            if (val && el.textContent !== val) el.textContent = val;
+        });
+        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+            const val = aprT(el.getAttribute('data-i18n-ph'));
+            if (val) el.setAttribute('placeholder', val);
+        });
+        const sel = document.getElementById('languageSelect');
+        if (sel) sel.value = lang;
+    }
+
+    function onLanguageChange() {
+        const sel = document.getElementById('languageSelect');
+        const lang = (sel && APRICITY_LANGS[sel.value]) ? sel.value : 'en';
+        try { localStorage.setItem('apricity-language', lang); } catch (e) {}
+        applyLanguage(lang);
+    }
+
+    // ===== DOWNLOAD BUTTONS (console-gated) =====
+    //   sudo install apps allow  -> buttons appear on every game/app tile
+    //   sudo install apps deny   -> buttons go away again
+    // Off until the command is run; the choice is remembered per browser.
+    const DL_GATE_KEY = 'apricity-downloads';
+
+    function downloadsAllowed() {
+        try { return localStorage.getItem(DL_GATE_KEY) === 'allow'; } catch (e) { return false; }
+    }
+
+    // True only for apps that live in one .html file (./games/pvz.html,
+    // ./hollow_knight.html). Anything inside its own folder (./games/run3/,
+    // ./apps/netchat/index.html) needs the whole folder to run, so there is no
+    // single file worth handing out.
+    function isSingleFileSrc(src) {
+        if (!src || /\/$/.test(src)) return false;
+        const parts = String(src).replace(/^\.?\//, '').replace(/^\/+/, '').split('/').filter(Boolean);
+        if (!parts.length) return false;
+        if (!/\.html?$/i.test(parts[parts.length - 1])) return false;
+        return parts.length <= 2;
+    }
+
+    function downloadBtnHTML(src, label) {
+        if (!downloadsAllowed() || !src) return '';
+        const ok = isSingleFileSrc(src);
+        const name = String(label || 'This app').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+        const title = ok ? ('Download ' + name) : (name + ' is a multi-file app, so there is no single file to download');
+        return `
+                    <button class="games-fs-dl${ok ? '' : ' na'}" title="${title}" aria-label="${title}"
+                        onclick='event.stopPropagation(); downloadSingleFile("${src}", ${JSON.stringify(String(label || 'app'))})'>
+                        <span class="material-symbols-outlined">download</span>
+                    </button>`;
+    }
+
+    function downloadSingleFile(src, label) {
+        if (!downloadsAllowed()) {
+            alert('Download buttons are off. Run "sudo install apps allow" in the console to turn them on.');
+            return;
+        }
+        if (!isSingleFileSrc(src)) {
+            alert((label || 'This app') + ' is a multi-file app: it needs its whole folder to run, so there is no single file to download.');
+            return;
+        }
+        const file = String(src).split('/').pop() || 'app.html';
+        const a = document.createElement('a');
+        a.href = src;
+        a.download = file;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }
+
+    function setDownloadsAllowed(allow) {
+        try { localStorage.setItem(DL_GATE_KEY, allow ? 'allow' : 'deny'); } catch (e) {}
+        // Redraw the grids so the buttons appear/disappear right away.
+        if (typeof renderGamesFullscreenGrid === 'function') renderGamesFullscreenGrid();
+        if (typeof renderUtopiaGamesGrid === 'function') renderUtopiaGamesGrid();
+        if (typeof renderAppsFullscreenGrid === 'function') renderAppsFullscreenGrid();
+    }
+
     function toggleGamesFullscreen() {
         const o = document.getElementById('gamesFsOverlay');
         const isActive = o.classList.contains('active');
@@ -4669,7 +4835,7 @@ function generateFingerprint() {
             return `
                 <div class="games-fs-card" onclick="toggleGamesFullscreen(); openGame('${g.id}', '${g.src}', 'main')">
                     <div class="games-fs-icon">${gameIconHTML(g)}</div>
-                    <div class="games-fs-name">${g.name}</div>
+                    <div class="games-fs-name">${g.name}</div>${downloadBtnHTML(g.src, g.name)}
                 </div>`;
         }).join('');
     }
@@ -4858,7 +5024,7 @@ function generateFingerprint() {
             return `
                 <div class="games-fs-card" onclick="toggleUtopiaGames(); openGame('${g.name}', '${g.src}', 'utopia')">
                     ${iconHTML}
-                    <div class="games-fs-name">${g.name}</div>
+                    <div class="games-fs-name">${g.name}</div>${downloadBtnHTML(g.src, g.name)}
                 </div>`;
         }).join('');
     }
@@ -4868,16 +5034,16 @@ function generateFingerprint() {
     // function that launches it (e.g. 'openSunlit'). It will then appear in
     // the fullscreen "All Apps" grid. Set placeholder to true for an empty slot.
     const APPS_LIST = [
-        { id: 'sunlit',    name: 'Sunlit OS',   icon: 'wb_sunny',     open: 'openSunlit' },
+        { id: 'sunlit',    name: 'Sunlit OS',   icon: 'wb_sunny',     open: 'openSunlit',   src: './apps/sunlit_os.html' },
         { id: 'gemini',    name: 'Groq AI',     icon: 'auto_awesome', open: 'openGemini' },
-        { id: 'meet',      name: 'Meet Stable', icon: 'video_call',   open: 'openMeetStable' },
-        { id: 'spotify',   name: 'Spotify',     icon: 'graphic_eq',   open: 'openSpotify' },
-        { id: 'desktop',   name: 'Desktop',     icon: 'computer',     open: 'openDesktop' },
+        { id: 'meet',      name: 'Meet Stable', icon: 'video_call',   open: 'openMeetStable', src: './apps/meet_stable.html' },
+        { id: 'spotify',   name: 'Spotify',     icon: 'graphic_eq',   open: 'openSpotify',  src: './apps/spotify.html' },
+        { id: 'desktop',   name: 'Desktop',     icon: 'computer',     open: 'openDesktop',  src: './apps/desktop.html' },
         { id: 'youtube',   name: 'YouTube',     icon: 'play_circle',  open: 'showYouTube' },
-        { id: 'discord',   name: 'Chillcord',     icon: 'forum',        open: 'openDiscordApp' },
-        { id: 'ti-flash', name: 'Ti Flash',     icon: 'usb',          open: 'openTiFlash' },
-        { id: 'netchat',  name: 'NetChat',      icon: './apps/netchat/icon.png', open: 'openNetChat' },
-        { id: 'pixelart', name: 'Pixel Art',    icon: 'palette',      open: 'openPixelArt' },
+        { id: 'discord',   name: 'Chillcord',     icon: 'forum',        open: 'openDiscordApp', src: './apps/discord/index.html' },
+        { id: 'ti-flash', name: 'Ti Flash',     icon: 'usb',          open: 'openTiFlash',  src: './apps/ti-flash/docs/index.html' },
+        { id: 'netchat',  name: 'NetChat',      icon: './apps/netchat/icon.png', open: 'openNetChat', src: './apps/netchat/index.html' },
+        { id: 'pixelart', name: 'Pixel Art',    icon: 'palette',      open: 'openPixelArt', src: './apps/pixelart.html' },
     ];
 
     function toggleAppsFullscreen() {
@@ -4913,7 +5079,7 @@ function generateFingerprint() {
             return `
                 <div class="games-fs-card" onclick="toggleAppsFullscreen(); ${a.open}()">
                     <div class="games-fs-icon">${appIconHTML(a)}</div>
-                    <div class="games-fs-name">${a.name}</div>
+                    <div class="games-fs-name">${a.name}</div>${downloadBtnHTML(a.src, a.name)}
                 </div>`;
         }).join('');
     }
@@ -6020,6 +6186,9 @@ function generateFingerprint() {
         const tabsEnabled = localStorage.getItem('apricity-tabs-enabled');
         if (tabsEnabled === null) localStorage.setItem('apricity-tabs-enabled', '0');
         document.getElementById('tabSystemToggle').checked = (tabsEnabled === '1');
+
+        // Restore interface language (defaults to English)
+        applyLanguage(apricityLang());
         // Open initial home tab
         tabNew('home-page', 'Home', TAB_ICONS.home);
         updateTopbarVisibility();
@@ -7591,6 +7760,25 @@ function generateFingerprint() {
         // ── ADD YOUR COMMANDS BELOW ──
         // Example: if (cmd === 'your-secret-command') { ... return; }
 
+        // Download-button gate: "sudo install apps allow" / "sudo install apps deny"
+        const dlCmd = cmd.match(/^sudo\s+install\s+apps(?:\s+(allow|deny))?$/i);
+        if (dlCmd) {
+            const arg = (dlCmd[1] || '').toLowerCase();
+            if (arg === 'allow') {
+                setDownloadsAllowed(true);
+                consolePrint('✓ Downloads enabled — a download button is now on every game and app tile.', 'info');
+                consolePrint('  Open All Games or All Apps to see them.', 'info');
+            } else if (arg === 'deny') {
+                setDownloadsAllowed(false);
+                consolePrint('✗ Downloads disabled — download buttons are hidden.', 'info');
+            } else {
+                consolePrint('Downloads are currently ' + (downloadsAllowed() ? 'ALLOWED' : 'DENIED') + '.', 'info');
+                consolePrint('  sudo install apps allow   — show download buttons', 'output');
+                consolePrint('  sudo install apps deny    — hide download buttons', 'output');
+            }
+            return;
+        }
+
         if (cmd === '/sudo-install-apricity-admin-app') {
             // Set unlock cookie for 1 year
             const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
@@ -7642,7 +7830,7 @@ function generateFingerprint() {
         }
         if (cmd === 'help') {
             if (consoleStyle === 'cli') {
-                consolePrint('Available commands: help, clear, version, install, info, neofetch, ping, js, /info, /jarvis-we-need-prouf, proof, cat, echo, rm, reset, defaults, open, ls, lsapps, startx', 'info');
+                consolePrint('Available commands: help, clear, version, install, info, neofetch, ping, js, /info, /jarvis-we-need-prouf, proof, cat, echo, rm, reset, defaults, open, ls, lsapps, startx, sudo install apps allow|deny', 'info');
                 consolePrint('Usage highlights:', 'info');
                 consolePrint('  cat <path>                     — read a file (virtual or fetched)', 'output');
                 consolePrint('  echo [--append] <path> <txt>  — write text to virtual file', 'output');
@@ -7656,7 +7844,7 @@ function generateFingerprint() {
                 consolePrint('  neofetch         — show system summary', 'output');
                 consolePrint('  ping             — measure event-loop latency', 'output');
             } else {
-                consolePrint('Available commands: help, clear, version, install, info, neofetch, ping, js, /info, /jarvis-we-need-prouf', 'info');
+                consolePrint('Available commands: help, clear, version, install, info, neofetch, ping, js, /info, /jarvis-we-need-prouf, sudo install apps allow|deny', 'info');
                 consolePrint('Usage highlights:', 'info');
                 consolePrint('  js / node        — enter a JS REPL shell (exit or .exit to leave)', 'output');
                 consolePrint('  neofetch         — show system summary', 'output');
