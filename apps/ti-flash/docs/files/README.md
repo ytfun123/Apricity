@@ -7,6 +7,9 @@ Drop your calculator files here and reference them from `BUILTIN_FILES` in
   ASM/C program support on CE-family OS versions where TI has locked it down.
 - `cesium.8xp` — the Cesium shell file for the CE line, commonly installed
   right after jailbreaking to make launching homebrew games/programs easier.
+- `arTIfiCE_v3.8xp` + `INEQUVAR.8xv` — arTIfiCE v3, for **OS 5.8.5 only**
+  (v2.1's exploit was patched there). Requires the Inequalz app to be installed;
+  send the trigger AppVar after opening Inequalz's Functions screen.
 - `ion.8xg` — the ION shell for the classic (Z80) TI-84 Plus line. Sent to a
   Plus instead of arTIfiCE/Cesium; games then show up under the APPS menu.
 

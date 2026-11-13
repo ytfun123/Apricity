@@ -18,15 +18,31 @@ const ASM_LOCK_VERSION_TEXT = '5.5.1 (EU) / 5.5.5 (US)';
 const BUILTIN_FILES = [
   {
     key: 'jailbreak',
-    label: 'arTIfiCE (jailbreak)',
+    label: 'arTIfiCE v2.1 (OS 5.5 to 5.8.4)',
     path: 'files/arTIfiCE_v2_1.8xp',
     required: true,
     family: 'ce'
   },
   {
     key: 'cesium',
-    label: 'Cesium (shell)',
+    label: 'Cesium 3.8.0 (shell)',
     path: 'files/cesium_english_zx0.8xp',
+    required: false,
+    family: 'ce'
+  },
+  // OS 5.8.5 patched the v2.1 exploit. v3 needs the Inequalz app installed and
+  // both files sent; the trigger AppVar only works once Inequalz is open.
+  {
+    key: 'jailbreak-v3',
+    label: 'arTIfiCE v3 (OS 5.8.5 only)',
+    path: 'files/arTIfiCE_v3.8xp',
+    required: false,
+    family: 'ce'
+  },
+  {
+    key: 'jailbreak-v3-trigger',
+    label: 'arTIfiCE v3 trigger (INEQUVAR)',
+    path: 'files/INEQUVAR.8xv',
     required: false,
     family: 'ce'
   },
