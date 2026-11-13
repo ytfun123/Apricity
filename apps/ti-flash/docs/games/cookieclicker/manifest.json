@@ -1,4 +1,3 @@
 [
-  { "file": "COOKCLIK.8xp", "label": "Cookie Clicker CE" },
-  { "file": "clibs.8xg", "label": "Required libraries" }
+  { "file": "CookieClicker.8xg", "label": "Cookie Clicker (installs prgmCOOKCLCK and list CDAT)" }
 ]
