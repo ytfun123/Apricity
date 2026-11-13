@@ -50,6 +50,7 @@ const GAME_CATEGORIES = [
   { key: 'flappy', label: 'Flappy Bird', dir: 'games/flappy', plusDir: 'games/ti-84 plus/flappy-plus', desc: 'The infamous bird-flapping game.', ceImg: 'games/flappy/ce.png', plusImg: 'games/ti-84 plus/flappy-plus/plus.png' },
   { key: 'portal', label: 'Portal', dir: 'games/portal', desc: 'Think with portals \u2014 puzzle platformer.', ceImg: 'games/portal/ce.png' },
   { key: 'tetris', label: 'Tetris', dir: 'games/tetris', desc: 'Stack blocks and clear lines.', ceImg: 'games/tetris/ce.png' },
+  { key: 'cookieclicker', label: 'Cookie Clicker', dir: 'games/cookieclicker', desc: 'Bake cookies, buy buildings, and watch the numbers climb.', ceImg: 'games/cookieclicker/ce.svg' },
   { key: '2048', label: '2048', dir: 'games/2048', plusDir: 'games/ti-84 plus/2048', desc: 'Slide and merge tiles to reach 2048.', ceImg: 'games/2048/ce.png', plusImg: 'games/ti-84 plus/2048/plus.png' },
   { key: 'checkers', label: 'Checkers', dir: 'games/checkers', desc: 'Classic board game for two players.', ceImg: 'games/checkers/ce.png' },
   { key: 'chess', label: 'Chess', dir: 'games/chess', desc: 'The game of kings.', ceImg: 'games/chess/ce.png' },
