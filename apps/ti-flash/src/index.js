@@ -55,6 +55,13 @@ const BUILTIN_FILES = [
   }
 ];
 
+// Which built-in files to send for the jailbreak, by OS generation. OS 5.8.5
+// patched the v2.1 exploit, and v3 needs its Inequalz trigger AppVar.
+const JAILBREAK_SETS = {
+  v2: ['jailbreak', 'cesium', 'jailbreak-v3-trigger'],
+  v3: ['jailbreak-v3', 'jailbreak-v3-trigger', 'cesium']
+};
+
 // Games library: each category is a folder under docs/games/<key>/ with a
 // manifest.json listing its files (see docs/games/README.md). To add a new
 // category, create the folder + manifest.json and add an entry here — no
@@ -122,6 +129,7 @@ const GAME_CATEGORIES = [
 let calculator = null;
 let calcFamily = null;    // 'ce' | 'plus' | null once a calculator is identified
 let asmLocked = null;      // null = not asked yet, true/false once answered
+let jailbreakSet = null;    // 'v2' = OS 5.5-5.8.4, 'v3' = OS 5.8.5+, null = unknown
 let jailbreakReady = false; // true once the jailbreak step is resolved (not needed, already had it, or installed)
 let ionReady = false;       // true once ION is confirmed/installed on a Plus
 let queue = [];             // { id, name, tiFile, status, message, builtin, key }
@@ -242,8 +250,9 @@ function attachConnectionListeners() {
     if ( calc != calculator ) return;
     calculator = null;
     calcFamily = null;
-    asmLocked = null;
-    jailbreakReady = false;
+          asmLocked = null;
+      jailbreakSet = null;
+      jailbreakReady = false;
     ionReady = false;
     updateButtons();
   });
@@ -347,8 +356,8 @@ async function ensureSendReady() {
 
 function askOsVersion() {
   const popup = setPopup(
-    'Is ASM/C blocked on your calculator?',
-    `TI locked ASM/C programs starting with OS ${ASM_LOCK_VERSION_TEXT} on the TI-84 Plus CE / TI-83 Premium CE family.`
+    'Which OS is on your calculator?',
+    `TI locked ASM/C programs starting with OS ${ASM_LOCK_VERSION_TEXT}, and each generation needs a different jailbreak file. Pick your version:`
   );
 
   const custom = popup.querySelector('.custom');
@@ -365,25 +374,38 @@ function askOsVersion() {
   `;
 
   return new Promise(resolve => {
-    const yesBtn = popupButton('no', "Yes, it's blocked", () => {
-      asmLocked = true;
-      jailbreakReady = false;
+    const close = () => {
       popup.classList.remove('active');
       updateButtons();
       resolve();
-    });
+    };
 
-    const noBtn = popupButton('yes', 'No, ASM still works', () => {
+    const oldBtn = popupButton('yes', '5.4 or older \u2014 ASM still works', () => {
       asmLocked = false;
+      jailbreakSet = null;
       jailbreakReady = true;
-      popup.classList.remove('active');
-      updateButtons();
-      resolve();
+      close();
     });
 
-    popup.querySelector('.buttons').innerHTML = '';
-    popup.querySelector('.buttons').appendChild(noBtn);
-    popup.querySelector('.buttons').appendChild(yesBtn);
+    const v2Btn = popupButton('no', '5.5 to 5.8.4 \u2014 arTIfiCE v2.1', () => {
+      asmLocked = true;
+      jailbreakSet = 'v2';
+      jailbreakReady = false;
+      close();
+    });
+
+    const v3Btn = popupButton('no', '5.8.5 or newer \u2014 arTIfiCE v3', () => {
+      asmLocked = true;
+      jailbreakSet = 'v3';
+      jailbreakReady = false;
+      close();
+    });
+
+    const buttons = popup.querySelector('.buttons');
+    buttons.innerHTML = '';
+    buttons.appendChild(oldBtn);
+    buttons.appendChild(v2Btn);
+    buttons.appendChild(v3Btn);
     popup.classList.add('active');
   });
 }
@@ -423,17 +445,46 @@ async function installJailbreak() {
     return;
   }
 
-  for ( const entry of BUILTIN_FILES ) {
-    if ( entry.family !== 'ce' ) continue;
+  const set = JAILBREAK_SETS[jailbreakSet] || JAILBREAK_SETS.v2;
+
+  for ( const key of set ) {
+    // v3 only arms itself while Inequalz is reading its Functions screen, so
+    // stop and have the user open it before the trigger AppVar goes over.
+    if ( key === 'jailbreak-v3-trigger' && jailbreakSet === 'v3' ) {
+      await alert(
+        'Open Inequalz now',
+        'On your calculator press APPS, choose Inequalz and open its Functions screen. Leave it there, then press Okay here to send the trigger file.'
+      );
+    }
+
+    const entry = BUILTIN_FILES.find(f => f.key === key);
+    if ( !entry ) continue;
     const item = await addFileFromPath(entry.label, entry.path, { builtin: true, key: entry.key });
     updateButtons();
     if ( item && item.tiFile ) {
       await sendQueueItem(item.id);
     }
+
+    // 5.8.4 and below are unlocked by v2.1 alone; the trigger rides along for
+    // a later OS update instead of being needed now.
+    if ( key === 'jailbreak-v3-trigger' && jailbreakSet !== 'v3' ) {
+      await alert(
+        'Trigger file sent for later',
+        'On OS 5.8.4 and below arTIfiCE v2.1 does the whole job, so this trigger is not used yet \u2014 it is on the calculator in case you update to 5.8.5.'
+      );
+    }
   }
 
   jailbreakReady = true;
   updateButtons();
+
+  if ( jailbreakSet === 'v3' ) {
+    alert(
+      'Almost done!',
+      'arTIfiCE v3 installs a Flash app called AsmHook2. Let the calculator finish, then send your games as usual \u2014 press ON + PRGM to open the shell.'
+    );
+    return;
+  }
 
   alert(
     'Almost done!',
