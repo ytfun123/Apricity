@@ -4951,6 +4951,15 @@ function generateFingerprint() {
         });
     });
 
+    // Names on the APPS tab tiles. Separate from the tables above because these
+    // are app names, not interface copy: the brands stay as they are and only
+    // the descriptive ones get translated.
+    const APPS_TAB_I18N = {
+        'home.desktop': { en: "Desktop", es: "Escritorio", fr: "Bureau", de: "Desktop", 'pt-BR': "Área de trabalho", it: "Scrivania", nl: "Bureaublad", pl: "Pulpit", ru: "Рабочий стол", tr: "Masaüstü", ja: "デスクトップ", zh: "桌面", hi: "डेस्कटॉप", uk: "Робочий стіл" },
+        'home.pixelart': { en: "Pixel Art", es: "Arte pixel", fr: "Pixel art", de: "Pixel-Art", 'pt-BR': "Arte pixel", it: "Pixel art", nl: "Pixelkunst", pl: "Pixel art", ru: "Пиксель-арт", tr: "Piksel sanatı", ja: "ピクセルアート", zh: "像素画", hi: "पिक्सेल आर्ट", uk: "Піксель-арт" }
+    };
+    Object.keys(APPS_TAB_I18N).forEach(key => { APRICITY_STRINGS[key] = APPS_TAB_I18N[key]; });
+
     function apricityLang() {
         try { return localStorage.getItem('apricity-language') || 'en'; } catch (e) { return 'en'; }
     }
@@ -5159,6 +5168,16 @@ function generateFingerprint() {
             translateModalText(document.getElementById(id));
         });
         renderLangFormQr();
+        // An app that is already open follows the change too: repaint the APPS
+        // tiles and tell the running iframe to re-apply its own translations.
+        try {
+            const frame = document.getElementById('game-fullscreen-frame');
+            if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 'apricity-language', lang }, '*');
+        } catch (e) {}
+        try {
+            const overlay = document.getElementById('appsFsOverlay');
+            if (overlay && overlay.classList.contains('active')) renderAppsFullscreenGrid();
+        } catch (e) {}
         const sel = document.getElementById('languageSelect');
         if (sel) sel.value = lang;
     }
@@ -5493,12 +5512,12 @@ function generateFingerprint() {
         { id: 'gemini',    name: 'Groq AI',     icon: 'auto_awesome', open: 'openGemini' },
         { id: 'meet',      name: 'Meet Stable', icon: 'video_call',   open: 'openMeetStable', src: './apps/meet_stable.html' },
         { id: 'spotify',   name: 'Spotify',     icon: 'graphic_eq',   open: 'openSpotify',  src: './apps/spotify.html' },
-        { id: 'desktop',   name: 'Desktop',     icon: 'computer',     open: 'openDesktop',  src: './apps/desktop.html' },
+        { id: 'desktop',   name: 'Desktop',     nameKey: 'home.desktop',  icon: 'computer',     open: 'openDesktop',  src: './apps/desktop.html' },
         { id: 'youtube',   name: 'YouTube',     icon: 'play_circle',  open: 'showYouTube' },
         { id: 'discord',   name: 'Chillcord',     icon: 'forum',        open: 'openDiscordApp', src: './apps/discord/index.html' },
         { id: 'ti-flash', name: 'Ti Flash',     icon: 'usb',          open: 'openTiFlash',  src: './apps/ti-flash/docs/index.html' },
         { id: 'netchat',  name: 'NetChat',      icon: './apps/netchat/icon.png', open: 'openNetChat', src: './apps/netchat/index.html' },
-        { id: 'pixelart', name: 'Pixel Art',    icon: 'palette',      open: 'openPixelArt', src: './apps/pixelart.html' },
+        { id: 'pixelart', name: 'Pixel Art',    nameKey: 'home.pixelart', icon: 'palette',      open: 'openPixelArt', src: './apps/pixelart.html' },
     ];
 
     function toggleAppsFullscreen() {
@@ -5520,6 +5539,12 @@ function generateFingerprint() {
         return `<span class="material-symbols-outlined">${value || 'apps'}</span>`;
     }
 
+    // Tile label in the current interface language (app names are proper nouns,
+    // so only the ones with a real translation carry a nameKey).
+    function appLabel(a) {
+        return a.nameKey ? aprT(a.nameKey) : a.name;
+    }
+
     function renderAppsFullscreenGrid() {
         const grid = document.getElementById('appsFsGrid');
         grid.innerHTML = APPS_LIST.map(a => {
@@ -5534,7 +5559,7 @@ function generateFingerprint() {
             return `
                 <div class="games-fs-card" onclick="toggleAppsFullscreen(); ${a.open}()">
                     <div class="games-fs-icon">${appIconHTML(a)}</div>
-                    <div class="games-fs-name">${a.name}</div>${downloadBtnHTML(a.src, a.name)}
+                    <div class="games-fs-name">${appLabel(a)}</div>${downloadBtnHTML(a.src, appLabel(a))}
                 </div>`;
         }).join('');
     }

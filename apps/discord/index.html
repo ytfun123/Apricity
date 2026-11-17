@@ -583,6 +583,7 @@ body.icon-style-emoji .ic-google{display:none}
   .sidebar{left:56px}
 }
 </style>
+<script src="../app-lang.js"></script>
 </head>
 <body>
 <script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('nc_theme')||'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
@@ -799,7 +800,7 @@ function playNotificationSound(){
         <input type="file" id="file-input" style="display:none" onchange="handleFileSelected(event)">
         <button class="icon-btn" onclick="document.getElementById('file-input').click()" title="Upload file to Catbox"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">attach_file</span><span class="ic-emoji">📎</span></span></button>
         <textarea class="msg-field" id="msg-in" placeholder="Message everyone…" rows="1"
-          onkeydown="handleKey(event)" oninput="autoResize(this);handleMentionInput(this)"></textarea>
+          onkeydown="handleKey(event)" oninput="autoResize(this);handleMentionInput(this);queueDraftSave()"></textarea>
         <button class="icon-btn" onclick="toggleEmojiPicker(event)"><span class="ic-wrap"><span class="material-symbols-outlined ic-google">mood</span><span class="ic-emoji">😊</span></span></button>
         <button class="send-btn" id="send-btn" onclick="sendMsg()" disabled><span class="ic-wrap"><span class="material-symbols-outlined ic-google">send</span><span class="ic-emoji">➤</span></span></button>
       </div>
@@ -1863,6 +1864,7 @@ async function bootApp(){
   document.getElementById('modlist-btn').style.display=isMod(me)?'flex':'none';
   channels=await dbGet('channels','?order=created_at.asc');
   await loadAllUsers();
+  hydrateFriendsSnapshot(); // paint the saved list before the network answers
   await loadFriendsData();
   myDMs=JSON.parse(localStorage.getItem('nc_dms')||'[]');
   loadMyServers();  // fire-and-forget: renders from cache instantly, refreshes API async
@@ -1884,6 +1886,13 @@ async function bootApp(){
   if(modReqTimer) clearInterval(modReqTimer);
   modReqTimer=setInterval(checkPendingModRequests,5000);
   checkPendingModRequests();
+  // Friends/requests otherwise only refreshed on boot or after an action, so
+  // a request you accepted on your phone never showed up here.
+  if(friendsTimer) clearInterval(friendsTimer);
+  friendsTimer=setInterval(()=>{ if(!document.hidden) loadFriendsData(); },45000);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden && Date.now()-friendsLastLoad>10000) loadFriendsData(); });
+  window.addEventListener('focus',()=>{ if(Date.now()-friendsLastLoad>10000) loadFriendsData(); });
+  window.addEventListener('online',()=>loadFriendsData());
   // Role + ban checks happen quietly in the background so they never
   // delay showing the app on load — matches the instant-boot pattern
   // already used for session re-validation below.
@@ -2111,19 +2120,93 @@ async function loadAllUsers(){
 // ================================================================
 let myFriends=[], friendReqIncoming=[], friendReqOutgoing=[], myBlocked=[];
 let activeFriendsTab='online'; // 'online' | 'all' | 'requests'
-async function loadFriendsData(){
+// The friends list lives in Supabase, but it is mirrored into localStorage.
+// Before this, one failed request (a blip, a sleeping tab, a rate limit) left
+// the sidebar empty until a full reload, which is what "it forgets my friends"
+// was: the cache is now painted first and only replaced by a *successful* fetch.
+const FRIENDS_CACHE_KEY='nc_friends_cache';
+let friendsRetryTimer=null, friendsRetryDelay=4000, friendsOfflineWarned=false, friendsTimer=null, friendsLastLoad=0;
+function sameJson(a,b){ try{ return JSON.stringify(a)===JSON.stringify(b); }catch(e){ return false; } }
+function cacheFriendsSnapshot(){
   try{
-    const [f,reqs,bl]=await Promise.all([
-      rpc('get_my_friends',{p_token:token}),
-      rpc('get_pending_friend_requests',{p_token:token}),
-      rpc('get_blocked_users',{p_token:token})
-    ]);
-    myFriends=Array.isArray(f)?f:[];
-    friendReqIncoming=(reqs&&Array.isArray(reqs.incoming))?reqs.incoming:[];
-    friendReqOutgoing=(reqs&&Array.isArray(reqs.outgoing))?reqs.outgoing:[];
-    myBlocked=Array.isArray(bl)?bl:[];
+    localStorage.setItem(FRIENDS_CACHE_KEY,JSON.stringify({
+      friends:myFriends, incoming:friendReqIncoming, outgoing:friendReqOutgoing,
+      blocked:myBlocked, at:Date.now()
+    }));
   }catch(e){}
-  syncNavRailActive();
+}
+function hydrateFriendsSnapshot(){
+  try{
+    const c=JSON.parse(localStorage.getItem(FRIENDS_CACHE_KEY)||'null');
+    if(!c) return false;
+    if(Array.isArray(c.friends)) myFriends=c.friends;
+    if(Array.isArray(c.incoming)) friendReqIncoming=c.incoming;
+    if(Array.isArray(c.outgoing)) friendReqOutgoing=c.outgoing;
+    if(Array.isArray(c.blocked)) myBlocked=c.blocked;
+    return myFriends.length>0;
+  }catch(e){ return false; }
+}
+function scheduleFriendsRetry(){
+  if(friendsRetryTimer) return;
+  friendsRetryTimer=setTimeout(()=>{
+    friendsRetryTimer=null;
+    loadFriendsData();
+    friendsRetryDelay=Math.min(friendsRetryDelay*2,60000);
+  },friendsRetryDelay);
+}
+function refreshFriendsViews(){
+  try{ syncNavRailActive(); }catch(e){}
+  try{ updateDmFriendBar(); }catch(e){}
+  try{
+    if(view==='friends') renderFriendsMain();
+    else if(view==='default') renderDefaultSidebar();
+    else renderDMSidebar();
+  }catch(e){}
+  try{
+    if(document.getElementById('friends-panel')?.classList.contains('on')) renderFriendsPanelContent();
+  }catch(e){}
+}
+async function loadFriendsData(){
+  if(!token) return;
+  friendsLastLoad=Date.now();
+  // Settle all three separately: one failing call must not discard the others
+  // (or the cache) the way a bare Promise.all + catch used to.
+  const [f,reqs,bl]=await Promise.allSettled([
+    rpc('get_my_friends',{p_token:token}),
+    rpc('get_pending_friend_requests',{p_token:token}),
+    rpc('get_blocked_users',{p_token:token})
+  ]);
+  let changed=false, failed=0;
+  if(f.status==='fulfilled'){
+    const next=Array.isArray(f.value)?f.value:[];
+    if(!sameJson(next,myFriends)){ myFriends=next; changed=true; }
+  } else failed++;
+  if(reqs.status==='fulfilled'){
+    const v=reqs.value||{};
+    const inc=Array.isArray(v.incoming)?v.incoming:[];
+    const out=Array.isArray(v.outgoing)?v.outgoing:[];
+    if(!sameJson(inc,friendReqIncoming)||!sameJson(out,friendReqOutgoing)){
+      friendReqIncoming=inc; friendReqOutgoing=out; changed=true;
+    }
+  } else failed++;
+  if(bl.status==='fulfilled'){
+    const next=Array.isArray(bl.value)?bl.value:[];
+    if(!sameJson(next,myBlocked)){ myBlocked=next; changed=true; }
+  } else failed++;
+  if(failed){
+    scheduleFriendsRetry();
+    if(!friendsOfflineWarned && myFriends.length){
+      friendsOfflineWarned=true;
+      showToast('Reconnecting \u2014 showing your saved friends','error');
+    }
+  }else{
+    friendsRetryDelay=4000;
+    friendsOfflineWarned=false;
+    if(friendsRetryTimer){ clearTimeout(friendsRetryTimer); friendsRetryTimer=null; }
+    cacheFriendsSnapshot();
+  }
+  if(changed) refreshFriendsViews();
+  else syncNavRailActive();
 }
 function friendStatusWith(uid){
   if(myBlocked.find(b=>b.id===uid)) return 'blocked';
@@ -2686,6 +2769,42 @@ function renderDMItems(){
 // ================================================================
 // MESSAGES
 // ================================================================
+// Drafts: Discord keeps an unsent message per conversation. Keyed by the same
+// cache key the message list uses, so a half-typed message survives switching
+// to another channel, opening the friends list, or closing the tab.
+const DRAFTS_KEY='nc_drafts';
+let draftSaveTimer=null;
+function readDrafts(){ try{ return JSON.parse(localStorage.getItem(DRAFTS_KEY)||'{}')||{}; }catch(e){ return {}; } }
+function writeDrafts(d){ try{ localStorage.setItem(DRAFTS_KEY,JSON.stringify(d)); }catch(e){} }
+function draftKeyFor(){ try{ return activeMessageCacheKey(); }catch(e){ return ''; } }
+function saveDraftNow(){
+  const inp=document.getElementById('msg-in'); if(!inp) return;
+  const k=draftKeyFor(); if(!k) return;
+  const v=inp.value, d=readDrafts();
+  if(!v.trim()){ if(k in d){ delete d[k]; writeDrafts(d); } return; }
+  if(d[k]===v) return;
+  d[k]=v;
+  const keys=Object.keys(d);
+  if(keys.length>60) keys.slice(0,keys.length-60).forEach(x=>delete d[x]);
+  writeDrafts(d);
+}
+function queueDraftSave(){
+  if(draftSaveTimer) clearTimeout(draftSaveTimer);
+  draftSaveTimer=setTimeout(saveDraftNow,350);
+}
+function clearDraft(){
+  const k=draftKeyFor(); if(!k) return;
+  const d=readDrafts();
+  if(k in d){ delete d[k]; writeDrafts(d); }
+}
+function restoreDraft(key){
+  const inp=document.getElementById('msg-in'); if(!inp) return;
+  const d=readDrafts();
+  inp.value=d[key]||'';
+  try{ autoResize(inp); }catch(e){}
+  const btn=document.getElementById('send-btn');
+  if(btn) btn.disabled=!inp.value.trim()||!!currentMute;
+}
 let loadMsgsKey=null;
 async function loadMsgs(){
   closeMobileNav();
@@ -2694,6 +2813,7 @@ async function loadMsgs(){
   // New conversation: clear the incremental-render diff state so we paint fresh
   // instead of diffing against the previous chat's messages.
   if(cacheKey!==loadMsgsKey){ lastRenderedMsgs=[]; loadMsgsKey=cacheKey; }
+  restoreDraft(cacheKey);
   const cached=messageCache[cacheKey];
   if(cached && cached.length){
     await renderMsgs(cached,cacheKey);
@@ -3433,6 +3553,7 @@ async function sendMsg(){
     payload=`↩ Replying to @${replyTo.username}: "${snippet}"\n${REPLY_DIVIDER}\n${txt}`;
   }
   inp.value=''; inp.style.height='';
+  clearDraft();
   cancelReply();
   document.getElementById('send-btn').disabled=true;
   const key=activeMessageCacheKey();
@@ -4777,6 +4898,81 @@ function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrol
 function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}
 function esc(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 let toastTimer;
+// ================================================================
+// QUICK SWITCHER (Ctrl/Cmd+K) — jump straight to any DM, friend or
+// channel like Discord's switcher instead of hunting the sidebar.
+// ================================================================
+function quickSwitcherItems(){
+  const out=[], seen=new Set();
+  (myFriends||[]).forEach(u=>{
+    if(!u||seen.has(u.id)) return; seen.add(u.id);
+    out.push({label:u.username,sub:'Friend',ico:'person',run:()=>goDM(u.id,u.username,u.avatar_color||'#6c7cff')});
+  });
+  (myDMs||[]).forEach(u=>{
+    if(!u||seen.has(u.id)) return; seen.add(u.id);
+    out.push({label:u.username,sub:'Direct message',ico:'alternate_email',run:()=>goDM(u.id,u.username,u.avatar_color||'#6c7cff')});
+  });
+  (channels||[]).forEach(c=>out.push({
+    label:'#'+c.name,
+    sub:c.type==='voice'?'Voice channel':'Text channel',
+    ico:c.type==='voice'?'volume_up':'tag',
+    run:()=>goChannel(c.id,c.name,c.description||'',c.type||'text')
+  }));
+  out.push({label:'Global chat',sub:'Everyone',ico:'public',run:()=>goGlobal()});
+  out.push({label:'Friends',sub:'Your friend list',ico:'group',run:()=>openFriendsPanel()});
+  return out;
+}
+let qsItems=[], qsIndex=0;
+function qsFiltered(){
+  const inp=document.getElementById('qs-input');
+  const q=(inp?(inp.value||''):'').trim().toLowerCase();
+  const list=q?qsItems.filter(i=>i.label.toLowerCase().includes(q)||i.sub.toLowerCase().includes(q)):qsItems;
+  return list.slice(0,40);
+}
+function qsRender(){
+  const list=document.getElementById('qs-list');
+  if(!list) return;
+  const items=qsFiltered();
+  if(!items.length){
+    list.innerHTML='<div style="padding:14px 16px;color:var(--text-lo,#949ba4);font-size:13px">No matches</div>';
+    return;
+  }
+  list.innerHTML=items.map((it,i)=>`<div onclick="qsPick(${i})" style="display:flex;align-items:center;gap:10px;padding:10px 14px;margin:2px 6px;border-radius:8px;cursor:pointer;color:var(--text-hi,#f2f3f5);background:${i===qsIndex?'var(--bg-hover,rgba(255,255,255,.08))':'transparent'}">
+    <span class="material-symbols-outlined" style="font-size:18px;color:var(--text-lo,#949ba4)">${it.ico}</span>
+    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px">${escH(it.label)}</span>
+    <span style="font-size:11.5px;color:var(--text-lo,#949ba4)">${escH(it.sub)}</span>
+  </div>`).join('');
+}
+function qsPick(i){ const it=qsFiltered()[i]; closeQuickSwitcher(); if(it) it.run(); }
+function closeQuickSwitcher(){ const ov=document.getElementById('qs-overlay'); if(ov) ov.remove(); }
+function openQuickSwitcher(){
+  closeQuickSwitcher();
+  qsItems=quickSwitcherItems(); qsIndex=0;
+  const ov=document.createElement('div');
+  ov.id='qs-overlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding-top:12vh';
+  ov.innerHTML=`<div style="width:min(560px,92vw);background:var(--bg-channels,#1e1f22);border:1px solid var(--border,#2b2d31);border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.55)">
+    <input id="qs-input" autocomplete="off" placeholder="Where would you like to go?" style="width:100%;box-sizing:border-box;padding:15px 16px;border:none;outline:none;background:transparent;color:var(--text-hi,#f2f3f5);font-size:15px;font-family:inherit">
+    <div id="qs-list" style="max-height:46vh;overflow:auto;padding:4px 0;border-top:1px solid var(--border,#2b2d31)"></div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('mousedown',e=>{ if(e.target===ov) closeQuickSwitcher(); });
+  const inp=document.getElementById('qs-input');
+  inp.addEventListener('input',()=>{ qsIndex=0; qsRender(); });
+  inp.addEventListener('keydown',e=>{
+    const items=qsFiltered();
+    if(e.key==='ArrowDown'){ e.preventDefault(); qsIndex=Math.min(qsIndex+1,items.length-1); qsRender(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); qsIndex=Math.max(qsIndex-1,0); qsRender(); }
+    else if(e.key==='Enter'){ e.preventDefault(); qsPick(qsIndex); }
+    else if(e.key==='Escape'){ e.preventDefault(); closeQuickSwitcher(); }
+  });
+  qsRender();
+  setTimeout(()=>inp.focus(),20);
+}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&!e.altKey&&(e.key==='k'||e.key==='K')){ e.preventDefault(); openQuickSwitcher(); }
+  else if(e.key==='Escape'){ closeQuickSwitcher(); }
+});
 function showToast(msg,type=''){
   const t=document.getElementById('toast');
   t.textContent=msg; t.className='toast show'+(type?' '+type:'');
