@@ -634,6 +634,10 @@ function playNotificationSound(){
       <div class="auth-tab" onclick="openSignupStyleChooser()">Create account</div>
     </div>
     <div class="auth-error" id="auth-error"></div>
+    <div style="display:flex;gap:9px;align-items:flex-start;background:rgba(99,102,241,.10);border:1px solid rgba(99,102,241,.35);border-radius:10px;padding:10px 12px;margin:2px 0 14px;font-size:11.5px;line-height:1.45;color:var(--text-md);text-align:left">
+      <span style="font-size:14px;line-height:1">🔒</span>
+      <span>We collect as little as possible: a username and password, plus your IP address <b>only if you are old enough</b> to agree to it. <a style="color:var(--accent-hi);cursor:pointer;text-decoration:underline" onclick="openPrivacyPolicy()">Read the Privacy Policy</a></span>
+    </div>
     <!-- Honeypot: real users never see or fill this (off-screen, no label,
          tabindex -1). Bots that blindly auto-fill every input on the page
          trip it. Checked in submitAuth() and re-checked server-side in
@@ -655,18 +659,17 @@ function playNotificationSound(){
         <option value="OTHER">Other</option>
       </select></div>
     <div id="age-confirm-wrap" style="display:none">
-      <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text-lo);margin:2px 0 10px;cursor:pointer">
-        <input type="checkbox" id="age-confirm-check" style="margin-top:2px;flex-shrink:0">
-        <span>I confirm I am 13 years of age or older.</span>
-      </label>
-      <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text-lo);margin:2px 0 14px;cursor:pointer">
-        <input type="checkbox" id="no-ip-check" style="margin-top:2px;flex-shrink:0" onchange="localStorage.setItem('nc_no_ip',this.checked?'1':'')">
-        <span>I don't want ChillCord to collect my IP address.</span>
-      </label>
+      <div style="font-size:12px;font-weight:600;color:var(--text-md);margin:0 0 6px;text-align:left">Date of birth</div>
+      <div style="display:flex;gap:8px;margin-bottom:6px">
+        <select id="dob-day" style="flex:1;padding:9px 8px;border-radius:9px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-hi);font-size:13px;font-family:inherit"></select>
+        <select id="dob-month" style="flex:1.4;padding:9px 8px;border-radius:9px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-hi);font-size:13px;font-family:inherit"></select>
+        <select id="dob-year" style="flex:1;padding:9px 8px;border-radius:9px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-hi);font-size:13px;font-family:inherit"></select>
+      </div>
+      <div style="font-size:11px;color:var(--text-lo);margin-bottom:14px;text-align:left;line-height:1.45">Used only to work out whether we're allowed to record your IP address for ban enforcement. Your birthday is never stored — only the yes/no result.</div>
     </div>
     <button class="auth-btn" id="auth-btn" onclick="submitAuth()">Sign in</button>
     <div style="text-align:center;font-size:12px;color:var(--text-lo)">No email required · Username only</div>
-    <div style="text-align:center;font-size:11px;margin-top:8px"><span style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="openPrivacyPolicy()">Privacy Policy</span></div>
+    <div style="text-align:center;font-size:11px;color:var(--text-lo);margin-top:10px">By creating an account you agree to the <span style="color:var(--accent-hi);cursor:pointer;text-decoration:underline" onclick="openPrivacyPolicy()">Privacy Policy</span></div>
   </div>
 </div>
 
@@ -982,10 +985,13 @@ function playNotificationSound(){
         <option value="OTHER">Other</option>
       </select></div>
     <div id="consent-age-wrap" style="display:none;margin-top:10px">
-      <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text-lo);cursor:pointer">
-        <input type="checkbox" id="consent-age-check" style="margin-top:2px;flex-shrink:0">
-        <span>I confirm I am 13 years of age or older.</span>
-      </label>
+      <label style="font-size:12px;font-weight:600;color:var(--text-md);display:block;margin-bottom:6px">Date of birth</label>
+      <div style="display:flex;gap:8px">
+        <select id="consent-dob-day" style="flex:1;padding:9px 8px;border-radius:9px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-hi);font-size:13px;font-family:inherit"></select>
+        <select id="consent-dob-month" style="flex:1.4;padding:9px 8px;border-radius:9px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-hi);font-size:13px;font-family:inherit"></select>
+        <select id="consent-dob-year" style="flex:1;padding:9px 8px;border-radius:9px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-hi);font-size:13px;font-family:inherit"></select>
+      </div>
+      <div style="font-size:11px;color:var(--text-lo);margin-top:6px;line-height:1.45">Used only to decide whether we may record your IP address. We don't store your birthday.</div>
     </div>
     <div class="mactions" style="margin-top:14px">
       <button class="mbtn ok" onclick="submitConsentBackfill()" style="width:100%">Continue</button>
@@ -1645,7 +1651,16 @@ async function submitAuth(){
   if(authMode==='register'&&containsBlockedWord(u)) return showAuthErr('That username isn\'t allowed, please choose another');
   if(p.length<6) return showAuthErr('Password must be at least 6 characters');
   if(authMode==='register'&&p!==c) return showAuthErr('Passwords do not match');
-  if(appSettings.collect_ip&&!document.getElementById('age-confirm-check').checked) return showAuthErr('Please confirm you are 13 years of age or older');
+  // Age gate: the date of birth decides whether we may record an IP address.
+  // Under-age signups still go through — we simply never collect it.
+  if(authMode==='register'){
+    const dob=dobFromSelects('dob');
+    if(!dob) return showAuthErr('Please enter your date of birth');
+    const age=ageFromDOB(dob.y,dob.d,dob.m);
+    if(age<0||age>120) return showAuthErr('Please check your date of birth');
+    const region=appSettings.collect_region?document.getElementById('region-select').value:'';
+    rememberAgeVerdict(age>=minAgeForRegion(region));
+  }
   const btn=document.getElementById('auth-btn');
   btn.disabled=true; btn.textContent='Verifying…';
   const tokenForThisAttempt=await getCaptchaToken();
@@ -1665,11 +1680,12 @@ async function submitAuth(){
     localStorage.setItem('nc_user',JSON.stringify(me));
     syncToSheet();
     try{
-      const ip=(appSettings.collect_ip&&!document.getElementById('no-ip-check').checked)?await getClientIP():null;
-      const fp=appSettings.collect_fp?await getFingerprint():null;
+      const allowed=ageAllows();
+      const ip=(appSettings.collect_ip&&allowed)?await getClientIP():null;
+      const fp=(appSettings.collect_fp&&allowed)?await getFingerprint():null;
       const region=appSettings.collect_region?document.getElementById('region-select').value:null;
       cachedClientIP=ip; cachedFingerprint=fp;
-      const secRes=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:appSettings.collect_ip,p_region:region});
+      const secRes=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:appSettings.collect_ip?allowed:null,p_region:region});
       if(secRes&&secRes.error){
         localStorage.removeItem('nc_token'); localStorage.removeItem('nc_user');
         me=null; token=null;
@@ -1706,15 +1722,14 @@ const WIZ_STEPS=[
   {key:'username',type:'text',q:"What username do you want?",sub:"This is how everyone on ChillCord will see you.",placeholder:'your_username',maxlength:30},
   {key:'password',type:'password',q:"Nice to meet you. What's your password?",sub:"At least 6 characters.",placeholder:'••••••••'},
   {key:'confirm',type:'password',q:"What's your password one last time?",sub:"Just to make sure it matches.",placeholder:'••••••••'},
-  {key:'age',type:'yesno',q:"Can you confirm that you are 13 years of age or older?",sub:"ChillCord is only for people aged 13 and up."},
-  {key:'ip',type:'yesno',q:"Do you want ChillCord to collect your IP address?",sub:"It's used for safety features like ban enforcement. You can say no."},
+  {key:'dob',type:'dob',q:"When were you born?",sub:"We only use this to know whether we may record your IP address for ban enforcement. Your birthday is never stored."},
   {key:'theme',type:'theme',q:"What theme fits you best?",sub:"Pick one to preview it live — you can change it anytime in Settings."}
 ];
 let wizStep=0;
-const wizData={username:'',password:'',confirm:'',age:null,ip:null,theme:'midnight'};
+const wizData={username:'',password:'',confirm:'',dob:null,theme:'midnight'};
 function openSignupWizard(){
   wizStep=0;
-  wizData.username='';wizData.password='';wizData.confirm='';wizData.age=null;wizData.ip=null;
+  wizData.username='';wizData.password='';wizData.confirm='';wizData.dob=null;
   wizData.theme='midnight';
   const w=document.getElementById('signup-wizard');
   w.classList.add('on');w.setAttribute('aria-hidden','false');
@@ -1738,6 +1753,12 @@ function renderWizardStep(){
     control=`<div class="wiz-choices">
       <button class="wiz-choice ${v===true?'sel':''}" onclick="wizChoose('${step.key}',true)">Yes</button>
       <button class="wiz-choice ${v===false?'sel':''}" onclick="wizChoose('${step.key}',false)">No</button>
+    </div>`;
+  } else if(step.type==='dob'){
+    control=`<div style="display:flex;gap:8px;justify-content:center">
+      ${dobSelectHTML('wiz-dob','day',wizData.dob&&wizData.dob.d)}
+      ${dobSelectHTML('wiz-dob','month',wizData.dob&&wizData.dob.m)}
+      ${dobSelectHTML('wiz-dob','year',wizData.dob&&wizData.dob.y)}
     </div>`;
   } else if(step.type==='theme'){
     const swat={dark:['#0b0c11','#0d0f14','#6366f1'],midnight:['#13161f','#1a1d27','#6c7cff'],light:['#ffffff','#eceef5','#5b60e8']};
@@ -1781,11 +1802,12 @@ function wizardNext(){
     if(wizData.password.length<6) return wizErr('Your password must be at least 6 characters.');
   } else if(step.key==='confirm'){
     if(wizData.confirm!==wizData.password) return wizErr("Those passwords don't match.");
-  } else if(step.key==='age'){
-    if(wizData.age===null) return wizErr('Please choose Yes or No.');
-    if(wizData.age===false) return wizErr('Sorry — you must be 13 or older to use ChillCord.');
-  } else if(step.key==='ip'){
-    if(wizData.ip===null) return wizErr('Please choose Yes or No.');
+  } else if(step.key==='dob'){
+    const dob=wizData.dob;
+    if(!dob||!dob.d||!dob.m||!dob.y) return wizErr('Please pick your day, month and year of birth.');
+    const age=ageFromDOB(dob.y,dob.d,dob.m);
+    if(age<0||age>120) return wizErr('Please check your date of birth.');
+    rememberAgeVerdict(age>=minAgeForRegion(''));
   }
   if(wizStep<WIZ_STEPS.length-1){ wizStep++; renderWizardStep(); }
   else finalizeSignup();
@@ -1795,9 +1817,7 @@ async function finalizeSignup(){
   document.getElementById('au').value=wizData.username;
   document.getElementById('ap').value=wizData.password;
   document.getElementById('ac').value=wizData.confirm;
-  const ageChk=document.getElementById('age-confirm-check'); if(ageChk) ageChk.checked=true;
-  const noIpChk=document.getElementById('no-ip-check'); if(noIpChk) noIpChk.checked=!wizData.ip;
-  localStorage.setItem('nc_no_ip',wizData.ip?'':'1');
+  // The age verdict was already stored when the DOB step was accepted.
   setTheme(wizData.theme);
   authMode='register';
   const nextBtn=document.getElementById('wiz-next');
@@ -1911,11 +1931,12 @@ async function bootApp(){
   (async()=>{
     try{
       await loadAppSettings();
-      const ip=(appSettings.collect_ip&&!localStorage.getItem('nc_no_ip'))?await getClientIP():null;
-      const fp=appSettings.collect_fp?await getFingerprint():null;
+      const allowed=ageAllows();
+      const ip=(appSettings.collect_ip&&allowed)?await getClientIP():null;
+      const fp=(appSettings.collect_fp&&allowed)?await getFingerprint():null;
       cachedClientIP=ip; cachedFingerprint=fp;
       // Only refresh IP/FP here — never silently set age_confirmed on a
-      // routine boot. Age is only ever set by an explicit checkbox
+      // routine boot. Age is only ever set by the date-of-birth gate
       // (at signup/sign-in, or via the one-time backfill prompt below).
       const secRes=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:null});
       if(secRes&&secRes.banned){
@@ -1951,15 +1972,21 @@ async function deleteDefaultChannel(id,name){
 async function submitConsentBackfill(){
   const needsAge=document.getElementById('consent-age-wrap').style.display!=='none';
   const needsRegion=document.getElementById('consent-region-wrap').style.display!=='none';
-  if(needsAge&&!document.getElementById('consent-age-check').checked){
-    showToast('Please confirm you are 13 years of age or older','error');
-    return;
-  }
   const region=needsRegion?document.getElementById('consent-region-select').value:null;
+  let ageOk=null;
+  if(needsAge){
+    const dob=dobFromSelects('consent-dob');
+    if(!dob){ showToast('Please enter your date of birth','error'); return; }
+    const age=ageFromDOB(dob.y,dob.d,dob.m);
+    if(age<0||age>120){ showToast('Please check your date of birth','error'); return; }
+    ageOk=age>=minAgeForRegion(region||'');
+    rememberAgeVerdict(ageOk);
+  }
   try{
-    const ip=(appSettings.collect_ip&&!localStorage.getItem('nc_no_ip'))?(cachedClientIP||await getClientIP()):null;
-    const fp=appSettings.collect_fp?(cachedFingerprint||await getFingerprint()):null;
-    const r=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:needsAge?true:null,p_region:region});
+    const allowed=ageOk===null?ageAllows():ageOk;
+    const ip=(appSettings.collect_ip&&allowed)?(cachedClientIP||await getClientIP()):null;
+    const fp=(appSettings.collect_fp&&allowed)?(cachedFingerprint||await getFingerprint()):null;
+    const r=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:needsAge?ageOk:null,p_region:region});
     if(r&&r.error){ showToast(r.error,'error'); return; }
     document.getElementById('consent-modal').classList.remove('on');
     showToast('Thanks!','success');
@@ -2999,25 +3026,111 @@ function applyAppSettingsToAuthForm(){
   const regionWrap=document.getElementById('region-wrap');
   if(ageWrap) ageWrap.style.display=appSettings.collect_ip?'block':'none';
   if(regionWrap) regionWrap.style.display=appSettings.collect_region?'block':'none';
-  const noIpCheck=document.getElementById('no-ip-check');
-  if(noIpCheck) noIpCheck.checked=!!localStorage.getItem('nc_no_ip');
+  initDobSelects('dob');
+  initDobSelects('consent-dob');
 }
+// ---------------------------------------------------------------------------
+// AGE GATE
+// A date of birth decides whether we may record an IP address or device
+// fingerprint. The birthday itself is never stored, sent, or logged — only the
+// yes/no verdict stays in this browser (localStorage 'nc_age_ok').
+// 13 is the floor most jurisdictions set; the EU/UK require 16.
+// ---------------------------------------------------------------------------
+const MIN_AGE_DEFAULT=13, MIN_AGE_EU=16;
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function minAgeForRegion(region){
+  const r=String(region||'').toUpperCase();
+  return (r==='EU'||r==='UK')?MIN_AGE_EU:MIN_AGE_DEFAULT;
+}
+function ageFromDOB(y,m,d){
+  const by=Number(y), bm=Number(m), bd=Number(d);
+  if(!by||!bm||!bd) return -1;
+  const today=new Date();
+  let age=today.getFullYear()-by;
+  const hadBirthday=(today.getMonth()+1>bm)||((today.getMonth()+1===bm)&&today.getDate()>=bd);
+  if(!hadBirthday) age--;
+  return age;
+}
+function rememberAgeVerdict(ok){ try{ localStorage.setItem('nc_age_ok',ok?'1':'0'); }catch(e){} }
+function ageAllows(){ try{ return localStorage.getItem('nc_age_ok')==='1'; }catch(e){ return false; } }
+function initDobSelects(prefix){
+  const day=document.getElementById(prefix+'-day');
+  const mon=document.getElementById(prefix+'-month');
+  const yr=document.getElementById(prefix+'-year');
+  if(!day||!mon||!yr||day.options.length) return;
+  let d='<option value="">Day</option>';
+  for(let i=1;i<=31;i++) d+=`<option value="${i}">${i}</option>`;
+  day.innerHTML=d;
+  let m='<option value="">Month</option>';
+  MONTH_NAMES.forEach((n,i)=>{ m+=`<option value="${i+1}">${n}</option>`; });
+  mon.innerHTML=m;
+  let y='<option value="">Year</option>';
+  const nowY=new Date().getFullYear();
+  for(let i=0;i<100;i++){ const yy=nowY-1-i; y+=`<option value="${yy}">${yy}</option>`; }
+  yr.innerHTML=y;
+}
+function dobFromSelects(prefix){
+  const d=document.getElementById(prefix+'-day');
+  const m=document.getElementById(prefix+'-month');
+  const y=document.getElementById(prefix+'-year');
+  if(!d||!m||!y||!d.value||!m.value||!y.value) return null;
+  return {d:Number(d.value),m:Number(m.value),y:Number(y.value)};
+}
+function dobSelectHTML(prefix,part,selected){
+  let opts='';
+  if(part==='day'){
+    opts+='<option value="">Day</option>';
+    for(let i=1;i<=31;i++) opts+=`<option value="${i}"${selected===i?' selected':''}>${i}</option>`;
+  } else if(part==='month'){
+    opts+='<option value="">Month</option>';
+    MONTH_NAMES.forEach((n,i)=>{ opts+=`<option value="${i+1}"${selected===i+1?' selected':''}>${n}</option>`; });
+  } else {
+    opts+='<option value="">Year</option>';
+    const nowY=new Date().getFullYear();
+    for(let i=0;i<100;i++){ const y=nowY-1-i; opts+=`<option value="${y}"${selected===y?' selected':''}>${y}</option>`; }
+  }
+  return `<select id="${prefix}-${part}" onchange="wizDobChange()" style="flex:1;padding:10px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-hi);font-size:13px;font-family:inherit">${opts}</select>`;
+}
+function wizDobChange(){
+  wizData.dob=dobFromSelects('wiz-dob');
+  const next=document.getElementById('wiz-next');
+  if(next) next.disabled=!wizData.dob;
+}
+const PRIVACY_POLICY_VERSION='Version 2 — age-based collection';
 function buildPrivacyPolicyText(){
-  let html='<p>Here is exactly what this app collects and why:</p><ul style="padding-left:18px;margin:8px 0">';
-  html+='<li>Your <b>username and password</b> (used only to log you in — no email required).</li>';
+  const regionSel=document.getElementById('region-select');
+  const minAge=minAgeForRegion(appSettings.collect_region&&regionSel?regionSel.value:'');
+  let html='<p style="margin-top:0">ChillCord asks for as little as it can. This page lists exactly what is collected, why, and what happens if you are below the age threshold.</p>';
+
+  html+='<h4 style="margin:14px 0 6px">What we collect</h4><ul style="padding-left:18px;margin:6px 0">';
+  html+='<li><b>Username and password</b> — used only to sign you in. No email address is required, and your password is stored as a bcrypt hash, never in readable form.</li>';
   if(appSettings.collect_ip){
-    html+='<li>Your <b>IP address</b>, used to enforce network-level bans and to prevent banned users from evading bans with a new account. Because this counts as personal data, we ask you to confirm you are 13 or older before collecting it. You can opt out of this specifically with the "don\'t collect my IP" checkbox at sign-up/sign-in.</li>';
+    html+='<li><b>IP address</b> — recorded only when the date of birth you enter shows you are <b>at least '+minAge+' years old</b> ('+MIN_AGE_EU+' in the EU and UK). It is used to enforce network-level bans and to stop a banned person coming back on a new account.</li>';
   }
   if(appSettings.collect_fp){
-    html+='<li>A basic <b>device fingerprint</b> (browser/screen characteristics), used the same way as the IP — to catch ban evasion, not to track you across other sites.</li>';
+    html+='<li><b>Device fingerprint</b> — a rough summary of browser and screen characteristics, used the same way as the IP address: to recognise ban evasion, never to follow you across other websites.</li>';
   }
   if(appSettings.collect_region){
-    html+='<li>The <b>general region</b> you tell us you\'re in (e.g. EU, US, UK), used only to be more careful with data handling for your region.</li>';
+    html+='<li><b>General region</b> — the area you select (EU, US, UK, Other), used only to apply the right data-handling rules.</li>';
   }
   if(!appSettings.collect_ip&&!appSettings.collect_fp&&!appSettings.collect_region){
-    html+='<li>Nothing beyond your username/password — IP, fingerprint, and region collection are all currently switched off.</li>';
+    html+='<li>Nothing beyond your username and password — IP, fingerprint and region collection are all switched off right now.</li>';
   }
-  html+='</ul><p>Moderators can mute or ban based on the data types enabled above. None of this data is sold or shared with third parties.</p>';
+  html+='</ul>';
+
+  html+='<h4 style="margin:14px 0 6px">Age and IP collection</h4>';
+  html+='<p style="margin:6px 0">At sign-up we ask for your date of birth for one purpose only: deciding whether you are old enough for us to record your IP address and device fingerprint. <b>The date itself is never stored, transmitted or logged</b> — only the yes/no result stays in your browser. If you are under '+MIN_AGE_DEFAULT+' (under '+MIN_AGE_EU+' in the EU and UK), your account still works normally, but no IP address or device fingerprint is recorded for you.</p>';
+
+  html+='<h4 style="margin:14px 0 6px">Why this is allowed</h4>';
+  html+='<p style="margin:6px 0">Storing network data for abuse prevention rests on a legitimate interest in keeping the community safe, together with the age confirmation described above. None of it is used for advertising or profiling, and none of it is sold or shared with third parties.</p>';
+
+  html+='<h4 style="margin:14px 0 6px">How long it is kept</h4>';
+  html+='<p style="margin:6px 0">Account data stays until you delete your account. IP addresses and fingerprints are kept only while they are useful for moderation, and are cleared when the related block or ban expires.</p>';
+
+  html+='<h4 style="margin:14px 0 6px">Your choices</h4>';
+  html+='<p style="margin:6px 0">You can delete your account at any time, which removes your username, password, messages and stored network data. You can also ask a moderator to explain any action taken against your account.</p>';
+
+  html+='<p style="margin:12px 0 0;color:var(--text-lo);font-size:11.5px">'+PRIVACY_POLICY_VERSION+'</p>';
   return html;
 }
 function openPrivacyPolicy(){
@@ -4451,6 +4564,14 @@ function privacyTabHTML(){
     <div class="s-toggle" style="margin-top:12px">
       <div><div class="s-toggle-label">Instant Back to Apricity</div><div class="s-toggle-sub">Always show the back button to exit ChillCord instantly, even with no navigation history.</div></div>
       <div class="toggle-switch${localStorage.getItem('nc_instant_back')==='1'?' on':''}" id="tog-instant-back" onclick="this.classList.toggle('on');localStorage.setItem('nc_instant_back',this.classList.contains('on')?'1':'0');renderServerRail()"></div>
+    </div>
+    <div style="margin-top:16px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg-input)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Data we hold about you</div>
+      <div style="font-size:12px;color:var(--text-lo);line-height:1.5">
+        Username and password: always.<br>
+        IP address and device fingerprint: ${appSettings.collect_ip?(ageAllows()?'collected — your date of birth puts you above the age threshold.':'not collected — we have no date of birth for you yet.'):'switched off by the site owner.'}
+      </div>
+      <button class="s-btn neutral" style="margin-top:10px" onclick="openPrivacyPolicy()">Open Privacy Policy</button>
     </div>`;
 }
 
