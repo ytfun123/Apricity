@@ -5010,7 +5010,7 @@ loadAppSettings();
 // them directly from here — do a lightweight ping through the proxy instead.
 (async()=>{
   try{
-    const r=await supaFetch('/rest/v1/users?limit=1');
+    const r=await supaFetch('/rest/v1/users?select=id&limit=1');
     if(r.status===500){
       const d=await r.json().catch(()=>({}));
       if(d.error&&/SUPABASE_URL|SUPABASE_KEY/.test(d.error)){

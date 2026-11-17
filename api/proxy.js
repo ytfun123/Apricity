@@ -93,6 +93,60 @@ const CAPTCHA_PROTECTED_PATHS = [
   '/rest/v1/rpc/login_user',
 ];
 
+// ---------------------------------------------------------------------------
+// Abuse guards
+// ---------------------------------------------------------------------------
+// Rate limiting: Vercel runs many isolated instances, so this is a per-instance
+// window rather than a global one. It stops a single bot hammering a warm
+// lambda; the database triggers (enforce_message_rules, enforce_signup_rules)
+// are the authoritative limit, because they cannot be skipped.
+const RATE_WINDOW_MS = 10000;
+const RATE_LIMITS = { all: 150, message: 8, register: 5 };
+const rateBuckets = new Map();
+
+function clientIp(req) {
+  const fwd = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return fwd || (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+
+function overLimit(ip, bucket, limit) {
+  const now = Date.now();
+  const key = bucket + '|' + ip;
+  const entry = rateBuckets.get(key);
+  if (!entry || now > entry.reset) {
+    rateBuckets.set(key, { n: 1, reset: now + RATE_WINDOW_MS });
+    if (rateBuckets.size > 5000) {
+      for (const [k, v] of rateBuckets) if (now > v.reset) rateBuckets.delete(k);
+    }
+    return false;
+  }
+  entry.n++;
+  return entry.n > limit;
+}
+
+// Message text filter. The same list lives in public.blocked_words and is
+// enforced by a database trigger; this copy stops the traffic before it costs
+// a round trip, and covers a bot posting to the proxy with no client at all.
+const MESSAGE_BLOCKLIST = ['nigger','nigga','nignog','faggot','fagot','kike','spic','chink','wetback','tranny','retard','coon','gook','raghead','paki','beaner','negro','jigaboo','darkie','towelhead','zipperhead','fuck','shit','bitch','cunt','asshole','bastard','dickhead','pussy','whore','slut','rape','nazi','hitler','porn','dildo'];
+const MESSAGE_PATHS = [
+  '/rest/v1/rpc/send_global_message',
+  '/rest/v1/rpc/send_direct_message',
+  '/rest/v1/rpc/send_channel_message',
+  '/rest/v1/rpc/send_server_message'
+];
+
+// Lowercase, drop separators (so "n.i.g.g.e.r" matches) and fold the two
+// common leet substitutions.
+function scrubForFilter(str) {
+  return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/0/g, 'o').replace(/1/g, 'i');
+}
+
+function hasBlockedWord(str) {
+  const text = scrubForFilter(str);
+  if (!text) return false;
+  return MESSAGE_BLOCKLIST.some(w => new RegExp(w.split('').join('+') + '+').test(text));
+}
+
 async function verifyHcaptcha(token, remoteip) {
   const secret = process.env.HCAPTCHA_SECRET_KEY;
   if (!secret) return { ok: false, error: 'HCAPTCHA_SECRET_KEY not set in Vercel env vars' };
@@ -163,6 +217,26 @@ async function handleSupabase(req) {
   }
   if (bareePath === '/rest/v1/users' && parsedBody && 'username' in parsedBody && containsBlockedWord(parsedBody.username)) {
     return { status: 400, data: { error: "That username isn't allowed, please choose another" } };
+  }
+
+  // Bots do not run the client, so every guard below lives on the server.
+  const ip = clientIp(req);
+  if (overLimit(ip, 'all', RATE_LIMITS.all)) {
+    return { status: 429, data: { error: 'Too many requests — slow down' } };
+  }
+  if (MESSAGE_PATHS.includes(bareePath) && overLimit(ip, 'msg', RATE_LIMITS.message)) {
+    return { status: 429, data: { error: 'Slow down: you are sending messages too fast' } };
+  }
+  if (bareePath === '/rest/v1/rpc/register_user' && overLimit(ip, 'reg', RATE_LIMITS.register)) {
+    return { status: 429, data: { error: 'Too many signups from this network — try again later' } };
+  }
+  if (MESSAGE_PATHS.includes(bareePath) && parsedBody && hasBlockedWord(parsedBody.p_content)) {
+    return { status: 400, data: { error: 'Message blocked: that language is not allowed here' } };
+  }
+  // Password hashes, IPs and fingerprints are not readable through the table
+  // API any more (their column grants were revoked too, this is belt and braces).
+  if (bareePath === '/rest/v1/users' && /password_hash|ip_address|fingerprint|select=\*/.test(path)) {
+    return { status: 403, data: { error: 'That request is not allowed' } };
   }
 
   if (CAPTCHA_PROTECTED_PATHS.includes(bareePath)) {
