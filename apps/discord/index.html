@@ -1689,7 +1689,23 @@ async function submitAuth(){
   }
   btn.textContent=authMode==='login'?'Signing in…':'Creating account…';
   try{
-    const res=await rpc(authMode==='login'?'login_user':'register_user',{p_username:u,p_password:p},tokenForThisAttempt);
+    // Registration needs proof the request came from a real browser — an IP or a
+    // fingerprint. With neither, the server declines before creating anything.
+    const collAllowed=ageAllows();
+    let regIp=null, regFp=null;
+    if(authMode==='register'){
+      if(appSettings.collect_ip&&collAllowed) regIp=await getClientIP();
+      if(appSettings.collect_fp&&collAllowed) regFp=await getFingerprint();
+      if(regIp) cachedClientIP=regIp;
+      if(regFp) cachedFingerprint=regFp;
+    }
+    const authBody={p_username:u,p_password:p};
+    if(authMode==='register'){
+      authBody.p_ip=regIp;
+      authBody.p_fingerprint=regFp;
+      authBody.p_collection_allowed=!!collAllowed;
+    }
+    const res=await rpc(authMode==='login'?'login_user':'register_user',authBody,tokenForThisAttempt);
     if(res&&res.error) return showAuthErr(res.error);
     me=res.user; token=res.token;
     const myRoles=await hydrateRoles([me.id]);
@@ -1699,11 +1715,11 @@ async function submitAuth(){
     syncToSheet();
     try{
       const allowed=ageAllows();
-      const ip=(appSettings.collect_ip&&allowed)?await getClientIP():null;
-      const fp=(appSettings.collect_fp&&allowed)?await getFingerprint():null;
+      const ip=(appSettings.collect_ip&&allowed)?(cachedClientIP||await getClientIP()):null;
+      const fp=(appSettings.collect_fp&&allowed)?(cachedFingerprint||await getFingerprint()):null;
       const region=appSettings.collect_region?document.getElementById('region-select').value:null;
-      cachedClientIP=ip; cachedFingerprint=fp;
-      const secRes=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:appSettings.collect_ip?allowed:null,p_region:region});
+      cachedClientIP=ip||cachedClientIP; cachedFingerprint=fp||cachedFingerprint;
+      const secRes=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:appSettings.collect_ip?allowed:null,p_region:region,p_collection_allowed:allowed});
       if(secRes&&secRes.error){
         localStorage.removeItem('nc_token'); localStorage.removeItem('nc_user');
         me=null; token=null;
@@ -1955,6 +1971,9 @@ async function bootApp(){
   (async()=>{
     try{
       await loadAppSettings();
+      // Pick the stored answer back up before deciding whether to collect, so a
+      // cleared cookie jar can't turn collection back on for an opted-out account.
+      await syncPrivacyVerdict();
       const allowed=ageAllows();
       const ip=(appSettings.collect_ip&&allowed)?await getClientIP():null;
       const fp=(appSettings.collect_fp&&allowed)?await getFingerprint():null;
@@ -1962,7 +1981,7 @@ async function bootApp(){
       // Only refresh IP/FP here — never silently set age_confirmed on a
       // routine boot. Age is only ever set by the date-of-birth gate
       // (at signup/sign-in, or via the one-time backfill prompt below).
-      const secRes=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:null});
+      const secRes=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:null,p_collection_allowed:allowed});
       if(secRes&&secRes.banned){
         const banStatus=await checkMyModStatus(null);
         const activeBan=banStatus.find(a=>a.action_type==='ban');
@@ -1972,10 +1991,23 @@ async function bootApp(){
     checkMissingConsent();
   })();
 }
+// The IP-collection yes/no is stored on the account, not just in this browser,
+// so it survives cleared cookies and follows the user to another device.
+async function syncPrivacyVerdict(){
+  let r=null;
+  try{ r=await rpc('get_missing_consent',{p_token:token}); }catch(e){ return null; }
+  if(!r||r.error) return null;
+  if(r.ip_collection_allowed===false){
+    rememberAgeVerdict(false);
+  }else if(r.ip_collection_allowed===true){
+    try{ if(localStorage.getItem('nc_age_ok')===null) localStorage.setItem('nc_age_ok','1'); }catch(e){}
+  }
+  return r;
+}
 async function checkMissingConsent(){
   try{
-    const r=await rpc('get_missing_consent',{p_token:token});
-    if(!r||r.error) return;
+    const r=await syncPrivacyVerdict();
+    if(!r) return;
     if(!r.needs_age&&!r.needs_region) return;
     document.getElementById('consent-age-wrap').style.display=r.needs_age?'block':'none';
     document.getElementById('consent-region-wrap').style.display=r.needs_region?'block':'none';
@@ -2096,7 +2128,7 @@ async function submitConsentBackfill(){
     const allowed=ageOk===null?ageAllows():ageOk;
     const ip=(appSettings.collect_ip&&allowed)?(cachedClientIP||await getClientIP()):null;
     const fp=(appSettings.collect_fp&&allowed)?(cachedFingerprint||await getFingerprint()):null;
-    const r=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:needsAge?ageOk:null,p_region:region});
+    const r=await rpc('set_user_security_info',{p_token:token,p_ip:ip,p_fingerprint:fp,p_age_confirmed:needsAge?ageOk:null,p_region:region,p_collection_allowed:allowed});
     if(r&&r.error){ showToast(r.error,'error'); return; }
     document.getElementById('consent-modal').classList.remove('on');
     showToast('Thanks!','success');
@@ -3142,8 +3174,10 @@ function applyAppSettingsToAuthForm(){
 // ---------------------------------------------------------------------------
 // AGE GATE
 // A date of birth decides whether we may record an IP address or device
-// fingerprint. The birthday itself is never stored, sent, or logged — only the
-// yes/no verdict stays in this browser (localStorage 'nc_age_ok').
+// fingerprint. The birthday itself is never stored, sent, or logged. The yes/no
+// answer is kept twice: in this browser ('nc_age_ok') for speed, and as a
+// boolean on the account ('users.ip_collection_allowed') so clearing cookies
+// cannot switch collection back on.
 // 13 is the floor most jurisdictions set; the EU/UK require 16.
 // ---------------------------------------------------------------------------
 const MIN_AGE_DEFAULT=13, MIN_AGE_EU=16;
@@ -3229,7 +3263,7 @@ function buildPrivacyPolicyText(){
   html+='</ul>';
 
   html+='<h4 style="margin:14px 0 6px">Age and IP collection</h4>';
-  html+='<p style="margin:6px 0">At sign-up we ask for your date of birth for one purpose only: deciding whether you are old enough for us to record your IP address and device fingerprint. <b>The date itself is never stored, transmitted or logged</b> — only the yes/no result stays in your browser. If you are under '+MIN_AGE_DEFAULT+' (under '+MIN_AGE_EU+' in the EU and UK), your account still works normally, but no IP address or device fingerprint is recorded for you.</p>';
+  html+='<p style="margin:6px 0">At sign-up we ask for your date of birth for one purpose only: deciding whether you are old enough for us to record your IP address and device fingerprint. <b>The date itself is never stored, transmitted or logged</b> — only the yes/no answer is kept, as a single true/false flag on your account, so clearing your cookies or signing in on another device never asks you again. If you are under '+MIN_AGE_DEFAULT+' (under '+MIN_AGE_EU+' in the EU and UK), your account still works normally, but no IP address or device fingerprint is recorded for you.</p>';
 
   html+='<h4 style="margin:14px 0 6px">Why this is allowed</h4>';
   html+='<p style="margin:6px 0">Storing network data for abuse prevention rests on a legitimate interest in keeping the community safe, together with the age confirmation described above. None of it is used for advertising or profiling, and none of it is sold or shared with third parties.</p>';
@@ -4679,7 +4713,7 @@ function privacyTabHTML(){
       <div style="font-size:13px;font-weight:700;margin-bottom:4px">Data we hold about you</div>
       <div style="font-size:12px;color:var(--text-lo);line-height:1.5">
         Username and password: always.<br>
-        IP address and device fingerprint: ${appSettings.collect_ip?(ageAllows()?'collected — your date of birth puts you above the age threshold.':'not collected — we have no date of birth for you yet.'):'switched off by the site owner.'}
+        IP address and device fingerprint: ${!appSettings.collect_ip?'switched off by the site owner.':(ageAllows()?'collected — your date of birth puts you above the age threshold. This answer is saved on your account, so it applies on every device.':'not collected — your account is below the age threshold, or no date of birth has been recorded yet. This answer is saved on your account, not just in this browser.')}
       </div>
       <button class="s-btn neutral" style="margin-top:10px" onclick="openPrivacyPolicy()">Open Privacy Policy</button>
       <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
