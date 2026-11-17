@@ -101,7 +101,7 @@ const CAPTCHA_PROTECTED_PATHS = [
 // lambda; the database triggers (enforce_message_rules, enforce_signup_rules)
 // are the authoritative limit, because they cannot be skipped.
 const RATE_WINDOW_MS = 10000;
-const RATE_LIMITS = { all: 150, message: 8, register: 5 };
+const RATE_LIMITS = { all: 150, message: 8, register: 5, auth: 6 };
 const rateBuckets = new Map();
 
 function clientIp(req) {
@@ -128,6 +128,14 @@ function overLimit(ip, bucket, limit) {
 // enforced by a database trigger; this copy stops the traffic before it costs
 // a round trip, and covers a bot posting to the proxy with no client at all.
 const MESSAGE_BLOCKLIST = ['nigger','nigga','nignog','faggot','fagot','kike','spic','chink','wetback','tranny','retard','coon','gook','raghead','paki','beaner','negro','jigaboo','darkie','towelhead','zipperhead','fuck','shit','bitch','cunt','asshole','bastard','dickhead','pussy','whore','slut','rape','nazi','hitler','porn','dildo'];
+// Password-checking endpoints get their own strict bucket, since each call is a
+// password guess.
+const AUTH_PATHS = [
+  '/rest/v1/rpc/delete_account_with_password',
+  '/rest/v1/rpc/login_user',
+  '/rest/v1/rpc/change_password',
+  '/rest/v1/rpc/verify_password'
+];
 const MESSAGE_PATHS = [
   '/rest/v1/rpc/send_global_message',
   '/rest/v1/rpc/send_direct_message',
@@ -226,6 +234,9 @@ async function handleSupabase(req) {
   }
   if (MESSAGE_PATHS.includes(bareePath) && overLimit(ip, 'msg', RATE_LIMITS.message)) {
     return { status: 429, data: { error: 'Slow down: you are sending messages too fast' } };
+  }
+  if (AUTH_PATHS.includes(bareePath) && overLimit(ip, 'auth', RATE_LIMITS.auth)) {
+    return { status: 429, data: { error: 'Too many password attempts — wait a moment and try again' } };
   }
   if (bareePath === '/rest/v1/rpc/register_user' && overLimit(ip, 'reg', RATE_LIMITS.register)) {
     return { status: 429, data: { error: 'Too many signups from this network — try again later' } };

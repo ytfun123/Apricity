@@ -999,6 +999,24 @@ function playNotificationSound(){
   </div>
 </div>
 
+<!-- ACCOUNT LIMIT / DELETE ACCOUNT -->
+<div class="modal" id="acct-modal">
+  <div class="mbox" style="max-width:430px;text-align:left">
+    <div class="mtitle" id="acct-modal-title">You already have 3 accounts</div>
+    <div class="msub" id="acct-modal-sub"></div>
+    <div id="acct-limit-list" style="display:none;margin-top:12px;max-height:230px;overflow:auto"></div>
+    <div id="acct-pass-wrap" style="display:none;margin-top:12px">
+      <div class="auth-field"><label>Password</label>
+        <input id="acct-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')acctConfirmDelete()"></div>
+    </div>
+    <div id="acct-err" style="color:#f87171;font-size:12px;margin-top:8px;display:none"></div>
+    <div class="mactions" style="margin-top:14px">
+      <button class="mbtn cancel" onclick="closeModal('acct-modal')">Cancel</button>
+      <button class="mbtn ok" id="acct-delete-btn" onclick="acctConfirmDelete()" style="display:none">Delete account</button>
+    </div>
+  </div>
+</div>
+
 <!-- LITE MODE PASSWORD CONFIRMATION -->
 <div class="modal" id="lite-confirm-modal">
   <div class="mbox" style="max-width:380px;text-align:left">
@@ -1689,6 +1707,12 @@ async function submitAuth(){
       if(secRes&&secRes.error){
         localStorage.removeItem('nc_token'); localStorage.removeItem('nc_user');
         me=null; token=null;
+        // 4th account on this device: the server sends back the accounts that
+        // already exist so the user can free a slot instead of being stuck.
+        if(Array.isArray(secRes.accounts)&&secRes.accounts.length){
+          openAccountLimitModal(secRes.accounts, secRes.error);
+          return;
+        }
         showAuthErr(secRes.error);
         return;
       }
@@ -1969,6 +1993,92 @@ async function deleteDefaultChannel(id,name){
     showToast(`#${name} deleted`,'success');
   }catch(e){ showToast('Failed to delete channel','error'); }
 }
+// ---------------------------------------------------------------------------
+// ACCOUNT LIMIT + DELETION
+// Three accounts per device fingerprint. A 4th signup is refused with the list
+// of accounts already on that device; deleting one requires that account's
+// password, which is checked server-side in delete_account_with_password().
+// ---------------------------------------------------------------------------
+let acctLimitAccounts=[], acctTargetUsername=null;
+function acctErr(msg){
+  const el=document.getElementById('acct-err');
+  if(!el) return;
+  el.textContent=msg||'';
+  el.style.display=msg?'block':'none';
+}
+function openAccountLimitModal(accounts,msg){
+  acctLimitAccounts=Array.isArray(accounts)?accounts:[];
+  acctTargetUsername=null;
+  document.getElementById('acct-modal-title').textContent='You already have 3 accounts';
+  document.getElementById('acct-modal-sub').textContent=msg||'To make another, delete one of them first.';
+  const list=document.getElementById('acct-limit-list');
+  list.style.display='block';
+  list.innerHTML=acctLimitAccounts.map(a=>{
+    const joined=String(a.created_at||'').slice(0,10);
+    const initials=String(a.username||'?').slice(0,2).toUpperCase();
+    return `<div onclick="acctPick('${esc(a.username||'')}')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;background:var(--bg-input)">
+      <div style="width:32px;height:32px;border-radius:50%;background:#6c7cff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${escH(initials)}</div>
+      <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">${escH(a.username||'?')}</div><div style="font-size:11px;color:var(--text-lo)">Joined ${escH(joined||'unknown')}</div></div>
+      <span style="font-size:11.5px;color:var(--accent-hi)">Delete</span>
+    </div>`;
+  }).join('')||'<div style="color:var(--text-lo);font-size:12px">No accounts found</div>';
+  document.getElementById('acct-pass-wrap').style.display='none';
+  document.getElementById('acct-delete-btn').style.display='none';
+  document.getElementById('acct-pass').value='';
+  acctErr('');
+  document.getElementById('acct-modal').classList.add('on');
+}
+function acctPick(username){
+  acctTargetUsername=username;
+  document.getElementById('acct-modal-title').textContent='Delete '+username;
+  document.getElementById('acct-modal-sub').textContent='Enter the password for this account to delete it. Its messages go with it.';
+  document.getElementById('acct-limit-list').style.display='none';
+  document.getElementById('acct-pass-wrap').style.display='block';
+  document.getElementById('acct-delete-btn').style.display='inline-flex';
+  acctErr('');
+  setTimeout(()=>document.getElementById('acct-pass').focus(),50);
+}
+function openDeleteOwnAccount(){
+  if(!me) return;
+  acctLimitAccounts=[];
+  acctTargetUsername=me.username;
+  document.getElementById('acct-modal-title').textContent='Delete your account';
+  document.getElementById('acct-modal-sub').textContent='This permanently deletes '+me.username+', its messages and any stored network data. Enter your password to confirm.';
+  document.getElementById('acct-limit-list').style.display='none';
+  document.getElementById('acct-pass-wrap').style.display='block';
+  document.getElementById('acct-delete-btn').style.display='inline-flex';
+  document.getElementById('acct-pass').value='';
+  acctErr('');
+  document.getElementById('acct-modal').classList.add('on');
+  setTimeout(()=>document.getElementById('acct-pass').focus(),50);
+}
+async function acctConfirmDelete(){
+  const pass=document.getElementById('acct-pass').value;
+  if(!acctTargetUsername) return;
+  if(!pass){ acctErr('Enter the password for this account'); return; }
+  const btn=document.getElementById('acct-delete-btn');
+  btn.disabled=true; btn.textContent='Checking…';
+  try{
+    const r=await rpc('delete_account_with_password',{p_username:acctTargetUsername,p_password:pass});
+    if(r&&r.error){ acctErr(r.error); return; }
+    const deleted=acctTargetUsername;
+    const wasMe=!!(me&&deleted&&deleted.toLowerCase()===String(me.username).toLowerCase());
+    closeModal('acct-modal');
+    if(wasMe){
+      try{
+        localStorage.removeItem('nc_token'); localStorage.removeItem('nc_user');
+        localStorage.removeItem('nc_dms'); localStorage.removeItem('nc_friends_cache');
+      }catch(e){}
+      me=null; token=null;
+      location.reload();
+      return;
+    }
+    showAuthErr('Account "'+deleted+'" deleted — you can create your new one now');
+    showToast('Deleted "'+deleted+'"','success');
+  }catch(e){ acctErr('Could not delete — try again'); }
+  finally{ btn.disabled=false; btn.textContent='Delete account'; }
+}
+
 async function submitConsentBackfill(){
   const needsAge=document.getElementById('consent-age-wrap').style.display!=='none';
   const needsRegion=document.getElementById('consent-region-wrap').style.display!=='none';
@@ -4572,6 +4682,11 @@ function privacyTabHTML(){
         IP address and device fingerprint: ${appSettings.collect_ip?(ageAllows()?'collected — your date of birth puts you above the age threshold.':'not collected — we have no date of birth for you yet.'):'switched off by the site owner.'}
       </div>
       <button class="s-btn neutral" style="margin-top:10px" onclick="openPrivacyPolicy()">Open Privacy Policy</button>
+      <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
+        <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:4px">Delete account</div>
+        <div style="font-size:12px;color:var(--text-lo);line-height:1.5;margin-bottom:8px">Removes your username, password, messages and stored network data. This cannot be undone.</div>
+        <button class="s-btn danger" onclick="openDeleteOwnAccount()">Delete my account</button>
+      </div>
     </div>`;
 }
 
